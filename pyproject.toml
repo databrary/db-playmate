@@ -9,6 +9,8 @@ license = "GPL-3.0"
 python = "^3.7"
 boxsdk = "^2.6"
 PyJWT = "^1.7"
+toml = "^0.10.0"
+requests = "^2.22"
 
 [tool.poetry.dev-dependencies]
 
