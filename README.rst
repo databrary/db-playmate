@@ -1,6 +1,6 @@
 ===========
 db-playmate
-==========
+===========
 
 This package is intended to be used as an interface for KoboToolbox and Box
 for the Databrary PLAY project.
