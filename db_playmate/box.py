@@ -1,10 +1,21 @@
-import keyring
+import logging as log
+
 import boxsdk as bx
+import keyring
 
 
 class Box:
+    def __init__(self, client_id):
+        oauth = bx.OAuth2(
+            client_id=client_id, client_secret="", store_tokens=self.store_tokens
+        )
+        auth_url, csrf_token = oauth.get_authorization_url("http://localhost")
+        log.info(auth_url)
+        log.info(csrf_token)
+
     # From: https://stackoverflow.com/questions/29595255/working-with-the-box-com-sdk-for-python
-    def read_tokens(self):
+    @classmethod
+    def read_tokens(cls):
         """Reads authorisation tokens from keyring"""
         # Use keyring to read the tokens
         auth_token = keyring.get_password("Box_Auth", "mybox@box.com")
