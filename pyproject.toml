@@ -12,6 +12,7 @@ PyJWT = "^1.7"
 toml = "^0.10.0"
 requests = "^2.22"
 keyring = "^19.2"
+docutils = "^0.15.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
