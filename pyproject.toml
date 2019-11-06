@@ -13,6 +13,7 @@ toml = "^0.10.0"
 requests = "^2.22"
 keyring = "^19.2"
 docutils = "^0.15.2"
+flask = "^1.1.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
