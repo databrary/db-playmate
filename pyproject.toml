@@ -2,7 +2,7 @@
 name = "db-playmate"
 version = "0.1.0"
 description = "Client scripts for Databrary PLAY project."
-authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>"]
+authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>", "Jesse Lingeman <jmlingeman@gmail.com>"]
 license = "GPL-3.0"
 
 [tool.poetry.dependencies]
