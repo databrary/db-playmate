@@ -1,4 +1,5 @@
 import logging as log
+import argparse
 
 from boxsdk import JWTAuth
 import boxsdk as bx
@@ -15,11 +16,12 @@ app = Flask(__name__)
 
 access_code = None
 
-@app.route('/')
+
+@app.route("/")
 def handle_redirect():
     global access_code
     access_code = request.args.get("code")
-    print(access_code)
+    log.info(access_code)
     if len(access_code) > 0:
         return "Success! You can now close this window."
     else:
@@ -27,13 +29,10 @@ def handle_redirect():
 
 
 class Box:
-    def __init__(self):
-        with open("config.json") as config:
-            cfg = json.load(config)
-
-        self.client_id = cfg['client_id']
-        self.client_secret = cfg['client_secret']
-        self.redirect_url = "http://localhost:5000"
+    def __init__(self, client_id, client_secret, redirect_url="http://localhost:5000"):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.redirect_url = redirect_url
 
         self.login()
 
@@ -45,9 +44,9 @@ class Box:
 
         if access_token is None or refresh_token is None:
             oauth = bx.OAuth2(
-                client_id = self.client_id,
-                client_secret = self.client_secret,
-                store_tokens = self.store_tokens
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                store_tokens=self.store_tokens,
             )
             self.auth_url, csrf_token = oauth.get_authorization_url(self.redirect_url)
             webbrowser.open(self.auth_url)
@@ -59,10 +58,10 @@ class Box:
             access_token, refresh_token = self.read_tokens()
 
         oauth = bx.OAuth2(
-            client_id = self.client_id,
-            client_secret = self.client_secret,
-            access_token = access_token,
-            refresh_token = refresh_token
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            access_token=access_token,
+            refresh_token=refresh_token,
         )
         self.client = bx.Client(oauth)
 
@@ -82,9 +81,9 @@ class Box:
         # Explore the search function
 
     # From: https://stackoverflow.com/questions/29595255/working-with-the-box-com-sdk-for-python
-    @classmethod
     def read_tokens(self):
         """Reads authorisation tokens from keyring"""
+
         # Use keyring to read the tokens
         auth_token = keyring.get_password("Box_Auth", "play_box")
         refresh_token = keyring.get_password("Box_Refresh", "play_box")
@@ -92,12 +91,14 @@ class Box:
 
     def store_tokens(self, access_token, refresh_token):
         """Callback function when Box SDK refreshes tokens"""
+
         # Use keyring to store the tokens
         keyring.set_password("Box_Auth", "play_box", access_token)
         keyring.set_password("Box_Refresh", "play_box", refresh_token)
 
     def get_auth(self, client_id, client_secret, dev_token):
         """Return OAuth2"""
+
         return bx.OAuth2(
             client_id=client_id, client_secret=client_secret, access_token=dev_token
         )
@@ -108,7 +109,9 @@ class Box:
     def copy_file(self, src, dst):
         pass
 
-if __name__ == "__main__":
+
+def main(client_id, client_secret):
+
     # Delete the stored keys for debugging
     try:
         keyring.delete_password("Box_Auth", "play_box")
@@ -118,6 +121,24 @@ if __name__ == "__main__":
 
     server = Thread(target=app.run, daemon=True)
     server.start()
-    box = Box() # cid is hardcoded for now
+    box = Box(client_id, client_secret)
     box.list_dir(box.client.root_folder())
     print("Finished!")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--config-file",
+        default="config.json",
+        required=False,
+        help="json file with box credentials",
+    )
+    args = parser.parse_args()
+
+    with open(args.config_file) as config:
+        cfg = json.load(config)
+        clid = cfg["client_id"]
+        clsec = cfg["client_secret"]
+
+    main(clid, clsec)

@@ -1,6 +1,7 @@
 import json
 import logging as log
 
+import db_playmate as dbp
 from db_playmate import Box
 from db_playmate import Kobo
 from db_playmate import __version__
@@ -11,9 +12,8 @@ def test_version():
 
 
 def test_box(configs):
-    clid = configs["box"]["client_id"]
-    log.info(clid)
-    box = Box(clid)
+    box_cfg = configs["box"]
+    dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
 
 
 def test_kobo(configs):
