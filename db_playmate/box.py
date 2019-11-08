@@ -138,6 +138,7 @@ if __name__ == "__main__":
 
     with open(args.config_file) as config:
         cfg = json.load(config)
-        clid, clsec = cfg["client_id", "client_secret"]
+        clid = cfg["client_id"]
+        clsec = cfg["client_secret"]
 
     main(clid, clsec)
