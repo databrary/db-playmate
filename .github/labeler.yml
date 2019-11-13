@@ -1,0 +1,15 @@
+# Add 'repo' label to any root file changes
+repo:
+  - ./*
+  
+# Label for test folder changes
+tests:
+  - tests/*
+  
+# Label for kobotoolbox source file changes
+kobo:
+  - db_playmate/kobo*.py
+
+# Label for box source file changes
+box:
+  - db_playmate/box*.py
