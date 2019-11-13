@@ -1,17 +1,23 @@
 name: Run Tests
-on: push
+on:
+    push:
+        branches:
+            - master
+            - dev
 
 jobs:
   pytest:
     name: pytest
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@dev
+    - uses: actions/checkout@v1
+      with:
+          fetch-depth: 1
     - name: Install
-      uses: abatilo/actions-poetry@v1.0.0
+      uses: abatilo/actions-poetry@v1
       with:
         args: install
     - name: Run pytest
-      uses: abatilo/actions-poetry@v1.0.0
+      uses: abatilo/actions-poetry@v1
       with:
         args: run python -m pytest --cov=db_playmate tests/
