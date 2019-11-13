@@ -1,3 +1,5 @@
+import logging as log
+
 import requests
 from furl import furl
 from requests import HTTPError
@@ -18,13 +20,15 @@ class Kobo:
             "Connection": "keep-alive",
             "Accept": "application/json",
         }
-        self.forms = dict()
+        self.forms = {}
         self._response = {}
         self.get_forms(update=True)
 
     def get_forms(self, update=False):
-        """Sends query for forms if update is true or forms haven't been fetched yet.
-            Returns self.
+        """
+        Sends query for forms if update is true or forms haven't been fetched yet.
+        :param update: Set true to force an http request to kobo server
+        :return: self
         """
         if update or not self.forms:
             try:
@@ -35,7 +39,7 @@ class Kobo:
                 )
                 response.raise_for_status()
             except HTTPError as http_err:
-                print(f"HTTP error: {http_err}")
+                log.error(f"HTTP error: {http_err}")
                 raise http_err
             except Exception as err:
                 raise err
