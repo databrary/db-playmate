@@ -13,7 +13,7 @@ Set up
 
 2. Clone the repo and change to the folder::
 
-    ``git clone git@github.com:sh0sh1n/db-playmate.git && cd db-playmate``
+    git clone git@github.com:sh0sh1n/db-playmate.git && cd db-playmate
 
 3. Set up Python3 environment if you haven't already activated one:
     a) Create new: ``python3 -m venv .venv``
