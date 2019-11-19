@@ -4,7 +4,7 @@ import requests
 from furl import furl
 from requests import HTTPError
 
-from db_playmate.koboform import KoboForm
+from kobo.form import Form
 
 
 class Kobo:
@@ -47,7 +47,7 @@ class Kobo:
                 rj = response.json()
                 self._response = rj
                 for data in rj["results"]:
-                    form = KoboForm(data)
+                    form = Form(data)
                     self.forms[form.id] = form
 
         return self

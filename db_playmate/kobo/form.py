@@ -6,7 +6,7 @@ from furl import furl
 from requests import HTTPError
 
 
-class KoboForm:
+class Form:
     """
     Stores information about a particular form.
         * set of questions
@@ -79,34 +79,7 @@ class KoboForm:
     def to_csv(self, file):
         with open(file) as f:
             writer = csv.DictWriter(f, map(str, self.questions))
-            writer.writerows([])
-            for s in self.submissions:
-                writer.writerow([s.get(q) for q in self.questions])
-
-
-class Question:
-    """Stores information about a form question; essentially sets of Kobo ids and question texts."""
-
-    def __init__(self, qid, text=""):
-        self.ids = set(qid)
-        self.texts = set(text)
-
-    def __eq__(self, other):
-        """Two questions are equivalent if they share any common ids."""
-        self.ids.intersection(other.ids)
-
-    def merge(self, other):
-        self.ids.update(other.ids)
-        self.texts.update(other.texts)
-        return self
-
-    def __add__(self, other):
-        return self.merge(other)
-
-
-class Submission:
-    """Wrapper for a dictionary mapping questions to answers."""
-
-    def __init__(self, version=None):
-        self.answers = {}
-        self.version = version
+            writer.writerows(map(str, self.questions))
+            writer.writerow(
+                [s.get(q) for s in self.submissions for q in self.questions]
+            )
