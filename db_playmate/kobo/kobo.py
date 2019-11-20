@@ -1,5 +1,3 @@
-import logging as log
-
 import requests
 from furl import furl
 from requests import HTTPError
@@ -31,43 +29,37 @@ class Kobo:
         :return: self
         """
         if update or not self.forms:
-            try:
-                url = furl(self.base_url)
-                url.path.add("assets")
-                response = requests.get(
-                    url=url.url, params=self.params, headers=self.headers
-                )
-                response.raise_for_status()
-            except HTTPError as http_err:
-                log.error(f"HTTP error: {http_err}")
-                raise http_err
-            except Exception as err:
-                raise err
-            else:
-                rj = response.json()
-                self._response = rj
-                for data in rj["results"]:
-                    form = Form(data)
-                    self.forms[form.id] = form
+            url = furl(self.base_url)
+            url.path.add("assets")
+            response = self.send_query(url.url)
+            rj = response.json()
+            self._response = rj
+            for data in rj["results"]:
+                if "form_type" not in data.keys() or data["form_type"] != "survey":
+                    continue
+
+                form = Form(data, connection=self)
+                self.forms[form.id] = form
 
         return self
 
     def get_form(self, form_id, update=False):
         if update or form_id not in self.forms.keys():
-            try:
-                url = furl(self.base_url)
-                url.path.add("assets", str(form_id), "submissions")
-                response = requests.get(
-                    url=url.url, params=self.params, headers=self.headers
-                )
-                response.raise_for_status()
-            except HTTPError as http_err:
-                print(f"HTTP error: {http_err}")
-            except Exception as err:
-                raise err
-            else:
-                rj = response.json()
-                for submission in rj:
-                    self.forms[form_id].add_submission(submission)
+            url = furl(self.base_url)
+            url.path.add("assets", str(form_id), "submissions")
+            rj = self.send_query(url.url).json()
+            self.forms[form_id] = Form(rj, self)
 
         return self.forms[form_id]
+
+    def send_query(self, url, **headers):
+        hds = {**self.headers, **headers}
+        try:
+            response = requests.get(url=url, params=self.params, headers=hds)
+            response.raise_for_status()
+        except HTTPError as http_err:
+            print(f"HTTP error: {http_err}")
+        except Exception as err:
+            raise err
+        else:
+            return response

@@ -1,9 +1,8 @@
 import csv
-import logging as log
 
-import requests
 from furl import furl
-from requests import HTTPError
+
+from .question import Question
 
 
 class Form:
@@ -19,25 +18,54 @@ class Form:
         * default value for questions not in particular submissions
     """
 
-    def __init__(self, data):
+    ignored_qtypes = [
+        "calculate",
+        "note",
+        "begin_group",
+        "end_group",
+        "begin_repeat",
+        "end_repeat",
+    ]
+
+    def __init__(self, data, connection=None):
         self.raw_data = data
         self.questions = []
-        self.__parse()
+
+        # Parse survey questions
+        if "content" in data.keys():
+            if "survey" in data.get("content").keys():
+                self.parse_survey(data.get("content").get("survey"))
+
         self._subs_raw = {}
         self.submissions = []
+        self.connection = connection
 
-    def __parse(self, max_repeats=10):
-        """Unwrap dict representation of a form."""
-        # TODO: what to do about repeated questions??
+        try:
+            self.num_columns = data["summary"]["row_count"]
+        except [KeyError, AttributeError]:
+            self.num_columns = None
+        self.url = data["url"]
+        self.id = data["uid"]
+        self.name = data["name"]
+        self.type = data["asset_type"]
+        self.current_version = data["version_id"]
+        self.num_submissions = data["deployment__submission_count"]
 
-        summary = self.raw_data["summary"]
-        self.num_columns = summary["row_count"] if summary else None
-        self.url = self.raw_data["url"]
-        self.id = self.raw_data["uid"]
-        self.name = self.raw_data["name"]
-        self.type = self.raw_data["asset_type"]
-        self.current_version = self.raw_data["version_id"]
-        self.num_submissions = self.raw_data["deployment__submission_count"]
+    def parse_survey(self, survey):
+        for q in survey:
+            qid = q.get("$kuid")
+            qtype = q.get("type")
+            label = q.get("label")
+            name = q.get("name")
+
+            if qid is None:
+                continue
+            if qtype in self.ignored_qtypes:
+                continue
+
+            if label:
+                label = label[0]
+            self.questions.append(Question(qid=qid, name=name, label=label))
 
     def __call__(self, *args, **kwargs):
         for data in args:
@@ -60,25 +88,15 @@ class Form:
         return url.url
 
     def get_submissions(self, headers, params):
-        try:
-            response = requests.get(
-                url=self._submission_url(), params=params, header=headers
-            )
-            response.raise_for_status()
-        except HTTPError as http_err:
-            log.error(f"HTTP error: {http_err}")
-            raise http_err
-        except Exception as err:
-            raise err
-        else:
-            rj = response.json()
-            self._subs_raw = rj
-            for data in rj:
-                self.add_submission(data)
+        rj = self.connection.send_query(url=self._submission_url()).json()
+        self._subs_raw = rj
+        for data in rj:
+            self.add_submission(data)
 
     def to_csv(self, file):
         with open(file) as f:
             writer = csv.DictWriter(f, map(str, self.questions))
+            writer.writeheader()
             writer.writerows(map(str, self.questions))
             writer.writerow(
                 [s.get(q) for s in self.submissions for q in self.questions]

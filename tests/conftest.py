@@ -54,7 +54,7 @@ def examples_folder(test_folder):
     return test_folder.joinpath("ex")
 
 
-@pytest.fixture
+@pytest.fixture()
 def example_assets(examples_folder):
     """Fetch asset query response."""
 
@@ -62,7 +62,15 @@ def example_assets(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture
+@pytest.fixture()
+def example_form(examples_folder):
+    """Fetch form query response."""
+
+    fp = examples_folder.joinpath("form.json")
+    return json.load(open(fp))
+
+
+@pytest.fixture()
 def example_submissions(examples_folder):
     """Fetch submission query response."""
 
