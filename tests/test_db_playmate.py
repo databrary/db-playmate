@@ -1,9 +1,4 @@
-import json
-import logging as log
-
 import db_playmate as dbp
-from db_playmate import Box
-from db_playmate import Kobo
 from db_playmate import __version__
 
 
@@ -43,8 +38,6 @@ def test_box_files(box_client):
 
     x = box_client.delete("testdir/README.rst")
     assert x == True
-
-
 
 def test_kobo(configs):
     burl = configs["kobo"]["base_url"]
