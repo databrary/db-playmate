@@ -4,16 +4,16 @@ from pathlib import Path
 
 import pytest
 import toml
+import db_playmate as dbp
 
 from db_playmate.kobo import Kobo
 
 
-@pytest.fixture
+@pytest.fixture(scope="session", autouse=True)
 def test_folder():
     return Path(__file__).resolve().parent
 
-
-@pytest.fixture
+@pytest.fixture(scope="session", autouse=True)
 def config_files(test_folder):
     """Fetch config file. Load root toml and overwrite with env toml."""
     base_dir = test_folder.parent
@@ -28,8 +28,7 @@ def ddm(d1, d2):
         else:
             d1[k] = v
 
-
-@pytest.fixture
+@pytest.fixture(scope="session", autouse=True)
 def configs(config_files):
     """Read configuration file"""
     config = {}
@@ -38,7 +37,6 @@ def configs(config_files):
             ddm(config, toml.load(cf))
 
     return config
-
 
 @pytest.fixture()
 def kobo(configs):
@@ -76,3 +74,13 @@ def example_submissions(examples_folder):
 
     fp = examples_folder.joinpath("submissions.json")
     return json.load(open(fp))
+
+@pytest.fixture(scope="session", autouse=True)
+def box_client(configs):
+    box_cfg = configs["box"]
+    bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
+    try:
+        bx.delete("testdir")
+    except:
+        pass
+    yield bx
