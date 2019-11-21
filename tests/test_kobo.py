@@ -17,16 +17,22 @@ def test_form__parse(example_form):
 
 
 def test_question():
-    from kobo.question import Question
+    pass
 
-    q = Question(hash(1), "What is your name?", label="name")
-    assert str(q) == "name"
 
-    q2 = Question(hash(2), "What is your age?")
-    assert str(q2) == "What is your age?"
+def test_submission():
+    pass
 
-    assert q2 is not q
-    assert not q.congruent_to(q2)
 
-    q.merge(q2)
-    assert all(k in q.sigs for k in q2.sigs)
+def test_form_to_csv(example_form, example_submissions):
+    from db_playmate.kobo.form import Form
+    import io
+
+    f = Form(example_form)
+    for s in example_submissions:
+        f.add_submission(data=s)
+
+    csv = io.StringIO()
+    f.to_csv(csv)
+    log.info(csv.getvalue())
+    f.to_csv(open("test.csv", "w+"))

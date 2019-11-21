@@ -3,6 +3,7 @@ import csv
 from furl import furl
 
 from .question import Question
+from .submission import Submission
 
 
 class Form:
@@ -52,27 +53,21 @@ class Form:
         self.num_submissions = data["deployment__submission_count"]
 
     def parse_survey(self, survey):
-        for q in survey:
-            qid = q.get("$kuid")
-            qtype = q.get("type")
-            label = q.get("label")
-            name = q.get("name")
+        qs = filter(None, [self.parse_question(q) for q in survey])
+        self.questions.extend(qs)
 
-            if qid is None:
-                continue
-            if qtype in self.ignored_qtypes:
-                continue
+    def parse_question(self, question):
+        qtype = question.get("type")
+        if qtype is None or qtype in self.ignored_qtypes:
+            return None
 
-            if label:
-                label = label[0]
-            self.questions.append(Question(qid=qid, name=name, label=label))
-
-    def __call__(self, *args, **kwargs):
-        for data in args:
-            self.add_submission(self.__parse_sub(data))
-
-    def __parse_sub(self, data):
-        pass
+        qid = question.get("$kuid")
+        name = question.get("name")
+        try:
+            label = question.get("label")[0]
+        except (KeyError, TypeError):
+            label = ""
+        self.questions.append(Question(qid=qid, name=name, label=label, qtype=qtype))
 
     def add_submission(self, data):
         """
@@ -80,24 +75,22 @@ class Form:
         :param data: dict with question id and answers
         :return: submission object mapping questions to answers
         """
-        pass
+        self.submissions.append(Submission(data=data))
 
     def _submission_url(self):
         url = furl(self.url)
         url.path.add("submissions")
         return url.url
 
-    def get_submissions(self, headers, params):
+    def get_submissions(self):
         rj = self.connection.send_query(url=self._submission_url()).json()
         self._subs_raw = rj
         for data in rj:
             self.add_submission(data)
 
     def to_csv(self, file):
-        with open(file) as f:
-            writer = csv.DictWriter(f, map(str, self.questions))
-            writer.writeheader()
-            writer.writerows(map(str, self.questions))
-            writer.writerow(
-                [s.get(q) for s in self.submissions for q in self.questions]
-            )
+        writer = csv.DictWriter(
+            file, [str(q) for q in self.questions], dialect=csv.unix_dialect
+        )
+        writer.writeheader()
+        writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
