@@ -13,6 +13,7 @@ from db_playmate.kobo import Kobo
 def test_folder():
     return Path(__file__).resolve().parent
 
+
 @pytest.fixture(scope="session", autouse=True)
 def config_files(test_folder):
     """Fetch config file. Load root toml and overwrite with env toml."""
@@ -28,6 +29,7 @@ def ddm(d1, d2):
         else:
             d1[k] = v
 
+
 @pytest.fixture(scope="session", autouse=True)
 def configs(config_files):
     """Read configuration file"""
@@ -37,6 +39,7 @@ def configs(config_files):
             ddm(config, toml.load(cf))
 
     return config
+
 
 @pytest.fixture()
 def kobo(configs):
@@ -74,6 +77,7 @@ def example_submissions(examples_folder):
 
     fp = examples_folder.joinpath("submissions.json")
     return json.load(open(fp))
+
 
 @pytest.fixture(scope="session", autouse=True)
 def box_client(configs):

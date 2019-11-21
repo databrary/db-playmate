@@ -19,6 +19,7 @@ app = Flask(__name__)
 
 access_code = None
 
+
 @app.route("/")
 def handle_redirect():
     global access_code
@@ -219,7 +220,7 @@ class Box:
         new_name: assign a new name to the file (optional)
         """
         filesize = os.path.getsize(local_filepath) / 1000 / 1000
-        if filesize > 100: #MB
+        if filesize > 100:  # MB
             return self.upload_large_file(local_filepath, dest_folder, new_name)
         else:
             upload_folder = self.get_folder(dest_folder)
