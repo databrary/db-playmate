@@ -4,9 +4,8 @@ from pathlib import Path
 
 import pytest
 import toml
-import db_playmate as dbp
 
-from db_playmate.kobo import Kobo
+import db_playmate as dbp
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -41,21 +40,21 @@ def configs(config_files):
     return config
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session", autouse=True)
 def kobo(configs):
     log.info(configs)
     burl = configs["kobo"]["base_url"]
     token = configs["kobo"]["auth_token"]
-    kobo = Kobo(base_url=burl, token=token)
+    kobo = dbp.kobo.Kobo(base_url=burl, token=token)
     return kobo
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session", autouse=True)
 def examples_folder(test_folder):
     return test_folder.joinpath("ex")
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session", autouse=True)
 def example_assets(examples_folder):
     """Fetch asset query response."""
 
@@ -63,7 +62,7 @@ def example_assets(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session", autouse=True)
 def example_form(examples_folder):
     """Fetch form query response."""
 
@@ -71,7 +70,7 @@ def example_form(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session", autouse=True)
 def example_submissions(examples_folder):
     """Fetch submission query response."""
 

@@ -1,19 +1,16 @@
-import logging as log
 import argparse
+import json
+import logging as log
+import os
+import time
+import webbrowser
+from collections import deque
+from threading import Thread
 
-from boxsdk import JWTAuth
 import boxsdk as bx
 import keyring
-import json
-
 from flask import Flask
 from flask import request
-from threading import Thread
-import webbrowser
-import time
-from collections import deque
-
-import os
 
 app = Flask(__name__)
 
@@ -236,10 +233,10 @@ class Box:
         dest = self.get_folder(dest_folder)
         uploader = dest.get_chunked_uploader(local_filepath)
         try:
-            uploaded_file = chunked_uploader.start()
+            uploaded_file = uploader.start()
         except:
             # Try to resume the download if we've already started
-            uploaded_file = chunked_uploader.resume()
+            uploaded_file = uploader.resume()
         return uploaded_file
 
 

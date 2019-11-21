@@ -1,4 +1,3 @@
-import db_playmate as dbp
 from db_playmate import __version__
 
 
@@ -39,15 +38,4 @@ def test_box_files(box_client):
     assert x is not None and x.name == "README.rst" and x.parent.name == "testdir"
 
     x = box_client.delete("testdir/README.rst")
-    assert x == True
-
-
-def test_kobo(configs):
-    burl = configs["kobo"]["base_url"]
-    token = configs["kobo"]["auth_token"]
-    log.info(burl)
-    log.info(token)
-    r = Kobo(base_url=burl, token=token)
-    log.info(f"\n{len(r.forms)}")
-    for form in r.forms:
-        log.info("\n" + json.dumps(form.json, indent=2))
+    assert x is True
