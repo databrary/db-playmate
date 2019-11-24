@@ -13,3 +13,19 @@ class Question:
 
     def __str__(self):
         return self.names[self.__sid]
+
+
+class QuestionGroup:
+    """
+    A group of related questions.
+    """
+
+    def __init__(self, group_id, *questions):
+        self.group_id = group_id
+        self.questions = list(questions)
+
+    def add_questions(self, question):
+        self.questions.append(question)
+
+    def __sizeof__(self):
+        return len(self.questions)
