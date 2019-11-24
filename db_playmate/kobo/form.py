@@ -29,30 +29,37 @@ class Form:
     ]
 
     def __init__(self, data, connection=None):
-        self.raw_data = data
-        self.questions = []
-
-        # Parse survey questions
-        if "content" in data.keys():
-            if "survey" in data.get("content").keys():
-                self.parse_survey(data.get("content").get("survey"))
+        self.data = data
+        self._parse_summary()
+        self._parse_survey()
 
         self._subs_raw = {}
         self.submissions = []
         self.connection = connection
 
+    def _parse_summary(self):
         try:
-            self.num_columns = data["summary"]["row_count"]
-        except [KeyError, AttributeError]:
+            self.num_columns = self.data["summary"]["row_count"]
+        except (KeyError, AttributeError):
             self.num_columns = None
-        self.url = data["url"]
-        self.id = data["uid"]
-        self.name = data["name"]
-        self.type = data["asset_type"]
-        self.current_version = data["version_id"]
-        self.num_submissions = data["deployment__submission_count"]
+        self.url = self.data.get("url")
+        self.id = self.data.get("uid")
+        self.name = self.data.get("name")
+        self.type = self.data.get("asset_type")
+        self.current_version = self.data.get("version_id")
+        self.num_submissions = self.data.get("deployment__submission_count")
 
-    def parse_survey(self, survey):
+    def _parse_survey(self):
+        self.questions = []
+        if self.data is None:
+            return
+
+        # Parse survey questions
+        content = self.data.get("content")
+        if content is not None:
+            survey = content.get("survey")
+            if survey is not None:
+                self._parse_survey(survey)
         qs = filter(None, [self.parse_question(q) for q in survey])
         self.questions.extend(qs)
 
@@ -68,6 +75,13 @@ class Form:
         except (KeyError, TypeError):
             label = ""
         self.questions.append(Question(qid=qid, name=name, label=label, qtype=qtype))
+
+    def parse_group(self, group):
+        """
+        Parse a group of questions and set a group identifier
+        :param group:
+        :return:
+        """
 
     def add_submission(self, data):
         """
