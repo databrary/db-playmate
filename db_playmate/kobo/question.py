@@ -2,6 +2,9 @@ class Question:
     """Stores information about a form question; essentially sets of Kobo ids and question texts."""
 
     def __init__(self, qid, name, label=None, qtype=None):
+        if name is None:
+            name = ""
+
         self.names = {qid: name}
         self.labels = {qid: label}
         self.qtype = qtype

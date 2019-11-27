@@ -1,9 +1,8 @@
 import csv
-
 from furl import furl
-
 from .question import Question
 from .submission import Submission
+import logging as log
 
 
 class Form:
@@ -30,12 +29,21 @@ class Form:
 
     def __init__(self, data, connection=None):
         self.data = data
-        self._parse_summary()
-        self._parse_survey()
+        self.questions = list()
 
         self._subs_raw = {}
         self.submissions = []
         self.connection = connection
+
+        self._parse_summary()
+
+        # Check if survey contents are present. If not, fetch.
+        self.content = data.get("content")
+        if self.content is None:
+            self.get_form_contents()
+
+        # Parse form contents
+        self._parse_survey()
 
     def _parse_summary(self):
         try:
@@ -49,29 +57,43 @@ class Form:
         self.current_version = self.data.get("version_id")
         self.num_submissions = self.data.get("deployment__submission_count")
 
-    def _parse_survey(self):
-        self.questions = []
-        if self.data is None:
+    def get_form_contents(self, url=None):
+        if self.connection is None:
+            raise AttributeError("Missing connection object.")
+
+        if url is None and self.url is None:
+            raise AttributeError("Missing url.")
+
+        if not url:
+            url = self.url
+
+        rj = self.connection.send_query(url).json()
+        if rj is None:
+            log.info("Failed to get form contents.")
             return
 
-        # Parse survey questions
-        content = self.data.get("content")
-        if content is not None:
-            survey = content.get("survey")
-            if survey is not None:
-                self._parse_survey(survey)
-        qs = filter(None, [self.parse_question(q) for q in survey])
+        self.content = rj.get("content")
+
+    def _parse_survey(self):
+        if self.content is None:
+            raise AttributeError("Not form contents found.")
+
+        survey = self.content.get("survey")
+        if survey is None:
+            raise AttributeError("No survey in form contents.")
+
+        qs = filter(None, [self.parse_item(q) for q in survey])
         self.questions.extend(qs)
 
-    def parse_question(self, question):
-        qtype = question.get("type")
+    def parse_item(self, item):
+        qtype = item.get("type")
         if qtype is None or qtype in self.ignored_qtypes:
             return None
 
-        qid = question.get("$kuid")
-        name = question.get("name")
+        qid = item.get("$kuid")
+        name = item.get("name")
         try:
-            label = question.get("label")[0]
+            label = item.get("label")[0]
         except (KeyError, TypeError):
             label = ""
         self.questions.append(Question(qid=qid, name=name, label=label, qtype=qtype))
@@ -103,6 +125,9 @@ class Form:
             self.add_submission(data)
 
     def to_csv(self, file):
+        if len(self.submissions) < self.num_submissions:
+            self.get_submissions()
+
         writer = csv.DictWriter(
             file, [str(q) for q in self.questions], dialect=csv.unix_dialect
         )

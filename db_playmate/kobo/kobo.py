@@ -1,7 +1,6 @@
 import requests
 from furl import furl
 from requests import HTTPError
-
 from kobo.form import Form
 
 
@@ -35,7 +34,7 @@ class Kobo:
             rj = response.json()
             self._response = rj
             for data in rj["results"]:
-                if "form_type" not in data.keys() or data["form_type"] != "survey":
+                if data.get("asset_type") != "survey":
                     continue
 
                 form = Form(data, connection=self)
@@ -46,7 +45,8 @@ class Kobo:
     def get_form(self, form_id, update=False):
         if update or form_id not in self.forms.keys():
             url = furl(self.base_url)
-            url.path.add("assets", str(form_id), "submissions")
+
+            url.path.add(("assets", str(form_id)))
             rj = self.send_query(url.url).json()
             self.forms[form_id] = Form(rj, self)
 
