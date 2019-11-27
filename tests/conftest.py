@@ -45,13 +45,16 @@ def kobo(configs):
     log.info(configs)
     burl = configs["kobo"]["base_url"]
     token = configs["kobo"]["auth_token"]
-    kobo = dbp.kobo.Kobo(base_url=burl, token=token)
+    log.info("Initializing kobo...")
+    kobo = Kobo(base_url=burl, token=token)
     return kobo
 
 
 @pytest.fixture(scope="session", autouse=True)
 def examples_folder(test_folder):
-    return test_folder.joinpath("ex")
+    tf = test_folder.joinpath("ex")
+    tf.mkdir(parents=True, exist_ok=True)
+    return tf
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -79,11 +82,14 @@ def example_submissions(examples_folder):
 
 
 @pytest.fixture(scope="session", autouse=True)
-def box_client(configs):
-    box_cfg = configs["box"]
-    bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
-    try:
-        bx.delete("testdir")
-    except:
-        pass
-    yield bx
+def example_form_id():
+    return "aGD5Q64T5zTQtakQaS8x55"
+
+
+@pytest.fixture(scope="session", autouse=True)
+def output_folder(test_folder):
+    """Output folder to save files to."""
+
+    fp = test_folder.joinpath("tmp_output")
+    fp.mkdir(parents=True, exist_ok=True)
+    return fp
