@@ -2,9 +2,6 @@ class Question:
     """Stores information about a form question; essentially sets of Kobo ids and question texts."""
 
     def __init__(self, qid, name, label=None, qtype=None):
-        if name is None:
-            name = ""
-
         self.names = {qid: name}
         self.labels = {qid: label}
         self.qtype = qtype
@@ -15,7 +12,7 @@ class Question:
         self.labels[qid] = label
 
     def __str__(self):
-        return self.names[self.__sid]
+        return self.names[self.__sid] or str(self.__sid)
 
 
 class QuestionGroup:
