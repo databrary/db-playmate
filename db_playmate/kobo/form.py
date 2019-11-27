@@ -1,9 +1,8 @@
 import csv
-
 from furl import furl
-
 from .question import Question
 from .submission import Submission
+import logging as log
 
 
 class Form:
@@ -29,45 +28,82 @@ class Form:
     ]
 
     def __init__(self, data, connection=None):
-        self.raw_data = data
-        self.questions = []
-
-        # Parse survey questions
-        if "content" in data.keys():
-            if "survey" in data.get("content").keys():
-                self.parse_survey(data.get("content").get("survey"))
+        self.data = data
+        self.questions = list()
 
         self._subs_raw = {}
         self.submissions = []
         self.connection = connection
 
-        try:
-            self.num_columns = data["summary"]["row_count"]
-        except [KeyError, AttributeError]:
-            self.num_columns = None
-        self.url = data["url"]
-        self.id = data["uid"]
-        self.name = data["name"]
-        self.type = data["asset_type"]
-        self.current_version = data["version_id"]
-        self.num_submissions = data["deployment__submission_count"]
+        self._parse_summary()
 
-    def parse_survey(self, survey):
-        qs = filter(None, [self.parse_question(q) for q in survey])
+        # Check if survey contents are present. If not, fetch.
+        self.content = data.get("content")
+        if self.content is None:
+            self.get_form_contents()
+
+        # Parse form contents
+        self._parse_survey()
+
+    def _parse_summary(self):
+        try:
+            self.num_columns = self.data["summary"]["row_count"]
+        except (KeyError, AttributeError):
+            self.num_columns = None
+        self.url = self.data.get("url")
+        self.id = self.data.get("uid")
+        self.name = self.data.get("name")
+        self.type = self.data.get("asset_type")
+        self.current_version = self.data.get("version_id")
+        self.num_submissions = self.data.get("deployment__submission_count")
+
+    def get_form_contents(self, url=None):
+        if self.connection is None:
+            raise AttributeError("Missing connection object.")
+
+        if url is None and self.url is None:
+            raise AttributeError("Missing url.")
+
+        if not url:
+            url = self.url
+
+        rj = self.connection.send_query(url).json()
+        if rj is None:
+            log.info("Failed to get form contents.")
+            return
+
+        self.content = rj.get("content")
+
+    def _parse_survey(self):
+        if self.content is None:
+            raise AttributeError("Not form contents found.")
+
+        survey = self.content.get("survey")
+        if survey is None:
+            raise AttributeError("No survey in form contents.")
+
+        qs = filter(None, [self.parse_item(q) for q in survey])
         self.questions.extend(qs)
 
-    def parse_question(self, question):
-        qtype = question.get("type")
+    def parse_item(self, item):
+        qtype = item.get("type")
         if qtype is None or qtype in self.ignored_qtypes:
             return None
 
-        qid = question.get("$kuid")
-        name = question.get("name")
+        qid = item.get("$kuid")
+        name = item.get("name")
         try:
-            label = question.get("label")[0]
+            label = item.get("label")[0]
         except (KeyError, TypeError):
             label = ""
         self.questions.append(Question(qid=qid, name=name, label=label, qtype=qtype))
+
+    def parse_group(self, group):
+        """
+        Parse a group of questions and set a group identifier
+        :param group:
+        :return:
+        """
 
     def add_submission(self, data):
         """
@@ -89,6 +125,9 @@ class Form:
             self.add_submission(data)
 
     def to_csv(self, file):
+        if len(self.submissions) < self.num_submissions:
+            self.get_submissions()
+
         writer = csv.DictWriter(
             file, [str(q) for q in self.questions], dialect=csv.unix_dialect
         )
