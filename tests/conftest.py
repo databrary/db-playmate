@@ -1,3 +1,4 @@
+import keyring
 import json
 import logging as log
 from pathlib import Path
@@ -94,12 +95,15 @@ def output_folder(test_folder):
     return fp
 
 
-@pytest.fixture(scope="session")
+def clear_box_creds():
+    """Clear access and refresh tokens from keyring to avoid auth errors from expired tokens."""
+    keyring.delete_password("Box_Auth", "play_box")
+    keyring.delete_password("Box_Refresh", "play_box")
+
+
+@pytest.fixture()
 def box_client(configs):
+    clear_box_creds()
     box_cfg = configs["box"]
     bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
-    try:
-        bx.delete("testdir")
-    except:
-        pass
     yield bx
