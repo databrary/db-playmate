@@ -1,7 +1,7 @@
 import requests
 from furl import furl
 from requests import HTTPError
-from kobo.form import Form
+from .form import Form
 
 
 class Kobo:

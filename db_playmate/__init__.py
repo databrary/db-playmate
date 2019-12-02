@@ -1,6 +1,6 @@
 __version__ = "0.1.0"
-# noinspection PyUnresolvedReferences
-import box
 
-# noinspection PyUnresolvedReferences
-import kobo
+from .box import Box
+from .kobo import Kobo, Form
+
+__all__ = [Box, Kobo, Form]
