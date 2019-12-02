@@ -5,10 +5,18 @@ def test_version():
     assert __version__ == "0.1.0"
 
 
+def create_testdir(client):
+    return client.create_folder("", "testdir")
+
+
+def delete_testdir(client):
+    return client.delete("testdir")
+
+
 def test_box_folders(box_client):
-    x = box_client.get_folder("testdir")
-    if x is None:
-        x = box_client.create_folder("", "testdir")
+    delete_testdir(box_client)
+    x = create_testdir(box_client)
+    assert x is not None
 
     x = box_client.create_folder("testdir/a", "b")
     assert x is None  # This should fail because a doesnt exist
