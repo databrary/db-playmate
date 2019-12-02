@@ -100,13 +100,23 @@ def output_folder(test_folder):
     return fp
 
 
+def rm_bx_access_token():
+    if keyring.get_password("Box_Auth", "play_box") is not None:
+        keyring.delete_password("Box_Auth", "play_box")
+
+
+def rm_bx_refresh_token():
+    if keyring.get_password("Box_Refresh", "play_box") is not None:
+        keyring.delete_password("Box_Refresh", "play_box")
+
+
 def clear_box_creds():
     """Clear access and refresh tokens from keyring to avoid auth errors from expired tokens."""
-    keyring.delete_password("Box_Auth", "play_box")
-    keyring.delete_password("Box_Refresh", "play_box")
+    rm_bx_access_token()
+    rm_bx_refresh_token()
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def box_client(configs):
     clear_box_creds()
     box_cfg = configs["box"]
