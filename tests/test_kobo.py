@@ -1,9 +1,9 @@
+import io
 import logging as log
+from db_playmate import Kobo, Form
 
 
 def test_kobo(configs):
-    from db_playmate.kobo import Kobo
-
     kobo = Kobo(
         base_url=configs.get("kobo").get("base_url"),
         token=configs.get("kobo").get("auth_token"),
@@ -16,8 +16,6 @@ def test_get_form(kobo, example_form_id):
 
 
 def test_form__parse(example_form):
-    from db_playmate.kobo.form import Form
-
     f = Form(example_form)
     log.debug(f)
 
@@ -31,9 +29,6 @@ def test_submission():
 
 
 def test_form_to_csv(example_form, example_submissions):
-    from db_playmate.kobo.form import Form
-    import io
-
     f = Form(example_form)
     for s in example_submissions:
         f.add_submission(data=s)
