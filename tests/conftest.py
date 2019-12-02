@@ -1,7 +1,6 @@
 import json
 import logging as log
 from pathlib import Path
-
 import pytest
 import toml
 
@@ -93,3 +92,14 @@ def output_folder(test_folder):
     fp = test_folder.joinpath("tmp_output")
     fp.mkdir(parents=True, exist_ok=True)
     return fp
+
+
+@pytest.fixture(scope="session", autouse=True)
+def box_client(configs):
+    box_cfg = configs["box"]
+    bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
+    try:
+        bx.delete("testdir")
+    except:
+        pass
+    yield bx
