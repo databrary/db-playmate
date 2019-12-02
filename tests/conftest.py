@@ -4,13 +4,18 @@ import logging as log
 from pathlib import Path
 import pytest
 import toml
-
+from db_playmate import Kobo
 import db_playmate as dbp
 
 
 @pytest.fixture(scope="session", autouse=True)
 def test_folder():
     return Path(__file__).resolve().parent
+
+
+@pytest.fixture(scope="session", autouse=True)
+def root_folder():
+    return Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(scope="session", autouse=True)

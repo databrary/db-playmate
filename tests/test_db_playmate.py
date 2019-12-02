@@ -23,12 +23,13 @@ def test_box_folders(box_client):
     assert x is not None and x.name == "c" and x.parent.name == "b"
 
 
-def test_box_files(box_client):
+def test_box_files(box_client, root_folder):
     x = box_client.get_folder("testdir")
     if x is None:
         x = box_client.create_folder("", "testdir")
+        assert x is not None and x.name == "testdir"
 
-    x = box_client.upload_file("./README.rst", "testdir")
+    x = box_client.upload_file(root_folder.joinpath("./README.rst"), "testdir")
     assert x is not None and x.name == "README.rst" and x.parent.name == "testdir"
 
     x = box_client.move("testdir/README.rst", "testdir", "READYOU.rst")
