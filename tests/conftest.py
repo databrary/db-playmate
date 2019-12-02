@@ -39,7 +39,7 @@ def configs(config_files):
     return config
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def kobo(configs):
     log.info(configs)
     burl = configs["kobo"]["base_url"]
@@ -49,14 +49,14 @@ def kobo(configs):
     return kobo
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def examples_folder(test_folder):
     tf = test_folder.joinpath("ex")
     tf.mkdir(parents=True, exist_ok=True)
     return tf
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def example_assets(examples_folder):
     """Fetch asset query response."""
 
@@ -64,7 +64,7 @@ def example_assets(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def example_form(examples_folder):
     """Fetch form query response."""
 
@@ -72,7 +72,7 @@ def example_form(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def example_submissions(examples_folder):
     """Fetch submission query response."""
 
@@ -80,12 +80,12 @@ def example_submissions(examples_folder):
     return json.load(open(fp))
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def example_form_id():
     return "aGD5Q64T5zTQtakQaS8x55"
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def output_folder(test_folder):
     """Output folder to save files to."""
 
@@ -94,7 +94,7 @@ def output_folder(test_folder):
     return fp
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def box_client(configs):
     box_cfg = configs["box"]
     bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
