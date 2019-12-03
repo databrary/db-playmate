@@ -4,7 +4,6 @@ import logging as log
 from pathlib import Path
 import pytest
 import toml
-from db_playmate import Kobo
 import db_playmate as dbp
 
 
@@ -43,16 +42,6 @@ def configs(config_files):
             ddm(config, toml.load(cf))
 
     return config
-
-
-@pytest.fixture(scope="session")
-def kobo(configs):
-    log.info(configs)
-    burl = configs["kobo"]["base_url"]
-    token = configs["kobo"]["auth_token"]
-    log.info("Initializing kobo...")
-    kobo = Kobo(base_url=burl, token=token)
-    return kobo
 
 
 @pytest.fixture(scope="session")
