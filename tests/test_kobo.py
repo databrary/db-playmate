@@ -1,13 +1,27 @@
 import io
 import logging as log
+import pytest
 from db_playmate import Kobo, Form
 
 
-def test_kobo(configs):
-    kobo = Kobo(
-        base_url=configs.get("kobo").get("base_url"),
-        token=configs.get("kobo").get("auth_token"),
-    )
+@pytest.fixture(scope="session")
+def kobo(configs):
+    log.debug(configs)
+    burl = configs["kobo"]["base_url"]
+    token = configs["kobo"]["auth_token"]
+    log.debug("Initializing kobo...")
+    kobo = Kobo(base_url=burl, token=token)
+
+    # check proper attributes are set
+    assert kobo.base_url == burl
+    assert kobo.token == token
+    assert kobo.headers is not None
+    assert kobo.forms is not None
+
+    return kobo
+
+
+def test_kobo(kobo):
     assert kobo.forms is not None
 
 
