@@ -29,9 +29,8 @@ def test_get_form(kobo, example_form_id):
     assert kobo.get_form(form_id=example_form_id) is not None
 
 
-def test_form__parse(example_form):
+def test_form_parse(example_form):
     f = Form(example_form)
-    log.debug(f)
 
 
 def test_question():

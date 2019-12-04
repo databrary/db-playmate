@@ -124,6 +124,8 @@ class Form:
         for data in rj:
             self.add_submission(data)
 
+        return self.submissions
+
     def to_csv(self, file):
         if len(self.submissions) < self.num_submissions:
             self.get_submissions()

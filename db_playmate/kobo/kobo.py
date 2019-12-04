@@ -40,7 +40,7 @@ class Kobo:
                 form = Form(data, connection=self)
                 self.forms[form.id] = form
 
-        return self
+        return self.forms
 
     def get_form(self, form_id, update=False):
         if update or form_id not in self.forms.keys():
