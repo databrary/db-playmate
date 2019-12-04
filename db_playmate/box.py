@@ -14,6 +14,7 @@ from flask import request
 
 app = Flask(__name__)
 
+server = None
 access_code = None
 
 
@@ -51,7 +52,7 @@ class Box:
             webbrowser.open(self.auth_url)
             global access_code
             while access_code is None:
-                print(access_code)
+                log.debug(access_code)
                 time.sleep(1)
             self.authenticate(oauth, access_code)
             access_token, refresh_token = self.read_tokens()
@@ -122,7 +123,7 @@ class Box:
                 curname = os.sep.join([curname, name])
             else:
                 curname = name
-            print(curname)
+            log.debug(curname)
             parent = curfolder
             curfolder = self.get_folder(curname)
             if curfolder is None:
@@ -240,20 +241,13 @@ class Box:
         return uploaded_file
 
 
-def main(client_id, client_secret):
+def get_client(client_id, client_secret):
+    global server
+    if server is None:
+        server = Thread(target=app.run, daemon=True)
+        server.start()
 
-    # Delete the stored keys for debugging
-    # try:
-    #     keyring.delete_password("Box_Auth", "play_box")
-    #     keyring.delete_password("Box_Refresh", "play_box")
-    # except:
-    #     pass
-
-    server = Thread(target=app.run, daemon=True)
-    server.start()
-    box = Box(client_id, client_secret)
-
-    return box
+    return Box(client_id, client_secret)
 
 
 if __name__ == "__main__":
@@ -271,4 +265,4 @@ if __name__ == "__main__":
         clid = cfg["client_id"]
         clsec = cfg["client_secret"]
 
-    main(clid, clsec)
+    get_client(clid, clsec)
