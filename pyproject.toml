@@ -5,6 +5,9 @@ description = "Client scripts for Databrary PLAY project."
 authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>", "Jesse Lingeman <jmlingeman@gmail.com>"]
 license = "GPL-3.0"
 
+[tool.poetry.scripts]
+sync = "db_playmate:cli.main"
+
 [tool.poetry.dependencies]
 python = "^3.7"
 boxsdk = "^2.6"

@@ -1,6 +1,7 @@
 """
 Simple, interactive command line to use db-playmate.
 """
+from argparse import ArgumentParser
 import toml
 from pathlib import Path
 import keyring
@@ -9,8 +10,22 @@ from db_playmate.box import get_client as get_box_client
 
 
 def main():
-    print("Loading configurations...")
-    configs = toml.load(Path("../env/config.toml"))
+    parser = ArgumentParser()
+    parser.add_argument(
+        "--config-file",
+        "-c",
+        required=True,
+        help="toml file with Box and KoboToolbox credentials",
+    )
+    args = parser.parse_args()
+    config_path = Path(args.config_file).resolve()
+    print(f"Loading configurations from {config_path}...")
+    try:
+        configs = toml.load(config_path)
+    except FileNotFoundError:
+        print("ERROR: failed to load configurations")
+        return 1
+
     kconf = configs.get("kobo")
     bconf = configs.get("box")
     try:
