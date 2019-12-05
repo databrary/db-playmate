@@ -20,7 +20,15 @@ def main():
         pass
 
     print("Connecting to Box...")
-    box = get_box_client(bconf.get("client_id"), bconf.get("client_secret"))
+    client_id = bconf.get("client_id")
+    client_secret = bconf.get("client_secret")
+    try:
+        box = get_box_client(client_id, client_secret)
+    except Exception as e:
+        print("ERROR: failed to initialize box client. See error message.")
+        print(e)
+        return 1
+
     box.create_folder("", "kobo")
 
     print("Connecting to KoboToolbox...")
@@ -36,8 +44,8 @@ def main():
         box.upload_file(filename, "kobo")
 
     print("Finished.")
-    exit(0)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
