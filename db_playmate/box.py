@@ -15,18 +15,42 @@ from flask import request
 app = Flask(__name__)
 
 server = None
-access_code = None
+_access_code = None
 
 
 @app.route("/")
 def handle_redirect():
-    global access_code
-    access_code = request.args.get("code")
-    log.info(access_code)
-    if len(access_code) > 0:
+    global _access_code
+    _access_code = request.args.get("code")
+    log.info(_access_code)
+    if _access_code and len(_access_code) > 0:
         return "Success! You can now close this window."
     else:
+        _access_code = "denied"  # prevents box initialization hang
         return "Error: Access code was not obtained"
+
+
+def authenticate(oauth, access_code):
+    access_token, refresh_token = oauth.authenticate(access_code)
+    return access_token, refresh_token
+
+
+# From: https://stackoverflow.com/questions/29595255/working-with-the-box-com-sdk-for-python
+def read_tokens():
+    """Reads authorisation tokens from keyring"""
+
+    # Use keyring to read the tokens
+    auth_token = keyring.get_password("Box_Auth", "play_box")
+    refresh_token = keyring.get_password("Box_Refresh", "play_box")
+    return auth_token, refresh_token
+
+
+def store_tokens(access_token, refresh_token):
+    """Callback function when Box SDK refreshes tokens"""
+
+    # Use keyring to store the tokens
+    keyring.set_password("Box_Auth", "play_box", access_token)
+    keyring.set_password("Box_Refresh", "play_box", refresh_token)
 
 
 class Box:
@@ -34,28 +58,28 @@ class Box:
         self.client_id = client_id
         self.client_secret = client_secret
         self.redirect_url = redirect_url
-        self.login()
+        self._login()
 
-    def authenticate(self, oauth, access_code):
-        access_token, refresh_token = oauth.authenticate(access_code)
-
-    def login(self):
-        access_token, refresh_token = self.read_tokens()
+    def _login(self):
+        access_token, refresh_token = read_tokens()
 
         if access_token is None or refresh_token is None:
             oauth = bx.OAuth2(
                 client_id=self.client_id,
                 client_secret=self.client_secret,
-                store_tokens=self.store_tokens,
+                store_tokens=store_tokens,
             )
             self.auth_url, csrf_token = oauth.get_authorization_url(self.redirect_url)
             webbrowser.open(self.auth_url)
-            global access_code
-            while access_code is None:
-                log.debug(access_code)
+            global _access_code
+            while _access_code is None:
+                log.debug(_access_code)
                 time.sleep(1)
-            self.authenticate(oauth, access_code)
-            access_token, refresh_token = self.read_tokens()
+
+            if _access_code == "denied":
+                raise PermissionError("Failed to authenticate to Box.")
+
+            access_token, refresh_token = authenticate(oauth, _access_code)
 
         oauth = bx.OAuth2(
             client_id=self.client_id,
@@ -63,33 +87,10 @@ class Box:
             access_token=access_token,
             refresh_token=refresh_token,
         )
-        self.client = bx.Client(oauth)
-
-    # From: https://stackoverflow.com/questions/29595255/working-with-the-box-com-sdk-for-python
-    def read_tokens(self):
-        """Reads authorisation tokens from keyring"""
-
-        # Use keyring to read the tokens
-        auth_token = keyring.get_password("Box_Auth", "play_box")
-        refresh_token = keyring.get_password("Box_Refresh", "play_box")
-        return auth_token, refresh_token
-
-    def store_tokens(self, access_token, refresh_token):
-        """Callback function when Box SDK refreshes tokens"""
-
-        # Use keyring to store the tokens
-        keyring.set_password("Box_Auth", "play_box", access_token)
-        keyring.set_password("Box_Refresh", "play_box", refresh_token)
-
-    def get_auth(self, client_id, client_secret, dev_token):
-        """Return OAuth2"""
-
-        return bx.OAuth2(
-            client_id=client_id, client_secret=client_secret, access_token=dev_token
-        )
+        self._client = bx.Client(oauth)
 
     def get_root(self):
-        return self.client.root_folder()
+        return self._client.root_folder()
 
     def list_folder(self, directory):
         items = directory.get_items()
@@ -116,7 +117,6 @@ class Box:
         """
         path = path.split(os.sep)
         curname = ""
-        parent = None
         curfolder = self.get_root()
         for name in path:
             if len(curname) > 0:
