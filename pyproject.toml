@@ -2,14 +2,31 @@
 name = "db-playmate"
 version = "0.1.0"
 description = "Client scripts for Databrary PLAY project."
-authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>"]
+authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>", "Jesse Lingeman <jmlingeman@gmail.com>"]
 license = "GPL-3.0"
+
+[tool.poetry.scripts]
+sync = "db_playmate:cli.main"
 
 [tool.poetry.dependencies]
 python = "^3.7"
+boxsdk = "^2.6"
+PyJWT = "^1.7"
+toml = "^0.10.0"
+requests = "^2.22"
+keyring = "^19.2"
+docutils = "^0.15.2"
+flask = "^1.1.1"
+furl = "^2.1"
+pytest-cov = "^2.8"
 
 [tool.poetry.dev-dependencies]
+pytest = "^5.2"
 
 [build-system]
 requires = ["poetry>=0.12"]
 build-backend = "poetry.masonry.api"
+
+[pytest]
+log_cli = true
+log_cli_level = 0

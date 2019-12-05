@@ -1,0 +1,11 @@
+# Do not store credentials here!
+# Set credentials inside env/config.toml
+
+[box]
+client_id = ''
+client_secret = ''
+redirect_uri = ''
+
+[kobo]
+base_url = 'https://kf.kobotoolbox.org'
+auth_token = ''
