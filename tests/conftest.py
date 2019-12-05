@@ -109,5 +109,5 @@ def clear_box_creds():
 def box_client(configs):
     clear_box_creds()
     box_cfg = configs["box"]
-    bx = dbp.box.main(box_cfg["client_id"], box_cfg["client_secret"])
+    bx = dbp.box.get_client(box_cfg["client_id"], box_cfg["client_secret"])
     yield bx
