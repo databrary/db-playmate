@@ -63,29 +63,30 @@ class Box:
     def _login(self):
         access_token, refresh_token = read_tokens()
 
-        if access_token is None or refresh_token is None:
-            oauth = bx.OAuth2(
-                client_id=self.client_id,
-                client_secret=self.client_secret,
-                store_tokens=store_tokens,
-            )
-            self.auth_url, csrf_token = oauth.get_authorization_url(self.redirect_url)
-            webbrowser.open(self.auth_url)
-            global _access_code
-            while _access_code is None:
-                log.debug(_access_code)
-                time.sleep(1)
+        #if access_token is None or refresh_token is None:
+        oauth = bx.OAuth2(
+            client_id=self.client_id,
+            client_secret=self.client_secret,
+            store_tokens=store_tokens,
+        )
+        self.auth_url, csrf_token = oauth.get_authorization_url(self.redirect_url)
+        webbrowser.open(self.auth_url)
+        global _access_code
+        while _access_code is None:
+            log.debug(_access_code)
+            time.sleep(1)
 
-            if _access_code == "denied":
-                raise PermissionError("Failed to authenticate to Box.")
+        if _access_code == "denied":
+            raise PermissionError("Failed to authenticate to Box.")
 
-            access_token, refresh_token = authenticate(oauth, _access_code)
+        access_token, refresh_token = authenticate(oauth, _access_code)
 
         oauth = bx.OAuth2(
             client_id=self.client_id,
             client_secret=self.client_secret,
             access_token=access_token,
             refresh_token=refresh_token,
+            store_tokens=store_tokens
         )
         self._client = bx.Client(oauth)
 
@@ -169,6 +170,26 @@ class Box:
                     return item
         return None
 
+    def download_file(self, box_file, local_path, local_filename=None):
+        """
+        Downloads a file from box to the local path
+        """
+        if local_filename is not None:
+            local_path = local_path + os.sep + local_filename
+        else:
+            local_path = local_path + os.sep + box_file.get().name
+        
+        with open(local_path, 'wb') as handle:
+            return download_file_stream(self, box_file, output_stream)
+
+    def download_file_stream(self, box_file, output_stream):
+        """
+        Returns a file stream instead of a file object.
+        Downloads the file to an already created output stream (e.g., to Databrary)
+        """
+        return box_file.download_to(output_stream)
+
+
     def move(self, src, dst, new_name=None):
         """
         src: Full path to file/folder we want to move
@@ -237,6 +258,16 @@ class Box:
             uploaded_file = uploader.start()
         except:
             # Try to resume the download if we've already started
+            uploaded_file = uploader.resume()
+        return uploaded_file
+
+    def upload_file_stream(self, stream, dest_folder, total_size, filename):
+        dest = self.get_folder(dest_folder)
+        upload_session = dest.create_upload_session(total_size, filename)
+        uploader = upload_session.get_chunked_uploader_for_stream(stream, total_size)
+        try:
+            uploaded_file = uploader.start()
+        except:
             uploaded_file = uploader.resume()
         return uploaded_file
 
