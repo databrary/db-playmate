@@ -1,11 +1,12 @@
 import argparse
-import json
+import toml
 import logging as log
 import os
 import time
 import webbrowser
 from collections import deque
 from threading import Thread
+from boxsdk.object.collaboration import CollaborationRole
 
 import boxsdk as bx
 import keyring
@@ -153,6 +154,7 @@ class Box:
                 return None
         if curdir.name == target_dir:
             return curdir
+        raise Exception("Could not find directory {} in Box".format(path))
         return None
 
     def get_file(self, path):
@@ -271,6 +273,50 @@ class Box:
             uploaded_file = uploader.resume()
         return uploaded_file
 
+    def add_collab_viewer(self, item, email_address):
+        """
+        item: The Box File or Folder to add a collaborator to
+        email_address: String form of the email address to collab
+        """
+        try:
+            item.collaborate_with_login(email_address, CollaborationRole.VIEWER)
+            return True
+        except Exception as e:
+            print("Error: could not add user")
+            print(e)
+        return False
+
+    def remove_collab_viewer(self, item, email_address):
+        """
+        item: The Box File or Folder to remove collab from
+        email_address: String form of the email address to collab
+        returns True if the collab was successfully removed,
+                False if the collab could not be found. 
+        """
+        collabs = item.get_collaborations()
+        for c in collabs:
+            target = c.accessible_by
+            if target is not None:
+                print(target.login)
+
+            if (target is not None and target.login == email_address) or c.invite_email == email_address:
+                c.delete()
+                return True
+        return False
+
+    def list_collabs(self, item):
+        collabs = item.get_collaborations()
+        # Put it into a pandas dataframe or similar object?
+        class BoxCollab:
+            def __init__(self, c):
+                self.email = c.accessible_by.login if c.accessible_by is not None else c.invite_email
+                self.status = c.status
+                self.name = c.accessible_by.name if c.accessibly_by is not None else ""
+        return [BoxCollab(c) for c in collabs]
+
+
+
+
 
 def get_client(client_id, client_secret):
     global server
@@ -285,15 +331,15 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config-file",
-        default="config.json",
+        default="env/config.toml",
         required=False,
         help="json file with box credentials",
     )
     args = parser.parse_args()
 
     with open(args.config_file) as config:
-        cfg = json.load(config)
-        clid = cfg["client_id"]
-        clsec = cfg["client_secret"]
+        cfg = toml.load(config)
+        clid = cfg["box"]["client_id"]
+        clsec = cfg["box"]["client_secret"]
 
-    get_client(clid, clsec)
+    box = get_client(clid, clsec)
