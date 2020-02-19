@@ -1,0 +1,18 @@
+<!DOCTYPE HTML>
+<HTML>
+  <TITLE>
+    Databrary PLAY-Mate
+  </TITLE>
+  <BODY>
+    <form action="{{ url_for('send_to_qa') }}" method="POST">
+     <select name="send_to_qa" size="10">
+       {% for o in ready_for_qa %}
+       <option value="{{ o.id }}">{{ o.name }}</option>
+       {% endfor %}
+    </select>
+    <button type="submit">Send to QA</button>
+    </form>
+  </BODY>
+</HTML>
+
+
