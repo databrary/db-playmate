@@ -6,6 +6,7 @@ import pandas
 import keyring
 import io
 import re
+import flowjs
 from tqdm import tqdm
 
 class Databrary:
@@ -538,4 +539,77 @@ class Databrary:
     else:
       print("Download failed with HTTP status " + r.status_code + "\n")
       return('')
+
+    def upload_asset(self, volume_id, session_id, file_path):
+        """
+        Upload OPF files to a Databrary session
+        IMPORTANT: This method doesn't work with asset bigger than 1.04 MB
+        :param volume_id:
+        :param session_id:
+        :param file_path:
+        :return:
+        """
+
+        def create_asset(volume, session, filepath, token):
+            payload = {
+                'container': session,
+                'name': DatabraryApi.getFileName(filepath),
+                'upload': token
+            }
+            url = urljoin(self.__base_api_url, 'volume/' + str(volume) + '/asset')
+
+            logger.debug('Creating asset URL %s', url)
+            response = self.__session.post(url=url, json=payload)
+            if response.status_code == 200:
+                logger.info("Assets Created %s.", response.json())
+                return response.json()
+            else:
+                raise AttributeError('Cannot create asset om session %d volume %d', session, volume)
+
+        def start_upload(volume, filepath):
+            payload = {
+                'filename': DatabraryApi.getFileName(filepath),
+                'size': DatabraryApi.getFileSize(filepath)
+            }
+            url = urljoin(self.__base_api_url, 'volume/' + str(volume) + '/upload')
+
+            logger.debug('Starting upload URL %s', url)
+            response = self.__session.post(url=url, json=payload)
+            if response.status_code == 200:
+                logger.info("Upload Token %s.", response.content)
+                return response.content
+            else:
+                raise AttributeError('Cannot get upload token for volume %d', volume)
+
+        def upload_asset(volume, filepath, token):
+            __fileChunckSize = 1048576
+            __fileSize = DatabraryApi.getFileSize(filepath)
+            if __fileSize > __fileChunckSize:
+                raise AttributeError('File size must be < than %d', __fileChunckSize)
+
+            payload = {
+                'flowChunkNumber': 1,
+                'flowChunkSize': __fileChunckSize,
+                'flowCurrentChunkSize': __fileSize,
+                'flowTotalSize': __fileSize,
+                'flowIdentifier': token,
+                'flowFilename': DatabraryApi.getFileName(filepath),
+                'flowRelativePath': filepath,
+                'flowTotalChunks': 1
+            }
+            url = urljoin(self.__base_api_url, 'upload')
+
+            logger.debug('Uploading assets URL %s', url)
+            response = self.__session.get(url=url, params=payload)
+            if response.status_code >= 400:
+                raise AttributeError('Cannot upload file %s to volume %d', filepath, volume)
+
+        try:
+            upload_token = start_upload(volume_id, file_path)
+            upload_asset(volume_id, file_path, upload_token)
+            result = create_asset(volume_id, session_id, file_path, upload_token)
+            return result
+        except AttributeError as e:
+            logger.error(e.message)
+            raise
 
