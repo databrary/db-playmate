@@ -12,7 +12,7 @@ Used to transfer files between the three systems.
 class Bridge:
     def __init__(self, db_username, kobo_base_url, kobo_token, box_session):
         self.box = box_session
-        #self.kobo = Kobo(kobo_base_url, kobo_token)
+        self.kobo = Kobo(kobo_base_url, kobo_token)
         self.db = Databrary(db_username)
 
     def transfer_box_to_databrary(self, box_path, db_volume, db_container, rename_file=None):
@@ -30,8 +30,12 @@ class Bridge:
         """
         Transfer a file from databrary to Box
         """
+        # TODO expose the file name changing part of the download function 
         file_stream, total_size, filename = self.db.download_asset_stream(db_volume, db_container, db_asset)
         self.box.upload_file_stream(file_stream, box_path, total_size, filename)
+
+    def transfer_kobo_to_box(self):
+        pass
 
 
 if __name__ == "__main__":
@@ -40,7 +44,9 @@ if __name__ == "__main__":
         cfg = toml.load(config)
         clid = cfg["box"]["client_id"]
         clsec = cfg["box"]["client_secret"]
+        databrary_username = cfg["databrary"]["username"]
+        kobo_base_url = cfg['kobo']['base_url']
+        kobo_token = cfg['kobo']['auth_token']
 
     box = get_client(clid, clsec)
-    bridge = Bridge("jmlingeman@nyu.edu", "", "", box)
-    bridge.transfer_databrary_to_box(899, 36876, 174780, "PLAY-Project@/db_play_bridge_test")
+    bridge = Bridge(databrary_username, kobo_base_url, kobo_token, box)
