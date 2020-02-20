@@ -126,12 +126,35 @@ class Form:
 
         return self.submissions
 
-    def to_csv(self, file):
+    def _check_submissions(self):
         if len(self.submissions) < self.num_submissions:
             self.get_submissions()
 
+    def to_csv(self, file):
+        """
+        Write this form's data to file
+        :param file: File to write data to
+        :return:
+        """
+        self._check_submissions()
         writer = csv.DictWriter(
             file, [str(q) for q in self.questions], dialect=csv.unix_dialect
         )
         writer.writeheader()
         writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
+
+    def as_csv(self) -> str:
+        """
+        Return self as csv string.
+        :return: str
+        """
+        self._check_submissions()
+        writer = csv.DictWriter(
+            "", [str(q) for q in self.questions], dialect=csv.unix_dialect
+        )
+        writer.writeheader()
+        writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
+        return str(writer)
+
+    def __repr__(self):
+        return self.as_csv()
