@@ -158,3 +158,22 @@ class Form:
 
     def __repr__(self):
         return self.as_csv()
+
+    def group_by(self, label: str) -> dict:
+        """
+        Returns dictionary of submissions grouped by the answer
+        to the question with the given label
+        :param label:
+        :return:
+        """
+        ret = {}
+        for sub in self.submissions:
+            val = sub.data.get(label, None)
+            if val is None:
+                continue
+            if val in ret:
+                ret[val].append(sub)
+            else:
+                ret[val] = [sub]
+
+        return ret
