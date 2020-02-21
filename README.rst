@@ -15,14 +15,11 @@ Set up
 
     ``git clone git@github.com:sh0sh1n/db-playmate.git && cd db-playmate``
 
-3. Set up Python3 environment if you haven't already activated one:
-    a) Create new: ``python3 -m venv .venv``
-    b) Activate: ``source .venv/bin/activate``
-    c) More info: https://docs.python.org/3/tutorial/venv.html
+3. Set up Python3 environment using poetry if you haven't already activated one:
+    a) Have poetry create a venv and install the packages: ``poetry install``
+    b) Activate: ``poetry shell``
 
-4. Use poetry to install dependencies: ``poetry install``
-
-5. Copy the ``config.toml`` file to ``env/config.toml`` and fill in your credentials
+4. Copy the ``config.toml`` file to ``env/config.toml`` and fill in your credentials
 
 
 Configuration
