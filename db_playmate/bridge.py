@@ -7,13 +7,27 @@ from kobo import Kobo
 """
 This is the bridge between Box and Kobo/Databrary.
 Used to transfer files between the three systems.
+This class also will hold instances of all three connections
 """
 
+
 class Bridge:
-    def __init__(self, db_username, kobo_base_url, kobo_token, box_session):
-        self.box = box_session
+    def __init__(self, config_file):
+
+        with open(config_file) as config:
+            cfg = toml.load(config)
+            clid = cfg["box"]["client_id"]
+            clsec = cfg["box"]["client_secret"]
+            databrary_username = cfg["databrary"]["username"]
+            kobo_base_url = cfg['kobo']['base_url']
+            kobo_token = cfg['kobo']['auth_token']
+
+        print("Connecting to Box...")
+        self.box = get_client(clid, clsec)
+        print("Connecting to Kobo...")
         self.kobo = Kobo(kobo_base_url, kobo_token)
-        self.db = Databrary(db_username)
+        print("Connecting to Databrary...")
+        self.db = Databrary(databrary_username)
 
     def transfer_box_to_databrary(self, box_path, db_volume, db_container, rename_file=None):
         """
@@ -35,18 +49,18 @@ class Bridge:
         self.box.upload_file_stream(file_stream, box_path, total_size, filename)
 
     def transfer_kobo_to_box(self):
-        pass
-
-
-if __name__ == "__main__":
-
-    with open("env/config.toml") as config:
-        cfg = toml.load(config)
-        clid = cfg["box"]["client_id"]
-        clsec = cfg["box"]["client_secret"]
-        databrary_username = cfg["databrary"]["username"]
-        kobo_base_url = cfg['kobo']['base_url']
-        kobo_token = cfg['kobo']['auth_token']
-
-    box = get_client(clid, clsec)
-    bridge = Bridge(databrary_username, kobo_base_url, kobo_token, box)
+        try:
+            self.box.delete("kobo")
+        except Exception as e:
+            print(e)
+        try:
+            self.box.create_folder("", "kobo")
+        except Exception as e:
+            print(e)
+        for form in self.kobo.get_forms().values():
+            print(f"{form.name}: {form.num_submissions} submissions. Downloading...")
+            filename = form.name + ".csv"
+            with open(filename, "w+") as outfile:
+                form.to_csv(outfile)
+            print("Uploading to Box...")
+            self.box.upload_file(filename, "kobo")

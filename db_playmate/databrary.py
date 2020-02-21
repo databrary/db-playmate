@@ -8,608 +8,640 @@ import io
 import re
 import flowjs
 from tqdm import tqdm
+import json
+
 
 class Databrary:
-  PLAY_VOLUME = 899
-  def __init__(self, login_username):
-      """The password must be stored on the system keychain"""
-      self.login_db(login_username)
+    PLAY_VOLUME = 899
 
-  #-----------------------------------------------------------------------------
-  def assign_constants(self, vb = False):
-    "Download Databrary contants from API"
+    def __init__(self, login_username):
+        """The password must be stored on the system keychain"""
+        self.login_db(login_username)
 
-    # Check parameters
-    if (not(isinstance(vb, bool))):
-      print("vb must be Boolean.")
-      return('')
+    # -----------------------------------------------------------------------------
+    def assign_constants(self, vb=False):
+        "Download Databrary contants from API"
 
-    constants_url = "https://nyu.databrary.org/api/constants"
+        # Check parameters
+        if (not(isinstance(vb, bool))):
+            print("vb must be Boolean.")
+            return('')
 
-    if vb:
-      print("Sending GET request to " + constants_url + "\n")
+        constants_url = "https://nyu.databrary.org/api/constants"
 
-    r = self.session.get(constants_url)
-    if (r.status_code == 200):
-      if (type == 'all'):
-        return(r.content)
-      else:
-        # Convert content to data.frame
-        df = pandas.read_json(r.content, typ = 'series')
-        return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        if vb:
+            print("Sending GET request to " + constants_url + "\n")
 
-  #-----------------------------------------------------------------------------
-  # Access Databrary API to get current system stats
-  def get_db_stats(self, type = "all", vb = False):
-    "Current stats from Databrary API"
+        r = self.session.get(constants_url)
+        if (r.status_code == 200):
+            if (type == 'all'):
+                return(r.content)
+            else:
+                # Convert content to data.frame
+                df = pandas.read_json(r.content, typ='series')
+                return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    # Check parameters
-    if (not(isinstance(type, str))):
-      print("type must be a string.")
-      return('')
-    if (not(isinstance(vb, bool))):
-      print("vb must be Boolean.")
-      return('')
+    # -----------------------------------------------------------------------------
+    # Access Databrary API to get current system stats
+    def get_db_stats(self, type="all", vb=False):
+        "Current stats from Databrary API"
 
-    stats_activity_url = "https://nyu.databrary.org/api/activity"
+        # Check parameters
+        if (not(isinstance(type, str))):
+            print("type must be a string.")
+            return('')
+        if (not(isinstance(vb, bool))):
+            print("vb must be Boolean.")
+            return('')
 
-    if vb:
-      print("Sending GET request to " + stats_activity_url + "\n")
-    r = self.session.get(stats_activity_url)
+        stats_activity_url = "https://nyu.databrary.org/api/activity"
 
-    if (r.status_code == 200):
-      if (type == 'all'):
-        return(r.content)
-      else:
-        # Convert content to data.frame
-        df = pandas.read_json(r.content, typ = 'series')
-        return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        if vb:
+            print("Sending GET request to " + stats_activity_url + "\n")
+        r = self.session.get(stats_activity_url)
 
-  #-----------------------------------------------------------------------------
-  # login to Databrary
-  # TODO(ROG): Saving cookies!
-  def login_db(self, username = '', vb = False, stored_credentials = False, system_credentials = True, return_resp = False):
-    "Log in to Databrary"
+        if (r.status_code == 200):
+            if (type == 'all'):
+                return(r.content)
+            else:
+                # Convert content to data.frame
+                df = pandas.read_json(r.content, typ='series')
+                return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
+    # -----------------------------------------------------------------------------
+    # login to Databrary
+    # TODO(ROG): Saving cookies!
+    def login_db(self, username='', vb=False, stored_credentials=False, system_credentials=True, return_resp=False):
+        "Log in to Databrary"
 
-    # Check parameters
-    if (not(isinstance(username, str))):
-      print("username must be a string.")
-      return('')
-    if (not(isinstance(vb, bool))):
-      print("vb must be Boolean.")
-      return('')
-    if (not(isinstance(stored_credentials, bool))):
-      print("stored_credentials must be Boolean.")
-      return('')
-    if (not(isinstance(system_credentials, bool))):
-      print("system_credentials must be Boolean.")
-      return('')
+        # Check parameters
+        if (not(isinstance(username, str))):
+            print("username must be a string.")
+            return('')
+        if (not(isinstance(vb, bool))):
+            print("vb must be Boolean.")
+            return('')
+        if (not(isinstance(stored_credentials, bool))):
+            print("stored_credentials must be Boolean.")
+            return('')
+        if (not(isinstance(system_credentials, bool))):
+            print("system_credentials must be Boolean.")
+            return('')
 
-    login_url = "https://nyu.databrary.org/api/user/login"
+        login_url = "https://nyu.databrary.org/api/user/login"
 
-    if (stored_credentials):
-      if(vb):
-        print("Using stored credentials.")
-    elif (system_credentials):
-      if (username == ''):
-        print("Please enter your Databrary user ID (email).")
-        username = input("User ID: ")
-      if (keyring.get_keyring() != ''):
-          kl = keyring.get_password("databrary", username)
-          if (kl != 'None'):
-            pw = kl
-          else:
-            if (vb):
-              print("No password for user: ", username, "\n")
-              return('')
-      else:
+        if (stored_credentials):
+            if(vb):
+                print("Using stored credentials.")
+        elif (system_credentials):
+            if (username == ''):
+                print("Please enter your Databrary user ID (email).")
+                username = input("User ID: ")
+            if (keyring.get_keyring() != ''):
+                kl = keyring.get_password("databrary", username)
+                if (kl != 'None'):
+                    pw = kl
+                else:
+                    if (vb):
+                        print("No password for user: ", username, "\n")
+                        return('')
+            else:
+                if (vb):
+                    print("No stored credentials for user: ", username, "\n")
+                    return('')
+        else:
+            # Get login credentials
+            username = input("User ID: ")
+            pw = input("Password: ")
+
+        # Check login credentials
+        if (not(isinstance(username, str))):
+            print("username must be a string.")
+            return('')
+        if (not(isinstance(pw, str))):
+            print("Password must be a string")
+            return('')
+
+        # POST request
+        payload = {"email": username, "password": pw}
         if (vb):
-          print("No stored credentials for user: ", username, "\n")
-          return('')
-    else:
-      # Get login credentials
-      username = input("User ID: ")
-      pw = input("Password: ")
+            print("Sending GET request to ", login_url)
 
-    # Check login credentials
-    if (not(isinstance(username, str))):
-      print("username must be a string.")
-      return('')
-    if (not(isinstance(pw, str))):
-      print("Password must be a string")
-      return('')
+        self.session = requests.Session()
+        r = self.session.post(login_url, data=payload)
 
-    # POST request
-    payload = {"email": username, "password": pw}
-    if (vb):
-      print("Sending GET request to ", login_url)
+        if (r.status_code == 200):
+            print("Logged in.")
+            if (return_resp):
+                return(r.text)
+        else:
+            print("Log in failed with HTTP status " + r.status_code + "\n")
 
-    self.session = requests.Session()
-    r = self.session.post(login_url, data = payload)
+        return r
 
-    if (r.status_code == 200):
-      print("Logged in.")
-      if (return_resp):
-        return(r.text)
-    else:
-      print("Log in failed with HTTP status " + r.status_code + "\n")
+    # ------------------------------------------------------------------------------
+    def is_institution(self, party_id=8, vb=False, return_JSON=False):
 
-    return r
+        # Check parameters
+        if isinstance(party_id, list):
+            print("party_id must be single scalar value")
+            return('')
+        if not(isinstance(party_id, int)) or (party_id <= 0):
+            print("party_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
 
-  #------------------------------------------------------------------------------
-  def is_institution(self, party_id = 8, vb = False, return_JSON = False):
+        party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
 
-    # Check parameters
-    if isinstance(party_id, list):
-      print("party_id must be single scalar value")
-      return('')
-    if not(isinstance(party_id, int)) or (party_id <= 0):
-      print("party_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+        if (vb):
+            message(paste0("Sending GET to ", party_url))
+        r = self.session.get(party_url)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            if return_JSON:
+                return(r.text)
+            # Otherwise, convert JSON to data frame
+            df = pandas.read_json(r.content, typ='series')
+            return('institution' in df.index)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
+    # ------------------------------------------------------------------------------
+    def is_person(self, party_id=7, vb=False):
+        r = not(is_institution(party_id=party_id, vb=vb))
+        return(r)
 
-    if (vb):
-      message(paste0("Sending GET to ", party_url))
-    r = self.session.get(party_url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      if return_JSON:
-        return(r.text)
-      # Otherwise, convert JSON to data frame
-      df = pandas.read_json(r.content, typ = 'series')
-      return('institution' in df.index)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+    # ------------------------------------------------------------------------------
+    def get_institution(self, party_id=8, vb=False, return_JSON=False):
+        "Download data about an institution"
 
-  #------------------------------------------------------------------------------
-  def is_person(self, party_id = 7, vb = False):
-    r = not(is_institution(party_id = party_id, vb = vb))
-    return(r)
+        # Check parameters
+        if isinstance(party_id, list):
+            print("party_id must be single scalar value")
+            return('')
+        if not(isinstance(party_id, int)) or (party_id <= 0):
+            print("party_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+        if not(isinstance(return_JSON, bool)):
+            print("return_JSON must be Boolean")
+            return('')
 
-  #------------------------------------------------------------------------------
-  def get_institution(self, party_id = 8, vb = False, return_JSON = False):
-    "Download data about an institution"
+        party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
 
-    # Check parameters
-    if isinstance(party_id, list):
-      print("party_id must be single scalar value")
-      return('')
-    if not(isinstance(party_id, int)) or (party_id <= 0):
-      print("party_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
-    if not(isinstance(return_JSON, bool)):
-      print("return_JSON must be Boolean")
-      return('')
+        if (vb):
+            message(paste0("Sending GET to ", party_url))
+        r = self.session.get(party_url)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            if return_JSON:
+                return(r.text)
+            # Otherwise, convert JSON to data frame
+            df = pandas.read_json(r.content, typ='series')
+            if not('institution' in df.index):
+                print("Party ID " + party_id + " is not an institution.")
+                return('')
+            return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
+    # ------------------------------------------------------------------------------
+    def get_person(self, party_id=7, vb=False, return_JSON=False):
+        "Downloads metadata about a person."
 
-    if (vb):
-      message(paste0("Sending GET to ", party_url))
-    r = self.session.get(party_url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      if return_JSON:
-        return(r.text)
-      # Otherwise, convert JSON to data frame
-      df = pandas.read_json(r.content, typ = 'series')
-      if not('institution' in df.index):
-        print("Party ID " + party_id + " is not an institution.")
-        return('')
-      return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        # Check parameters
+        if isinstance(party_id, list):
+            print("party_id must be single scalar value")
+            return('')
+        if not(isinstance(party_id, int)) or (party_id <= 0):
+            print("party_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+        if not(isinstance(return_JSON, bool)):
+            print("return_JSON must be Boolean")
+            return('')
 
-  #------------------------------------------------------------------------------
-  def get_person(self, party_id = 7, vb = False, return_JSON = False):
-    "Downloads metadata about a person."
+        party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
 
-    # Check parameters
-    if isinstance(party_id, list):
-      print("party_id must be single scalar value")
-      return('')
-    if not(isinstance(party_id, int)) or (party_id <= 0):
-      print("party_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
-    if not(isinstance(return_JSON, bool)):
-      print("return_JSON must be Boolean")
-      return('')
+        if (vb):
+            message(paste0("Sending GET to ", party_url))
+        r = self.session.get(party_url)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            if return_JSON:
+                return(r.text)
+            # Otherwise, convert JSON to data frame
+            df = pandas.read_json(r.content, typ='series')
+            if not('prename' in df.index):
+                print("Party ID " + party_id + " is not a person.")
+                return('')
+            return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
+    # ------------------------------------------------------------------------------
+    def download_party(self, party_id=7, vb=False, return_JSON=False):
 
-    if (vb):
-      message(paste0("Sending GET to ", party_url))
-    r = self.session.get(party_url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      if return_JSON:
-        return(r.text)
-      # Otherwise, convert JSON to data frame
-      df = pandas.read_json(r.content, typ = 'series')
-      if not('prename' in df.index):
-        print("Party ID " + party_id + " is not a person.")
-        return('')
-      return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        # Check parameters
+        if isinstance(party_id, list):
+            print("party_id must be single scalar value")
+            return('')
+        if not(isinstance(party_id, int)) or (party_id <= 0):
+            print("party_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+        if not(isinstance(return_JSON, bool)):
+            print("return_JSON must be Boolean")
+            return('')
 
-  #------------------------------------------------------------------------------
-  def download_party(self, party_id = 7, vb = False, return_JSON = False):
+        party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
 
-    # Check parameters
-    if isinstance(party_id, list):
-      print("party_id must be single scalar value")
-      return('')
-    if not(isinstance(party_id, int)) or (party_id <= 0):
-      print("party_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
-    if not(isinstance(return_JSON, bool)):
-      print("return_JSON must be Boolean")
-      return('')
+        if (vb):
+            print("Sending GET to " + party_url)
+        r = self.session.get(party_url)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            if return_JSON:
+                return(r.text)
+            # Otherwise, convert JSON to data frame
+            df = pandas.read_json(r.content, typ='series')
+            return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
+    # ------------------------------------------------------------------------------
+    def download_session_csv(self, vol_id=1, to_df=True, return_response=False, vb=False):
 
-    if (vb):
-      print("Sending GET to " + party_url)
-    r = self.session.get(party_url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      if return_JSON:
-        return(r.text)
-      # Otherwise, convert JSON to data frame
-      df = pandas.read_json(r.content, typ = 'series')
-      return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        # Parameter checking
+        if isinstance(vol_id, list):
+            stop("vol_id must have length 1.")
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if not(isinstance(to_df, bool)):
+            print("vb must be Boolean")
+            return('')
+        if not(isinstance(return_response, bool)):
+            print("return_response must be Boolean")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
 
-  #------------------------------------------------------------------------------
-  def download_session_csv(self, vol_id = 1, to_df = True, return_response = False, vb = False):
+        request_url = "https://nyu.databrary.org/volume/" + \
+            str(vol_id) + "/csv"
 
-    # Parameter checking
-    if isinstance(vol_id, list):
-      stop("vol_id must have length 1.")
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if not(isinstance(to_df, bool)):
-      print("vb must be Boolean")
-      return('')
-    if not(isinstance(return_response, bool)):
-      print("return_response must be Boolean")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+        r = self.session.get(request_url)
+        print("Sending GET to " + request_url)
+        if (r.status_code == 200):
+            if(to_df):
+                bytes_content = io.BytesIO(r.content)
+                df = pandas.read_csv(bytes_content)
+                return(df)
+            else:
+                return(r.content)
+        else:
+            print('Download Failed, HTTP status ' + str(r.status_code))
+            if (return_response):
+                return(r.status_code)
 
-    request_url = "https://nyu.databrary.org/volume/" + str(vol_id) + "/csv"
+    # ------------------------------------------------------------------------------
+    def get_supported_file_types(self, vb=False):
+        "Extracts Databrary supported file types."
 
-    r = self.session.get(request_url)
-    print("Sending GET to " + request_url)
-    if (r.status_code == 200):
-      if(to_df):
-        bytes_content = io.BytesIO(r.content)
-        df = pandas.read_csv(bytes_content)
+        # Check parameters
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+
+        c = assign_constants(vb=vb)
+        fts = c['format']
+        df = pandas.DataFrame.from_dict(fts)
         return(df)
-      else:
-        return(r.content)
-    else:
-      print('Download Failed, HTTP status ' + str(r.status_code))
-      if (return_response):
-        return(r.status_code)
 
-  #------------------------------------------------------------------------------
-  def get_supported_file_types(self, vb = False):
-    "Extracts Databrary supported file types."
+    # ------------------------------------------------------------------------------
+    def list_sessions_in_volume(self, vol_id=1, vb=False):
+        "List the slots/sessions in a specified volume"
 
-    # Check parameters
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+        # Check parameters
+        if isinstance(vol_id, list):
+            print("vol_id must be single scalar value")
+            return('')
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
 
-    c = assign_constants(vb = vb)
-    fts = c['format']
-    df = pandas.DataFrame.from_dict(fts)
-    return(df)
+        vol_url = "https://nyu.databrary.org/api/volume/" + str(vol_id)
 
-  #------------------------------------------------------------------------------
-  def list_sessions_in_volume(self, vol_id = 1, vb = False):
-    "List the slots/sessions in a specified volume"
+        if (vb):
+            print("Sending GET to ", vol_url)
+        r = self.session.get(vol_url)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            df = pandas.read_json(r.content, typ='series')
+            return(df)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    # Check parameters
-    if isinstance(vol_id, list):
-      print("vol_id must be single scalar value")
-      return('')
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+    # ------------------------------------------------------------------------------
+    def download_containers_records(self, vol_id=2, convert_JSON=True, vb=False):
+        """ Download data about the containers (sessions/slots) in a given volume"""
+        # Check parameters
+        if isinstance(vol_id, list):
+            stop("vol_id must be a single, scalar value.")
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if not(isinstance(convert_JSON, bool)):
+            print("vb must be Boolean")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
 
-    vol_url = "https://nyu.databrary.org/api/volume/" + str(vol_id)
+        url_cont_rec = "https://nyu.databrary.org/api/volume/" + \
+            str(vol_id) + "?containers&records"
+        if (vb):
+            print("Sending GET to ", url_cont_rec)
+        r = self.session.get(url_cont_rec)
+        if (r.status_code == 200):
+            if vb:
+                print("Success.")
+            if convert_JSON:
+                df = pandas.read_json(r.content, typ='series')
+                return(df)
+            else:
+                return(r.text)
+        else:
+            print("Download failed with HTTP status " + r.status_code + "\n")
+            return('')
 
-    if (vb):
-      print("Sending GET to ", vol_url)
-    r = self.session.get(vol_url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      df = pandas.read_json(r.content, typ = 'series')
-      return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+    # ------------------------------------------------------------------------------
+    def download_asset(self, vol_id=1, session_id=9807, asset_id=1, vb=False, download_dir="./"):
 
-  #------------------------------------------------------------------------------
-  def download_containers_records(self, vol_id = 2, convert_JSON = True, vb = False):
-    """ Download data about the containers (sessions/slots) in a given volume"""
-    # Check parameters
-    if isinstance(vol_id, list):
-      stop("vol_id must be a single, scalar value.")
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if not(isinstance(convert_JSON, bool)):
-      print("vb must be Boolean")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+        # Check parameters
+        if isinstance(vol_id, list):
+            stop("vol_id must be a single, scalar value.")
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if isinstance(session_id, list):
+            stop("session_id must be a single, scalar value.")
+        if not(isinstance(session_id, int)) or (session_id <= 0):
+            print("session_id must be an integer > 0")
+            return('')
+        if isinstance(asset_id, list):
+            stop("asset_id must be a single, scalar value.")
+        if not(isinstance(asset_id, int)) or (asset_id <= 0):
+            print("asset_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
 
-    url_cont_rec = "https://nyu.databrary.org/api/volume/" + str(vol_id) + "?containers&records"
-    if (vb):
-      print("Sending GET to ", url_cont_rec)
-    r = self.session.get(url_cont_rec)
-    if (r.status_code == 200):
-      if vb:
-        print("Success.")
-      if convert_JSON:
-        df = pandas.read_json(r.content, typ = 'series')
-        return(df)
-      else:
-        return(r.text)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
+        url = "https://nyu.databrary.org/slot/" + \
+            str(session_id) + "/asset/" + \
+            str(asset_id) + "/download?inline=false"
+        if (vb):
+            print("Sending GET to ", url)
+            filename = "{}/{}-{}-{}.mp4".format(download_dir,
+                                                vol_id, session_id, asset_id)
+            with self.session.get(url, stream=True) as r:
+                r.raise_for_status()
+                total_size = int(r.headers.get('content-length', 0))
+                block_size = 1024  # 1 Kibibyte
+                t = tqdm(total=total_size, unit='iB', unit_scale=True)
+                with open(filename, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        if chunk:
+                            t.update(len(chunk))
+                            f.write(chunk)
+                    if (r.status_code == 200):
+                        if vb:
+                            print("Success!")
+                            return(df)
+                        else:
+                            print("Download failed with HTTP status " +
+                                  r.status_code + "\n")
+                            return('')
 
-  #------------------------------------------------------------------------------
-  def download_asset(self, vol_id = 1, session_id = 9807, asset_id = 1, vb = False, download_dir = "./"):
+    def download_asset_stream(self, vol_id=1, session_id=9807, asset_id=1, vb=False):
 
-    # Check parameters
-    if isinstance(vol_id, list):
-      stop("vol_id must be a single, scalar value.")
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if isinstance(session_id, list):
-      stop("session_id must be a single, scalar value.")
-    if not(isinstance(session_id, int)) or (session_id <= 0):
-      print("session_id must be an integer > 0")
-      return('')
-    if isinstance(asset_id, list):
-      stop("asset_id must be a single, scalar value.")
-    if not(isinstance(asset_id, int)) or (asset_id <= 0):
-      print("asset_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
+        def iterable_to_stream(iterable, total_size, buffer_size=io.DEFAULT_BUFFER_SIZE):
+            """
+            Lets you use an iterable (e.g. a generator) that yields bytestrings as a read-only
+            input stream.
 
-    url = "https://nyu.databrary.org/slot/" + str(session_id) + "/asset/" + str(asset_id) + "/download?inline=false"
-    if (vb):
-      print("Sending GET to ", url)
-      filename = "{}/{}-{}-{}.mp4".format(download_dir, vol_id, session_id, asset_id)
-      with self.session.get(url, stream=True) as r:
+            The stream implements Python 3's newer I/O API (available in Python 2's io module).
+            For efficiency, the stream is buffered.
+            """
+            class IterStream(io.RawIOBase):
+                def __init__(self):
+                    self.leftover = None
+                    self.t = tqdm(total=total_size, unit='iB', unit_scale=True)
+
+                def readable(self):
+                    return True
+
+                def readinto(self, b):
+                    try:
+                        # We're supposed to return at most this much
+                        l = len(b)
+                        chunk = self.leftover or next(iterable)
+                        output, self.leftover = chunk[:l], chunk[l:]
+                        b[:len(output)] = output
+                        self.t.update(len(output))
+                        return len(output)
+                    except StopIteration as e:
+                        return 0    # indicate EOF
+            return io.BufferedReader(IterStream(), buffer_size=buffer_size)
+
+        # Check parameters
+        if isinstance(vol_id, list):
+            stop("vol_id must be a single, scalar value.")
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if isinstance(session_id, list):
+            stop("session_id must be a single, scalar value.")
+        if not(isinstance(session_id, int)) or (session_id <= 0):
+            print("session_id must be an integer > 0")
+            return('')
+        if isinstance(asset_id, list):
+            stop("asset_id must be a single, scalar value.")
+        if not(isinstance(asset_id, int)) or (asset_id <= 0):
+            print("asset_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+
+        url = "https://nyu.databrary.org/slot/" + \
+            str(session_id) + "/asset/" + \
+            str(asset_id) + "/download?inline=false"
+        print("Sending GET to ", url)
+        r = self.session.get(url, stream=True)
         r.raise_for_status()
         total_size = int(r.headers.get('content-length', 0))
-        block_size = 1024 #1 Kibibyte
-        t=tqdm(total=total_size, unit='iB', unit_scale=True)
-        with open(filename, 'wb') as f:
-          for chunk in r.iter_content(chunk_size=8192):
-            if chunk:
-              t.update(len(chunk))
-              f.write(chunk)
-          if (r.status_code == 200):
-              if vb:
+        print(total_size)
+        d = r.headers['content-disposition']
+        fname = re.findall("filename=(.+)", d)[0]
+        i = r.iter_content(8192)
+        # Return the download stream for processing by another module 
+        # (i.e., uploading to Box)
+        return iterable_to_stream(r.iter_content(8192), total_size), total_size, fname
+
+    # ------------------------------------------------------------------------------
+    def get_asset_segment_range(self, vol_id=1, session_id=9807, asset_id=1, vb=False):
+
+        # Check parameters
+        if isinstance(vol_id, list):
+            stop("vol_id must be a single, scalar value.")
+        if not(isinstance(vol_id, int)) or (vol_id <= 0):
+            print("vol_id must be an integer > 0")
+            return('')
+        if isinstance(session_id, list):
+            stop("session_id must be a single, scalar value.")
+        if not(isinstance(session_id, int)) or (session_id <= 0):
+            print("session_id must be an integer > 0")
+            return('')
+        if isinstance(asset_id, list):
+            stop("asset_id must be a single, scalar value.")
+        if not(isinstance(asset_id, int)) or (asset_id <= 0):
+            print("asset_id must be an integer > 0")
+            return('')
+        if not(isinstance(vb, bool)):
+            print("vb must be Boolean")
+            return('')
+
+        url = "https://nyu.databrary.org/api/volume/" + \
+            str(vol_id) + "/slot/" + str(session_id) + \
+            "/asset/" + str(asset_id)
+        if (vb):
+            print("Sending GET to ", url)
+        r = self.session.get(url)
+        if (r.status_code == 200):
+            if vb:
                 print("Success!")
-                return(df)
-              else:
+            df = pandas.read_json(r.content, typ='series')
+            return(df)
+        else:
+            print("Download failed with HTTP status ", r.status_code)
+            return('')
+
+    def get_volume_by_name(self, vol_name):
+        search_url = "https://nyu.databrary.org/api/search?q=" + vol_name
+        r = self.session.get(search_url)
+        if (r.status_code == 200):
+            if (type == 'all'):
+                return(r.content)
+            else:
+                # Convert content to data.frame
+                c = json.loads(r.content)
+                print(c)
+                if len(c["response"]["docs"]) == 1:
+                    return c["response"]["docs"][0]["id"]
+                else:
+                    print("Could not find volume for", vol_name)
+                    return None
+        else:
+            print("Getting vol by name failed with HTTP status ", r.status_code, search_url)
+            return None
+
+    def get_slots_for_volume(self, vol_id):
+        if vol_id is None:
+            return None
+        url = "https://nyu.databrary.org/api/volume/" + \
+            str(vol_id) + "?containers"
+        r = self.session.get(url)
+        if (r.status_code == 200):
+            if (type == 'all'):
+                return(r.content)
+            else:
+                # Convert content to data.frame
+                c = json.loads(r.content)
+                print(c)
+                return c["containers"]
+        else:
+            print("Getting slots for vol failed with HTTP status ", r.status_code, url)
+            return None
+
+    def get_assets_for_volume(self, vol_id, gold_only=True):
+        slots = self.get_slots_for_volume(vol_id)
+        if slots is None:
+            return None
+        all_assets = []
+        for s in slots:
+            url = "https://nyu.databrary.org/api/volume/" + \
+                str(vol_id) + "/slot/" + str(s["id"]) + "?assets&records"
+            r = self.session.get(url)
+            if (r.status_code == 200):
+                c = json.loads(r.content)
+                print("SLOT", c)
+                if gold_only:
+                    flag = False
+                    for r in c["records"]:
+                        if "PLAY_Gold" in r["record"]["measures"].values():
+                            flag = True
+                            break
+                    if not flag:
+                        continue
+                assets = c["assets"]
+                for asset in assets:
+                    asset["filename"] = self.asset_to_filename(asset)
+                    asset["vol_id"] = vol_id
+                all_assets += assets
+            else:
+                print("Getting assets for volume failed with HTTP status ", r.status_code, url)
+                return None
+        return all_assets
+
+    def asset_to_filename(self, asset):
+        formats = self.get_file_formats()
+        return asset["name"] + "." + formats[str(asset["format"])]["extension"]
+
+    def get_file_formats(self):
+        try:
+            return self.formats
+        except AttributeError:
+            url = "https://nyu.databrary.org/api/constants"
+            r = self.session.get(url)
+            if (r.status_code == 200):
+                if (type == 'all'):
+                    return(r.content)
+                else:
+                    # Convert content to data.frame
+                    c = json.loads(r.content)
+                    formats = c["format"]
+                    self.formats = formats
+                    return formats
+            else:
                 print("Download failed with HTTP status " + r.status_code + "\n")
                 return('')
-
-  def download_asset_stream(self, vol_id = 1, session_id = 9807, asset_id = 1, vb = False):
-
-    def iterable_to_stream(iterable, total_size, buffer_size=io.DEFAULT_BUFFER_SIZE):
-      """
-      Lets you use an iterable (e.g. a generator) that yields bytestrings as a read-only
-      input stream.
-
-      The stream implements Python 3's newer I/O API (available in Python 2's io module).
-      For efficiency, the stream is buffered.
-      """
-      class IterStream(io.RawIOBase):
-          def __init__(self):
-              self.leftover = None
-              self.t=tqdm(total=total_size, unit='iB', unit_scale=True)
-          def readable(self):
-              return True
-          def readinto(self, b):
-              try:
-                l = len(b)  # We're supposed to return at most this much
-                chunk = self.leftover or next(iterable)
-                output, self.leftover = chunk[:l], chunk[l:]
-                b[:len(output)] = output
-                self.t.update(len(output))
-                return len(output)
-              except StopIteration as e:
-                return 0    # indicate EOF
-      return io.BufferedReader(IterStream(), buffer_size=buffer_size)
-
-    # Check parameters
-    if isinstance(vol_id, list):
-      stop("vol_id must be a single, scalar value.")
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if isinstance(session_id, list):
-      stop("session_id must be a single, scalar value.")
-    if not(isinstance(session_id, int)) or (session_id <= 0):
-      print("session_id must be an integer > 0")
-      return('')
-    if isinstance(asset_id, list):
-      stop("asset_id must be a single, scalar value.")
-    if not(isinstance(asset_id, int)) or (asset_id <= 0):
-      print("asset_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
-
-    url = "https://nyu.databrary.org/slot/" + str(session_id) + "/asset/" + str(asset_id) + "/download?inline=false"
-    print("Sending GET to ", url)
-    r = self.session.get(url, stream=True)
-    r.raise_for_status()
-    total_size = int(r.headers.get('content-length', 0))
-    print(total_size)
-    d = r.headers['content-disposition']
-    fname = re.findall("filename=(.+)", d)[0] 
-    i = r.iter_content(8192)
-    return iterable_to_stream(r.iter_content(8192), total_size), total_size, fname # Return the download stream for processing by another module (i.e., uploading to Box)
-      
-
-  #------------------------------------------------------------------------------
-  def get_asset_segment_range(self, vol_id = 1, session_id = 9807, asset_id = 1, vb = False):
-
-    # Check parameters
-    if isinstance(vol_id, list):
-      stop("vol_id must be a single, scalar value.")
-    if not(isinstance(vol_id, int)) or (vol_id <= 0):
-      print("vol_id must be an integer > 0")
-      return('')
-    if isinstance(session_id, list):
-      stop("session_id must be a single, scalar value.")
-    if not(isinstance(session_id, int)) or (session_id <= 0):
-      print("session_id must be an integer > 0")
-      return('')
-    if isinstance(asset_id, list):
-      stop("asset_id must be a single, scalar value.")
-    if not(isinstance(asset_id, int)) or (asset_id <= 0):
-      print("asset_id must be an integer > 0")
-      return('')
-    if not(isinstance(vb, bool)):
-      print("vb must be Boolean")
-      return('')
-
-    url = "https://nyu.databrary.org/api/volume/" + str(vol_id) + "/slot/" + str(session_id) + "/asset/" + str(asset_id)
-    if (vb):
-      print("Sending GET to ", url)
-    r = self.session.get(url)
-    if (r.status_code == 200):
-      if vb:
-        print("Success!")
-      df = pandas.read_json(r.content, typ = 'series')
-      return(df)
-    else:
-      print("Download failed with HTTP status " + r.status_code + "\n")
-      return('')
-
-    def upload_asset(self, volume_id, session_id, file_path):
-        """
-        Upload OPF files to a Databrary session
-        IMPORTANT: This method doesn't work with asset bigger than 1.04 MB
-        :param volume_id:
-        :param session_id:
-        :param file_path:
-        :return:
-        """
-
-        def create_asset(volume, session, filepath, token):
-            payload = {
-                'container': session,
-                'name': DatabraryApi.getFileName(filepath),
-                'upload': token
-            }
-            url = urljoin(self.__base_api_url, 'volume/' + str(volume) + '/asset')
-
-            logger.debug('Creating asset URL %s', url)
-            response = self.__session.post(url=url, json=payload)
-            if response.status_code == 200:
-                logger.info("Assets Created %s.", response.json())
-                return response.json()
-            else:
-                raise AttributeError('Cannot create asset om session %d volume %d', session, volume)
-
-        def start_upload(volume, filepath):
-            payload = {
-                'filename': DatabraryApi.getFileName(filepath),
-                'size': DatabraryApi.getFileSize(filepath)
-            }
-            url = urljoin(self.__base_api_url, 'volume/' + str(volume) + '/upload')
-
-            logger.debug('Starting upload URL %s', url)
-            response = self.__session.post(url=url, json=payload)
-            if response.status_code == 200:
-                logger.info("Upload Token %s.", response.content)
-                return response.content
-            else:
-                raise AttributeError('Cannot get upload token for volume %d', volume)
-
-        def upload_asset(volume, filepath, token):
-            __fileChunckSize = 1048576
-            __fileSize = DatabraryApi.getFileSize(filepath)
-            if __fileSize > __fileChunckSize:
-                raise AttributeError('File size must be < than %d', __fileChunckSize)
-
-            payload = {
-                'flowChunkNumber': 1,
-                'flowChunkSize': __fileChunckSize,
-                'flowCurrentChunkSize': __fileSize,
-                'flowTotalSize': __fileSize,
-                'flowIdentifier': token,
-                'flowFilename': DatabraryApi.getFileName(filepath),
-                'flowRelativePath': filepath,
-                'flowTotalChunks': 1
-            }
-            url = urljoin(self.__base_api_url, 'upload')
-
-            logger.debug('Uploading assets URL %s', url)
-            response = self.__session.get(url=url, params=payload)
-            if response.status_code >= 400:
-                raise AttributeError('Cannot upload file %s to volume %d', filepath, volume)
-
-        try:
-            upload_token = start_upload(volume_id, file_path)
-            upload_asset(volume_id, file_path, upload_token)
-            result = create_asset(volume_id, session_id, file_path, upload_token)
-            return result
-        except AttributeError as e:
-            logger.error(e.message)
-            raise
-
