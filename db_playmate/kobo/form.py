@@ -10,8 +10,6 @@ class Form:
     Stores information about a particular form.
         * set of questions
         * collection of answers mapped to questions (submissions)
-        * forms can have any number of variations on questions; submissions are particular versions of a form and need
-          not contain answers to all questions across all version
     Provides csv representation.
         * each submission is a row of data
         * each question is a column
@@ -76,7 +74,7 @@ class Form:
 
     def _parse_survey(self):
         if self.content is None:
-            raise AttributeError("Not form contents found.")
+            raise AttributeError("No form contents found.")
 
         survey = self.content.get("survey")
         if survey is None:
@@ -111,7 +109,7 @@ class Form:
         :param data: dict with question id and answers
         :return: submission object mapping questions to answers
         """
-        self.submissions.append(Submission(data=data))
+        self.submissions.append(Submission(parent=self, data=data))
 
     def _submission_url(self):
         url = furl(self.url)
@@ -141,7 +139,7 @@ class Form:
             file, [str(q) for q in self.questions], dialect=csv.unix_dialect
         )
         writer.writeheader()
-        writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
+        writer.writerows([s.as_dict() for s in self.submissions])
 
     def as_csv(self) -> str:
         """
