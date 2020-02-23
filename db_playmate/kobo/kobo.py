@@ -2,6 +2,7 @@ import requests
 from furl import furl
 from requests import HTTPError
 from .form import Form
+from typing import List
 
 
 class Kobo:
@@ -21,11 +22,11 @@ class Kobo:
         self._response = {}
         self.get_forms(update=True)
 
-    def get_forms(self, update=False):
+    def get_forms(self, update=False) -> List[Form]:
         """
         Sends query for forms if update is true or forms haven't been fetched yet.
         :param update: Set true to force an http request to kobo server
-        :return: self
+        :return: available forms
         """
         if update or not self.forms:
             url = furl(self.base_url)
