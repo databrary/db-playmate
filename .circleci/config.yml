@@ -28,11 +28,10 @@ jobs:
             poetry run black .
           
       # test
-      - name: Test and coverage
+      - name: Test
       - run:
           command: |
             poetry run pytest --cov=db_playmate tests/
-            poetry run coveralls
 
 workflows:
   main:
