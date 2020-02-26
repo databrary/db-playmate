@@ -8,12 +8,31 @@ jobs:
     executor: python/default
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
+      - restore_cache:
+        keys:
+          - deps-{{ checksum "poetry.lock" }}
       - run:
-          command: ./manage.py test
-          name: Test
+          name: Install dependencies
+          command: |
+            poetry install
+
+      - save_cache:
+        key: deps-{{ checksum "poetry.lock" }}
+        paths:
+          - /home/circleci/.cache/pypoetry/virtualenvs
+
+      # black
+      - run:
+          name: Run Black
+          command: |
+            poetry run black .
+          
+      # test
+      - name: Test and coverage
+      - run:
+          command: |
+            poetry run pytest --cov=db_playmate tests/
+            poetry run coveralls
 
 workflows:
   main:
