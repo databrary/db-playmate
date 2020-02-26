@@ -5,8 +5,7 @@ orbs:
 
 jobs:
   build-and-test:
-    docker:
-      - image: circleci/python:3.8.1
+    executor: python
     steps:
       - checkout
       - restore_cache:
@@ -26,7 +25,7 @@ jobs:
       - run:
           name: Run Black
           command: |
-            poetry run black .
+            poetry run black "db_playmate"
           
       # test
       - run:
