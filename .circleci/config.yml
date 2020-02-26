@@ -5,21 +5,22 @@ orbs:
 
 jobs:
   build-and-test:
-    executor: python/default
+    docker:
+      - image: circleci/python:3.8.1
     steps:
       - checkout
       - restore_cache:
-        keys:
-          - deps-{{ checksum "poetry.lock" }}
+          keys:
+            - deps-{{ checksum "poetry.lock" }}
       - run:
           name: Install dependencies
           command: |
             poetry install
 
       - save_cache:
-        key: deps-{{ checksum "poetry.lock" }}
-        paths:
-          - /home/circleci/.cache/pypoetry/virtualenvs
+          key: deps-{{ checksum "poetry.lock" }}
+          paths:
+            - /home/circleci/.cache/pypoetry/virtualenvs
 
       # black
       - run:
