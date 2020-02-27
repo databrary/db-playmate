@@ -18,7 +18,7 @@ class Submission:
         self.rel_coding_finished = False
         self.moved_to_gold = False
         self.id = "{} - {} - {}".format(self.vol_id, self.site_id, self.subj_number)
-        self.name = self.id # TODO For now, revisit this
+        self.name = self.id  # TODO For now, revisit this
 
         # Lists because there can be multiple videos per
         # task
@@ -29,12 +29,12 @@ class Submission:
         self.consent = []
 
         self.video_map = {
-                "NaturalPlay": self.natural_play,
-                "StructuredPlay": self.structured_play,
-                "HouseWalkthrough": self.house_walk,
-                "Questionnaires": self.home_question,
-                "Consent": self.consent
-                }
+            "NaturalPlay": self.natural_play,
+            "StructuredPlay": self.structured_play,
+            "HouseWalkthrough": self.house_walk,
+            "Questionnaires": self.home_question,
+            "Consent": self.consent,
+        }
 
     def _to_csv(self):
         # Return a CSV string rep
@@ -47,11 +47,13 @@ class Submission:
             return False
 
     def __str__(self):
-        filenames = [x['filename'] for a in self.video_map.values() for x in a]
-        return "Asset: {} {} {} - Filenames: ".format(self.vol_id, self.site_id, self.subj_number) + " ".join(filenames)
+        filenames = [x["filename"] for a in self.video_map.values() for x in a]
+        return "Asset: {} {} {} - Filenames: ".format(
+            self.vol_id, self.site_id, self.subj_number
+        ) + " ".join(filenames)
 
     def add_video(self, asset):
-        filename = asset['filename']
+        filename = asset["filename"]
         video_type = filename.split("_")[-1].split(".")[0]
         if video_type[-1].isdigit():
             video_type = video_type[:-1]
@@ -59,7 +61,11 @@ class Submission:
             print(video_type)
             self.video_map[video_type].append(asset)
         else:
-            print("Warning: Could not find video_type", video_type, "in map or video was already in list")
+            print(
+                "Warning: Could not find video_type",
+                video_type,
+                "in map or video was already in list",
+            )
 
 
 class Lab:
@@ -75,7 +81,6 @@ class Lab:
     def __str__(self):
         return "{} - {}".format(institution, site_code)
 
-
     def assign_video(self, asset):
         pass
 
@@ -88,7 +93,7 @@ class Site:
         self.labs = {}
 
     def add_video(self, site_id, asset):
-        filename = asset['filename']
+        filename = asset["filename"]
         subj_number = filename.split("_")[2]
         if subj_number not in self.submissions:
             self.submissions[subj_number] = Submission(site_id, subj_number, asset)
@@ -100,15 +105,15 @@ class Site:
 
 class Datastore:
     def __init__(self):
-        self.labs = {} # lab_code -> lab
-        self.sites = {} # site_code -> site
+        self.labs = {}  # lab_code -> lab
+        self.sites = {}  # site_code -> site
 
     def add_video(self, asset):
-        site_id = asset['filename'].split("_")[1].strip()
+        site_id = asset["filename"].split("_")[1].strip()
         self.sites[site_id].add_video(site_id, asset)
 
     def save(self, filename):
-        with open(filename, 'wb') as handle:
+        with open(filename, "wb") as handle:
             pickle.dump(self, handle)
 
     def get_submissions(self):
