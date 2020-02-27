@@ -10,8 +10,6 @@ class Form:
     Stores information about a particular form.
         * set of questions
         * collection of answers mapped to questions (submissions)
-        * forms can have any number of variations on questions; submissions are particular versions of a form and need
-          not contain answers to all questions across all version
     Provides csv representation.
         * each submission is a row of data
         * each question is a column
@@ -76,7 +74,7 @@ class Form:
 
     def _parse_survey(self):
         if self.content is None:
-            raise AttributeError("Not form contents found.")
+            raise AttributeError("No form contents found.")
 
         survey = self.content.get("survey")
         if survey is None:
@@ -111,7 +109,7 @@ class Form:
         :param data: dict with question id and answers
         :return: submission object mapping questions to answers
         """
-        self.submissions.append(Submission(data=data))
+        self.submissions.append(Submission(parent=self, data=data))
 
     def _submission_url(self):
         url = furl(self.url)
@@ -126,12 +124,54 @@ class Form:
 
         return self.submissions
 
-    def to_csv(self, file):
+    def _check_submissions(self):
         if len(self.submissions) < self.num_submissions:
             self.get_submissions()
 
+    def to_csv(self, file):
+        """
+        Write this form's data to file
+        :param file: File to write data to
+        :return:
+        """
+        self._check_submissions()
         writer = csv.DictWriter(
             file, [str(q) for q in self.questions], dialect=csv.unix_dialect
         )
         writer.writeheader()
+        writer.writerows([s.as_dict() for s in self.submissions])
+
+    def as_csv(self) -> str:
+        """
+        Return self as csv string.
+        :return: str
+        """
+        self._check_submissions()
+        writer = csv.DictWriter(
+            "", [str(q) for q in self.questions], dialect=csv.unix_dialect
+        )
+        writer.writeheader()
         writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
+        return str(writer)
+
+    def __repr__(self):
+        return self.as_csv()
+
+    def group_by(self, label: str) -> dict:
+        """
+        Returns dictionary of submissions grouped by the answer
+        to the question with the given label
+        :param label:
+        :return:
+        """
+        ret = {}
+        for sub in self.submissions:
+            val = sub.data.get(label, None)
+            if val is None:
+                continue
+            if val in ret:
+                ret[val].append(sub)
+            else:
+                ret[val] = [sub]
+
+        return ret

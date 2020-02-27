@@ -6,7 +6,7 @@ authors = ["Shohan Hasan <shohan.hasan.x6@gmail.com>", "Jesse Lingeman <jmlingem
 license = "GPL-3.0"
 
 [tool.poetry.scripts]
-sync = "db_playmate:cli.main"
+playmate = "db_playmate:cli.main"
 
 [tool.poetry.dependencies]
 python = "^3.7"

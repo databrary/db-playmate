@@ -7,6 +7,8 @@ from pathlib import Path
 import keyring
 from db_playmate import Kobo
 from db_playmate.box import get_client as get_box_client
+import tempfile
+import csv
 
 
 def main():
@@ -14,10 +16,12 @@ def main():
     parser.add_argument(
         "--config-file",
         "-c",
-        required=True,
+        required=False,
         help="toml file with Box and KoboToolbox credentials",
     )
     args = parser.parse_args()
+    if args.config_file is None:
+        args.config_file = "config.toml"
     config_path = Path(args.config_file).resolve()
     print(f"Loading configurations from {config_path}...")
     try:
@@ -44,19 +48,37 @@ def main():
         print(e)
         return 1
 
-    box.create_folder("", "kobo")
+    # box.create_folder("", "kobo")
 
     print("Connecting to KoboToolbox...")
     kobo = Kobo(base_url=kconf.get("base_url"), token=kconf.get("auth_token"))
-    src_folder = Path("../env/kobo")
+    src_folder = Path("./kobo")
     src_folder.mkdir(parents=False, exist_ok=True)
-    for form in kobo.get_forms().values():
-        print(f"{form.name}: {form.num_submissions} submissions. Downloading...")
-        filename = form.name + ".csv"
-        with open(filename, "w+") as outfile:
-            form.to_csv(outfile)
+    dest_folder = "kobo"
+    for frm in kobo.get_forms().values():
+        print(f"{frm.name}: {frm.num_submissions} submissions. Downloading...")
+        filename = frm.name + ".csv"
+        with open(Path(src_folder, filename), "w+") as outfile:
+            frm.to_csv(outfile)
+
         print("Uploading to Box...")
-        box.upload_file(filename, "kobo")
+        groups = frm.group_by("site_id")
+        for site, subms in groups.items():
+            print(f"\t- Uploading {len(subms)} submissions for {site}")
+            # write data to temp file
+            tf, tp = tempfile.mkstemp()
+            with open(tf, "w", newline="") as tmp:
+                w = csv.DictWriter(
+                    tmp, [str(q) for q in frm.questions], dialect=csv.unix_dialect
+                )
+                w.writeheader()
+                w.writerows([s.as_dict() for s in subms])
+
+            # upload to box
+            site_folder = str(Path(dest_folder, site))
+            box.create_folders(site_folder)
+            box.upload_file(tp, site_folder, new_name=filename)
+            del tf
 
     print("Finished.")
     return 0

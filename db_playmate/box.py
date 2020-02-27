@@ -108,7 +108,10 @@ class Box:
         """
         base = self.get_folder(base_folder)
         if base is not None:
-            return base.create_subfolder(new_folder_name)
+            try:
+                return base.create_subfolder(new_folder_name)
+            except:
+                pass
         return None
 
     def create_folders(self, path):
