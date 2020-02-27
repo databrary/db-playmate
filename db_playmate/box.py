@@ -65,7 +65,7 @@ class Box:
     def _login(self):
         access_token, refresh_token = read_tokens()
 
-        #if access_token is None or refresh_token is None:
+        # if access_token is None or refresh_token is None:
         oauth = bx.OAuth2(
             client_id=self.client_id,
             client_secret=self.client_secret,
@@ -88,7 +88,7 @@ class Box:
             client_secret=self.client_secret,
             access_token=access_token,
             refresh_token=refresh_token,
-            store_tokens=store_tokens
+            store_tokens=store_tokens,
         )
         self._client = bx.Client(oauth)
 
@@ -184,8 +184,8 @@ class Box:
             local_path = local_path + os.sep + local_filename
         else:
             local_path = local_path + os.sep + box_file.get().name
-        
-        with open(local_path, 'wb') as handle:
+
+        with open(local_path, "wb") as handle:
             return download_file_stream(self, box_file, output_stream)
 
     def download_file_stream(self, box_file, output_stream):
@@ -194,7 +194,6 @@ class Box:
         Downloads the file to an already created output stream (e.g., to Databrary)
         """
         return box_file.download_to(output_stream)
-
 
     def move(self, src, dst, new_name=None):
         """
@@ -303,7 +302,9 @@ class Box:
             if target is not None:
                 print(target.login)
 
-            if (target is not None and target.login == email_address) or c.invite_email == email_address:
+            if (
+                target is not None and target.login == email_address
+            ) or c.invite_email == email_address:
                 c.delete()
                 return True
         return False
@@ -313,19 +314,21 @@ class Box:
         # Put it into a pandas dataframe or similar object?
         class BoxCollab:
             def __init__(self, c):
-                self.email = c.accessible_by.login if c.accessible_by is not None else c.invite_email
+                self.email = (
+                    c.accessible_by.login
+                    if c.accessible_by is not None
+                    else c.invite_email
+                )
                 self.status = c.status
                 self.name = c.accessible_by.name if c.accessibly_by is not None else ""
+
         return [BoxCollab(c) for c in collabs]
-
-
-
 
 
 def get_client(client_id, client_secret):
     global server
     if server is None:
-        server = Thread(target=app.run, daemon=True, kwargs=dict(port='5001'))
+        server = Thread(target=app.run, daemon=True, kwargs=dict(port="5001"))
         server.start()
 
     return Box(client_id, client_secret)

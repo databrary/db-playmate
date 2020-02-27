@@ -6,17 +6,18 @@ from google.auth.transport.requests import Request
 from data_model import Lab, Site
 
 # If modifying these scopes, delete the file token.pickle.
-SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
 
 # TODO make this more robust so we're reading the header
+
 
 def read_master():
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
     # The ID and range of a sample spreadsheet.
-    PLAY_MASTER_ID = '1V9RuZJNRN4lehLzRSWO0MqVclsXPw7Z-Lxq-VQOvM-A'
-    PLAY_MASTER_RANGE = 'SiteTracking!A2:X'
+    PLAY_MASTER_ID = "1V9RuZJNRN4lehLzRSWO0MqVclsXPw7Z-Lxq-VQOvM-A"
+    PLAY_MASTER_RANGE = "SiteTracking!A2:X"
     SITE_CODE_COL = "SiteCode"
     LAB_CODE_COL = "LabCode"
     EMAIL_COL = "email"
@@ -28,8 +29,8 @@ def read_master():
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists('env/token.pickle'):
-        with open('env/token.pickle', 'rb') as token:
+    if os.path.exists("env/token.pickle"):
+        with open("env/token.pickle", "rb") as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -37,23 +38,30 @@ def read_master():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                'env/credentials.json', SCOPES)
+                "env/credentials.json", SCOPES
+            )
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open('env/token.pickle', 'wb') as token:
+        with open("env/token.pickle", "wb") as token:
             pickle.dump(creds, token)
 
-    service = build('sheets', 'v4', credentials=creds, cache_discovery=False)
+    service = build("sheets", "v4", credentials=creds, cache_discovery=False)
 
     # Call the Sheets API
     sheet = service.spreadsheets()
-    header = sheet.values().get(spreadsheetId=PLAY_MASTER_ID,
-                                range="SiteTracking!A1:X1").execute()
-    result = sheet.values().get(spreadsheetId=PLAY_MASTER_ID,
-                                range=PLAY_MASTER_RANGE).execute()
-    values = result.get('values', [])
+    header = (
+        sheet.values()
+        .get(spreadsheetId=PLAY_MASTER_ID, range="SiteTracking!A1:X1")
+        .execute()
+    )
+    result = (
+        sheet.values()
+        .get(spreadsheetId=PLAY_MASTER_ID, range=PLAY_MASTER_RANGE)
+        .execute()
+    )
+    values = result.get("values", [])
 
-    header = header.get('values', [])
+    header = header.get("values", [])
     for row in header:
         for i, col in enumerate(row):
             if col == SITE_CODE_COL:
@@ -69,9 +77,8 @@ def read_master():
             if col == ROLE_COL:
                 ROLE_COL = i
 
-
     if not values:
-        print('No data found.')
+        print("No data found.")
     else:
         labs = []
         sites = {}
@@ -79,7 +86,7 @@ def read_master():
         test_lab.db_volume = "PLAY Databrary API"
         labs.append(test_lab)
         for row in values:
-            print('%s, %s' % (row[INST_COL], row[LAB_CODE_COL]))
+            print("%s, %s" % (row[INST_COL], row[LAB_CODE_COL]))
             site_code = row[SITE_CODE_COL]
             lab_code = row[LAB_CODE_COL]
             try:
@@ -101,5 +108,5 @@ def read_master():
         return sites, labs
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     read_master()

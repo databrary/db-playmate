@@ -19,8 +19,8 @@ class Bridge:
             clid = cfg["box"]["client_id"]
             clsec = cfg["box"]["client_secret"]
             databrary_username = cfg["databrary"]["username"]
-            kobo_base_url = cfg['kobo']['base_url']
-            kobo_token = cfg['kobo']['auth_token']
+            kobo_base_url = cfg["kobo"]["base_url"]
+            kobo_token = cfg["kobo"]["auth_token"]
 
         print("Connecting to Box...")
         self.box = get_client(clid, clsec)
@@ -29,7 +29,9 @@ class Bridge:
         print("Connecting to Databrary...")
         self.db = Databrary(databrary_username)
 
-    def transfer_box_to_databrary(self, box_path, db_volume, db_container, rename_file=None):
+    def transfer_box_to_databrary(
+        self, box_path, db_volume, db_container, rename_file=None
+    ):
         """
         Rename file is optional, if so specify the filename to use on databrary)
         """
@@ -44,8 +46,10 @@ class Bridge:
         """
         Transfer a file from databrary to Box
         """
-        # TODO expose the file name changing part of the download function 
-        file_stream, total_size, filename = self.db.download_asset_stream(db_volume, db_container, db_asset)
+        # TODO expose the file name changing part of the download function
+        file_stream, total_size, filename = self.db.download_asset_stream(
+            db_volume, db_container, db_asset
+        )
         self.box.upload_file_stream(file_stream, box_path, total_size, filename)
 
     def transfer_kobo_to_box(self):
