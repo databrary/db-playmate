@@ -58,3 +58,8 @@ and copy the ``config.toml`` file from the root directory into the ``env`` folde
 
 
 3. Open ``env/config.toml`` and replace the default values of parameters with your values.
+
+Running
+"""""""
+
+Once everything is installed and credentials are set up, run ``python db_playmate/frontend.py``to kick off the process.
