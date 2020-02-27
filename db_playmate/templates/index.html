@@ -1,0 +1,80 @@
+<!DOCTYPE HTML>
+<HTML>
+  <HEAD>
+    <TITLE>
+      Databrary PLAY-Mate
+    </TITLE>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> -->
+  </HEAD>
+  <BODY>
+
+    <form action="{{ url_for('send_to_qa') }}" method="post">
+      {{ in_db_form.hidden_tag() }}
+      <p>
+      {{ in_db_form.in_databrary.label }}<br>
+      {{ in_db_form.in_databrary(cols=50) }}
+      </p>
+      <p>
+      {{ in_db_form.submit_send_to_qa() }}
+      </p>
+
+    </form>
+    <form action="{{ url_for('send_to_coding') }}" method="post">
+      <p>
+      {{ qa_form.ready_for_qa.label }}<br>
+      {{ qa_form.ready_for_qa(cols=50) }}
+      </p>
+      <p>
+      {{ qa_form.submit_send_to_coding() }}
+      {{ qa_form.submit_send_to_silver() }}
+      </p>
+
+    </form>
+    <form action="{{ url_for('send_to_lab') }}" method="post">
+      <p>
+      {{ coding_form.ready_for_coding.label }}
+      {{ coding_form.lab_list.label }}<br>
+      {{ coding_form.ready_for_coding(cols=25) }}
+      {{ coding_form.lab_list(cols=25) }}
+      </p>
+      <p>
+      {{ coding_form.submit_send_to_lab() }}
+      </p>
+
+    </form>
+    <form action="{{ url_for('send_to_rel') }}" method="post">
+      <p>
+      {{ video_coding_form.videos_coded.label }}
+      {{ video_coding_form.videos_not_coded.label }}<br>
+      {{ video_coding_form.videos_coded(cols=25) }}
+      {{ video_coding_form.videos_not_coded(cols=25) }}
+      </p>
+      <p>
+      {{ video_coding_form.submit_send_to_rel() }}
+      </p>
+
+    </form>
+    <form action="{{ url_for('send_to_gold') }}" method="post">
+      <p>
+      {{ rel_form.ready_for_rel.label }}
+      {{ rel_form.ready_for_rel(cols=50) }}
+      </p>
+      <p>
+      {{ rel_form.submit_send_to_gold(cols=50) }}
+      </p>
+      <p>
+      {{ rel_form.gold.label }}
+      {{ rel_form.gold() }}
+      </p>
+
+    </form>
+
+
+    <!-- <div id="ready_for_qa"></div> -->
+    <!-- <script src="static/js/send_to_coding.js"></script> -->
+    <!-- <script src="static/js/send_to_silver.js"></script> -->
+
+  </BODY>
+</HTML>
+
+

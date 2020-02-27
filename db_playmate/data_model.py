@@ -14,8 +14,11 @@ class Submission:
         self.moved_to_silver = False
         self.assigned_coding_site = None
         self.primary_coding_finished = False
+        self.ready_for_rel = False
         self.rel_coding_finished = False
         self.moved_to_gold = False
+        self.id = "{} - {} - {}".format(self.vol_id, self.site_id, self.subj_number)
+        self.name = self.id # TODO For now, revisit this
 
         # Lists because there can be multiple videos per
         # task
@@ -107,3 +110,22 @@ class Datastore:
     def save(self, filename):
         with open(filename, 'wb') as handle:
             pickle.dump(self, handle)
+
+    def get_submissions(self):
+        subs = []
+        for s in self.sites.values():
+            for v in s.submissions.values():
+                subs.append(v)
+        return subs
+
+    def find_submission(self, sub_id):
+        for s in self.get_submissions():
+            if s.id == sub_id:
+                return s
+        return None
+
+    def find_lab(self, lab_id):
+        for s in self.labs:
+            if lab_id == s.lab_code:
+                return s
+        return None
