@@ -12,6 +12,7 @@ import csv
 
 
 def main():
+    # todo: add destination path option
     parser = ArgumentParser()
     parser.add_argument(
         "--config-file",
@@ -48,13 +49,11 @@ def main():
         print(e)
         return 1
 
-    # box.create_folder("", "kobo")
-
     print("Connecting to KoboToolbox...")
     kobo = Kobo(base_url=kconf.get("base_url"), token=kconf.get("auth_token"))
     src_folder = Path("./kobo")
     src_folder.mkdir(parents=False, exist_ok=True)
-    dest_folder = "kobo"
+    dest_folder = "0_PLAY_KBTB_questionnaires"  # parameterize this
     for frm in kobo.get_forms().values():
         print(f"{frm.name}: {frm.num_submissions} submissions. Downloading...")
         filename = frm.name + ".csv"
