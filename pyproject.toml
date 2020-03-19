@@ -18,7 +18,6 @@ keyring = "^19.2"
 docutils = "^0.15.2"
 flask = "^1.1.1"
 furl = "^2.1"
-pytest-cov = "^2.8"
 pandas = "^0.25.3"
 tqdm = "^4.41.1"
 flowjs = "^0.1.1"
@@ -30,6 +29,7 @@ flask-wtf = "^0.14.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+pytest-cov = "^2.8"
 
 [build-system]
 requires = ["poetry>=0.12"]
