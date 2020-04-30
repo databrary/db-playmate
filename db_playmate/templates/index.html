@@ -5,70 +5,505 @@
       Databrary PLAY-Mate
     </TITLE>
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> -->
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}"> -->
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      /* Create two equal columns that floats next to each other */
+      .column {
+        float: left;
+        width: 50%;
+        padding: 10px;
+      }
+
+      /* Clear floats after the columns */
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      .main {
+        margin-left: 33%;
+        padding: 0px 10px;
+      }
+
+      select:empty {
+        min-width: 20%;
+      }
+
+      select[multiple]:empty {
+        min-width: 20%;
+        height: 30px;
+      }
+      select[multiple] {
+        min-width: 20%;
+        height: 30px;
+      }
+
+
+
+      /* The sidebar menu */
+      .sidenav {
+        height: 100%; /* Full-height: remove this if you want "auto" height */
+        width: 25%; /* Set the width of the sidebar */
+        position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+        z-index: 1; /* Stay on top */
+        top: 0; /* Stay at the top */
+        left: 0;
+        background-color: #111; /* Black */
+        padding-top: 20px;
+        padding-left: 5%;
+      }
+    </style>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script>
+
+      var source = new EventSource("/progress");
+      source.onmessage = function(event) {
+        $('.progress-bar').css('width', event.data+'%').attr('aria-valuenow', event.data);
+        $('.progress-bar-label').text(event.data+'%');
+
+        if(event.data == 100){
+          source.close()
+        }
+      }
+    </script>
   </HEAD>
   <BODY>
+  <div class="sidenav">
+    <form action="{{ url_for('queue_action') }}" method="post">
+      <div class="row">
+        <p>
+        {{ forms["queue_form"].actions.label }}<br>
+        {{ forms["queue_form"].actions() }}
+        </p>
+        <p>
+        {{ forms["queue_form"].submit_queue() }}
+        {{ forms["queue_form"].remove_item_queue() }}
+        </p>
+        <p>
+        {{ forms["queue_form"].cancel_queue() }}
+        </p>
+        {% block content %}
+          {% if queue.running %}
+          RUNNING
+          {% endif %}
+        {% endblock content %}
 
+        <div class="progress" style="width: 50%; margin: 50px;">
+          <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
+            <span class="progress-bar-label">0%</span>
+          </div>
+        </div>
+      </div>
+      <div class="row">
+        <p>
+        {{ forms["queue_form"].results.label }}<br>
+        {{ forms["queue_form"].results() }}
+        </p>
+      </div>
+    </form>
+  </div>
+  <div class="main">
+  <div class="row">
+    <h1>Add file to pipeline</h1>
     <form action="{{ url_for('send_to_qa') }}" method="post">
-      {{ in_db_form.hidden_tag() }}
+    <div class="column">
+      {{ forms["in_db_form"].hidden_tag() }}
       <p>
-      {{ in_db_form.in_databrary.label }}<br>
-      {{ in_db_form.in_databrary(cols=50) }}
+      {{ forms["in_db_form"].in_databrary.label }}<br>
+      {{ forms["in_db_form"].in_databrary() }}
       </p>
+    </div>
+    <div class="column">
+      <div class="row">
       <p>
-      {{ in_db_form.submit_send_to_qa() }}
+      {{ forms["in_db_form"].submit_send_to_qa() }}
       </p>
-
+      </div>
+      <div class="row">
+      <p>
+      {{ forms["in_db_form"].submit_remove() }}
+      </p>
+      </div>
+    </div>
     </form>
+  </div>
+  <div class="row">
     <form action="{{ url_for('send_to_coding') }}" method="post">
+    <div class="column">
       <p>
-      {{ qa_form.ready_for_qa.label }}<br>
-      {{ qa_form.ready_for_qa(cols=50) }}
+      {{ forms["qa_form"].ready_for_qa.label }}<br>
+      {{ forms["qa_form"].ready_for_qa() }}
       </p>
+    </div>
+    <div class="column">
       <p>
-      {{ qa_form.submit_send_to_coding() }}
-      {{ qa_form.submit_send_to_silver() }}
+      {{ forms["qa_form"].submit_send_to_coding() }} <br>
+      {{ forms["qa_form"].submit_send_to_silver() }}
       </p>
+    </div>
+    <div class="column">
+      <p>
+      </p>
+    </div>
 
     </form>
-    <form action="{{ url_for('send_to_lab') }}" method="post">
-      <p>
-      {{ coding_form.ready_for_coding.label }}
-      {{ coding_form.lab_list.label }}<br>
-      {{ coding_form.ready_for_coding(cols=25) }}
-      {{ coding_form.lab_list(cols=25) }}
-      </p>
-      <p>
-      {{ coding_form.submit_send_to_lab() }}
-      </p>
+  </div>
+  <div class="row">
+    <h1> QA Pass </h1>
+    <div class="column">
+      <form action="{{ url_for('send_to_lab_obj') }}" method="post">
+        <h2>Object</h2>
+        <div class="row">
+          <p>
+            {{ forms["obj_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["obj_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["obj_coding_form"].lab_list.label }}<br>
+            {{ forms["obj_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["obj_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    <div class="column">
+      <form action="{{ url_for('send_to_lab_loc') }}" method="post">
+        <h2>Loc</h2>
+        <div class="row">
+          <p>
+            {{ forms["loc_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["loc_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["loc_coding_form"].lab_list.label }}<br>
+            {{ forms["loc_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["loc_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="column">
+      <h2>Emo</h2>
+      <form action="{{ url_for('send_to_lab_emo') }}" method="post">
+        <div class="row">
+          <p>
+            {{ forms["emo_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["emo_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["emo_coding_form"].lab_list.label }}<br>
+            {{ forms["emo_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["emo_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    <div class="column">
+      <h2>Tra</h2>
+      <form action="{{ url_for('send_to_lab_tra') }}" method="post">
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["trans_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].lab_list.label }}<br>
+            {{ forms["trans_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+    </div>
 
-    </form>
-    <form action="{{ url_for('send_to_rel') }}" method="post">
-      <p>
-      {{ video_coding_form.videos_coded.label }}
-      {{ video_coding_form.videos_not_coded.label }}<br>
-      {{ video_coding_form.videos_coded(cols=25) }}
-      {{ video_coding_form.videos_not_coded(cols=25) }}
-      </p>
-      <p>
-      {{ video_coding_form.submit_send_to_rel() }}
-      </p>
+  </div>
+  <div class="row">
+    <div class="column">
+      <h2>Comm</h2>
+      <form action="{{ url_for('send_to_lab_comm') }}" method="post">
+        <div class="row">
+          <p>
+            {{ forms["comm_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["comm_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["comm_coding_form"].lab_list.label }}<br>
+            {{ forms["comm_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["comm_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
 
-    </form>
-    <form action="{{ url_for('send_to_gold') }}" method="post">
-      <p>
-      {{ rel_form.ready_for_rel.label }}
-      {{ rel_form.ready_for_rel(cols=50) }}
-      </p>
-      <p>
-      {{ rel_form.submit_send_to_gold(cols=50) }}
-      </p>
-      <p>
-      {{ rel_form.gold.label }}
-      {{ rel_form.gold() }}
-      </p>
+  <!-- 
 
-    </form>
+      VIDEO CODING FORMS BLOCK
 
+
+  -->
+  <div class="row">
+    <h1> Primary Coding Pass </h1>
+    <div class="column">
+      <h2> Object </h2>
+      <form action="{{ url_for('send_to_rel_obj') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["obj_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["obj_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["obj_video_coding_form"].submit_send_to_rel() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["obj_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["obj_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    <div class="column">
+      <h2> Loc </h2>
+      <form action="{{ url_for('send_to_rel_loc') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["loc_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["loc_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["loc_video_coding_form"].submit_send_to_rel() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["loc_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["loc_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+    <div class="column">
+      <h2> Emo </h2>
+      <form action="{{ url_for('send_to_rel_emo') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["emo_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["emo_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["emo_video_coding_form"].submit_send_to_rel() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["emo_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["emo_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+      </form>
+    </div>
+
+    <div class="column">
+      <h2> Trans </h2>
+      <form action="{{ url_for('send_to_rel_trans') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["trans_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].submit_send_to_rel() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["trans_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    <div class="row">
+      <div class="column">
+          <h2> Comm </h2>
+          <form action="{{ url_for('send_to_rel_comm') }}" method="post">
+            <div class="row">
+              <p>
+              {{ forms["comm_video_coding_form"].videos_coded.label }}<br>
+              {{ forms["comm_video_coding_form"].videos_coded() }}
+              </p>
+            </div>
+            <div class="row">
+              <p>
+              {{ forms["comm_video_coding_form"].submit_send_to_rel() }}
+              </p>
+            </div>
+            <div class="row">
+              <p>
+              {{ forms["comm_video_coding_form"].videos_not_coded.label }}<br>
+              {{ forms["comm_video_coding_form"].videos_not_coded() }}
+              </p>
+            </div>
+          </form>
+        </div>
+    </div>
+
+
+
+  </div>
+  <!-- 
+
+    REL CODING PASS
+
+    -->
+  <div class="row">
+    <h1> Rel Coding Pass </h1>
+    <div class="column">
+      <form action="{{ url_for('send_to_gold_obj') }}" method="post">
+        <h2> Object </h2>
+        <div class="row">
+          <p>
+          {{ forms["obj_rel_form"].ready_for_rel.label }}<br>
+          {{ forms["obj_rel_form"].ready_for_rel(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}
+        </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["obj_rel_form"].gold.label }}<br>
+        {{ forms["obj_rel_form"].gold() }}
+        </p>
+        </div>
+      </form>
+    </div>
+
+    <div class="column">
+      <form action="{{ url_for('send_to_gold_loc') }}" method="post">
+        <h2> Loc </h2>
+        <div class="row">
+          <p>
+          {{ forms["loc_rel_form"].ready_for_rel.label }}<br>
+          {{ forms["loc_rel_form"].ready_for_rel(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["loc_rel_form"].submit_send_to_gold(cols=50) }}
+        </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["loc_rel_form"].gold.label }}<br>
+        {{ forms["loc_rel_form"].gold() }}
+        </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="row">
+
+    <div class="column">
+      <form action="{{ url_for('send_to_gold_emo') }}" method="post">
+        <h2> Emo </h2>
+        <div class="row">
+          <p>
+          {{ forms["emo_rel_form"].ready_for_rel.label }}<br>
+          {{ forms["emo_rel_form"].ready_for_rel(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["emo_rel_form"].submit_send_to_gold(cols=50) }}
+        </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["emo_rel_form"].gold.label }}<br>
+        {{ forms["emo_rel_form"].gold() }}
+        </p>
+        </div>
+      </form>
+    </div>
+
+    <div class="column">
+      <form action="{{ url_for('send_to_gold_comm') }}" method="post">
+        <h2> Comm </h2>
+        <div class="row">
+          <p>
+          {{ forms["comm_rel_form"].ready_for_rel.label }}<br>
+          {{ forms["comm_rel_form"].ready_for_rel(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["comm_rel_form"].submit_send_to_gold(cols=50) }}
+        </p>
+        </div>
+        <div class="row">
+        <p>
+        {{ forms["comm_rel_form"].gold.label }}<br>
+        {{ forms["comm_rel_form"].gold() }}
+        </p>
+        </div>
+      </form>
+    </div>
+  </div>
+  </div>
+ 
 
     <!-- <div id="ready_for_qa"></div> -->
     <!-- <script src="static/js/send_to_coding.js"></script> -->

@@ -27,6 +27,7 @@ google-api-python-client = "^1.7.11"
 google-auth-httplib2 = "^0.0.3"
 google-auth-oauthlib = "^0.4.1"
 flask-wtf = "^0.14.3"
+pyvyu = "^0.3.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

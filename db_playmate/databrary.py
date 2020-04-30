@@ -5,8 +5,7 @@ import requests
 import pandas
 import keyring
 import io
-import re
-import flowjs
+import os
 from tqdm import tqdm
 import json
 
@@ -415,65 +414,42 @@ class Databrary:
             return ""
 
     # ------------------------------------------------------------------------------
-    def download_asset(
-        self, vol_id=1, session_id=9807, asset_id=1, vb=False, download_dir="./"
-    ):
+    def download_asset(self, asset, download_dir="./"):
 
-        # Check parameters
-        if isinstance(vol_id, list):
-            stop("vol_id must be a single, scalar value.")
-        if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
-            return ""
-        if isinstance(session_id, list):
-            stop("session_id must be a single, scalar value.")
-        if not (isinstance(session_id, int)) or (session_id <= 0):
-            print("session_id must be an integer > 0")
-            return ""
-        if isinstance(asset_id, list):
-            stop("asset_id must be a single, scalar value.")
-        if not (isinstance(asset_id, int)) or (asset_id <= 0):
-            print("asset_id must be an integer > 0")
-            return ""
-        if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
-            return ""
-
+        print("DOWNLOADING", asset.asset)
         url = (
-            "https://nyu.databrary.org/slot/"
-            + str(session_id)
+            "https://nyu.databrary.org"
             + "/asset/"
-            + str(asset_id)
+            + str(asset.asset_id)
             + "/download?inline=false"
         )
-        if vb:
-            print("Sending GET to ", url)
-            filename = "{}/{}-{}-{}.mp4".format(
-                download_dir, vol_id, session_id, asset_id
-            )
-            with self.session.get(url, stream=True) as r:
-                r.raise_for_status()
-                total_size = int(r.headers.get("content-length", 0))
-                block_size = 1024  # 1 Kibibyte
-                t = tqdm(total=total_size, unit="iB", unit_scale=True)
-                with open(filename, "wb") as f:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        if chunk:
-                            t.update(len(chunk))
-                            f.write(chunk)
-                    if r.status_code == 200:
-                        if vb:
-                            print("Success!")
-                            return df
-                        else:
-                            print(
-                                "Download failed with HTTP status "
-                                + r.status_code
-                                + "\n"
-                            )
-                            return ""
+        print("Sending GET to ", url)
+        filename = (
+            download_dir
+            + os.sep
+            + "PLAY_"
+            + str(asset.vol_id)
+            + str(asset.asset_id)
+            + "_NaturalPlay"
+            + ".mp4"
+        )
+        with self.session.get(url, stream=True) as r:
+            r.raise_for_status()
+            total_size = int(r.headers.get("content-length", 0))
+            block_size = 1024  # 1 Kibibyte
+            t = tqdm(total=total_size, unit="iB", unit_scale=True)
+            with open(filename, "wb") as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    if chunk:
+                        t.update(len(chunk))
+                        f.write(chunk)
+                if r.status_code == 200:
+                    return filename
+                else:
+                    print("Download failed with HTTP status " + r.status_code + "\n")
+                    return None
 
-    def download_asset_stream(self, vol_id=1, session_id=9807, asset_id=1, vb=False):
+    def download_asset_stream(self, asset, vb=False):
         def iterable_to_stream(
             iterable, total_size, buffer_size=io.DEFAULT_BUFFER_SIZE
         ):
@@ -507,31 +483,10 @@ class Databrary:
 
             return io.BufferedReader(IterStream(), buffer_size=buffer_size)
 
-        # Check parameters
-        if isinstance(vol_id, list):
-            stop("vol_id must be a single, scalar value.")
-        if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
-            return ""
-        if isinstance(session_id, list):
-            stop("session_id must be a single, scalar value.")
-        if not (isinstance(session_id, int)) or (session_id <= 0):
-            print("session_id must be an integer > 0")
-            return ""
-        if isinstance(asset_id, list):
-            stop("asset_id must be a single, scalar value.")
-        if not (isinstance(asset_id, int)) or (asset_id <= 0):
-            print("asset_id must be an integer > 0")
-            return ""
-        if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
-            return ""
-
         url = (
-            "https://nyu.databrary.org/slot/"
-            + str(session_id)
-            + "/asset/"
-            + str(asset_id)
+            "https://nyu.databrary.org/"
+            + "asset/"
+            + str(asset.asset_id)
             + "/download?inline=false"
         )
         print("Sending GET to ", url)
@@ -539,8 +494,8 @@ class Databrary:
         r.raise_for_status()
         total_size = int(r.headers.get("content-length", 0))
         print(total_size)
-        d = r.headers["content-disposition"]
-        fname = re.findall("filename=(.+)", d)[0]
+        print(r.headers)
+        fname = asset.play_filename
         i = r.iter_content(8192)
         # Return the download stream for processing by another module
         # (i.e., uploading to Box)
@@ -658,6 +613,16 @@ class Databrary:
                 for asset in assets:
                     asset["filename"] = self.asset_to_filename(asset)
                     asset["vol_id"] = vol_id
+                    asset["testdate"] = c["date"]
+                    for record in c["records"]:
+                        print(record)
+                        if record["record"]["category"] == 1:
+                            asset["gender"] = record["record"]["measures"]["5"]
+                            asset["birthdate"] = record["record"]["measures"]["4"]
+                            if "12" in record["record"]["measures"]:
+                                asset["language"] = record["record"]["measures"]["12"]
+                            else:
+                                asset["language"] = "English"
                 all_assets += assets
             else:
                 print(

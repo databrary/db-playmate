@@ -3,6 +3,9 @@ import toml
 from box import Box
 from databrary import Databrary
 from kobo import Kobo
+import os
+import shutil
+import constants
 
 """
 This is the bridge between Box and Kobo/Databrary.
@@ -42,15 +45,33 @@ class Bridge:
         # Now open an output stream into databrary
         # TODO
 
-    def transfer_databrary_to_box(self, db_volume, db_container, db_asset, box_path):
+    def transfer_file_to_box(self, filename, box_path):
+        self.box.upload_file(filename, box_path)
+
+    def transfer_databrary_to_box(self, db_asset, box_path):
         """
         Transfer a file from databrary to Box
         """
         # TODO expose the file name changing part of the download function
-        file_stream, total_size, filename = self.db.download_asset_stream(
-            db_volume, db_container, db_asset
-        )
-        self.box.upload_file_stream(file_stream, box_path, total_size, filename)
+        file_stream, total_size, filename = self.db.download_asset_stream(db_asset)
+        total_size_mb = total_size / 1000 / 1000
+        download_dir = constants.TMP_BOX
+        if total_size_mb < 200:  # KB
+            try:
+                os.mkdir(download_dir)
+            except:
+                pass
+            f = self.db.download_asset(db_asset, constants.TMP_BOX)
+            self.box.upload_file(f, box_path, db_asset.play_filename)
+
+            try:
+                shutil.rmtree(download_dir)
+            except:
+                pass
+        else:
+            self.box.upload_file_stream(
+                file_stream, box_path, total_size, db_asset.play_filename
+            )
 
     def transfer_kobo_to_box(self):
         try:
@@ -61,7 +82,8 @@ class Bridge:
             self.box.create_folder("", "kobo")
         except Exception as e:
             print(e)
-        for form in self.kobo.get_forms().values():
+        forms = self.kobo.get_forms()
+        for form in forms.values():
             print(f"{form.name}: {form.num_submissions} submissions. Downloading...")
             filename = form.name + ".csv"
             with open(filename, "w+") as outfile:

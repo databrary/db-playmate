@@ -238,15 +238,16 @@ class Box:
     def upload_file(self, local_filepath, dest_folder, new_name=None):
         """
         Main upload file function. Will call upload_large_file if the file
-        is over 100MB so that the upload can be chunked or resumed.
+        is over 200MB so that the upload can be chunked or resumed.
         local_filepath: Location of the file to upload on the local computer
         dest_folder: Destination folder of the file (string)
         new_name: assign a new name to the file (optional)
         """
         filesize = os.path.getsize(local_filepath) / 1000 / 1000
-        if filesize > 100:  # MB
+        if filesize > 200:  # MB
             return self.upload_large_file(local_filepath, dest_folder, new_name)
         else:
+            print("UPLOADING", new_name, local_filepath, dest_folder)
             upload_folder = self.get_folder(dest_folder)
             uploaded_file = upload_folder.upload(local_filepath, file_name=new_name)
             return uploaded_file
@@ -258,7 +259,7 @@ class Box:
         new_name: assign a new name to the file (optional)
         """
         dest = self.get_folder(dest_folder)
-        uploader = dest.get_chunked_uploader(local_filepath)
+        uploader = dest.get_chunked_uploader(local_path)
         try:
             uploaded_file = uploader.start()
         except:
@@ -268,12 +269,17 @@ class Box:
 
     def upload_file_stream(self, stream, dest_folder, total_size, filename):
         dest = self.get_folder(dest_folder)
-        upload_session = dest.create_upload_session(total_size, filename)
-        uploader = upload_session.get_chunked_uploader_for_stream(stream, total_size)
-        try:
-            uploaded_file = uploader.start()
-        except:
-            uploaded_file = uploader.resume()
+        if total_size > 200:
+            upload_session = dest.create_upload_session(total_size, filename)
+            uploader = upload_session.get_chunked_uploader_for_stream(
+                stream, total_size
+            )
+            try:
+                uploaded_file = uploader.start()
+            except:
+                uploaded_file = uploader.resume()
+        else:
+            uploaded_file = dest.upload_stream(stream, filename)
         return uploaded_file
 
     def add_collab_viewer(self, item, email_address):

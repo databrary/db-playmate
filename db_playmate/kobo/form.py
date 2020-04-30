@@ -154,6 +154,15 @@ class Form:
         writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
         return str(writer)
 
+    def as_csv_dict(self) -> dict:
+        self._check_submissions()
+        writer = csv.DictWriter(
+            "", [str(q) for q in self.questions], dialect=csv.unix_dialect
+        )
+        writer.writeheader()
+        writer.writerows([s.to_row_dict(self.questions) for s in self.submissions])
+        return writer
+
     def __repr__(self):
         return self.as_csv()
 
