@@ -57,6 +57,19 @@
         padding-top: 20px;
         padding-left: 5%;
       }
+
+      .tracolumn {
+        height: 100%;
+        width: 20%;
+        z-index: 1;
+        position: fixed;
+        top: 0;
+        float: right;
+        background-color: #555;
+        padding-top: 20px;
+        right: 0%;
+        padding-left: 3%;
+      }
     </style>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -109,6 +122,52 @@
       </div>
     </form>
   </div>
+    <div class="tracolumn">
+      <div class="row">
+      <h2>Assign to Transcriber</h2>
+      <form action="{{ url_for('send_to_lab_tra') }}" method="post">
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["trans_coding_form"].ready_for_coding() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].lab_list.label }}<br>
+            {{ forms["trans_coding_form"].lab_list() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["trans_coding_form"].submit_send_to_lab() }}
+          </p>
+        </div>
+      </form>
+      </div>
+    <div class="row">
+      <h2> Tra Rel </h2>
+      <form action="{{ url_for('send_to_rel_trans') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["trans_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].submit_send_to_rel() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["trans_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+      </form>
+    </div>
+    </div>
   <div class="main">
   <div class="row">
     <h1>Add file to pipeline</h1>
@@ -156,7 +215,7 @@
     </form>
   </div>
   <div class="row">
-    <h1> QA Pass </h1>
+    <h1> Assign to Pri Labs </h1>
     <div class="column">
       <form action="{{ url_for('send_to_lab_obj') }}" method="post">
         <h2>Object</h2>
@@ -225,31 +284,8 @@
         </div>
       </form>
     </div>
-    <div class="column">
-      <h2>Tra</h2>
-      <form action="{{ url_for('send_to_lab_tra') }}" method="post">
-        <div class="row">
-          <p>
-            {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
-            {{ forms["trans_coding_form"].ready_for_coding() }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-            {{ forms["trans_coding_form"].lab_list.label }}<br>
-            {{ forms["trans_coding_form"].lab_list() }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-            {{ forms["trans_coding_form"].submit_send_to_lab() }}
-          </p>
-        </div>
-      </form>
-    </div>
 
-  </div>
-  <div class="row">
+
     <div class="column">
       <h2>Comm</h2>
       <form action="{{ url_for('send_to_lab_comm') }}" method="post">
@@ -281,7 +317,7 @@
 
   -->
   <div class="row">
-    <h1> Primary Coding Pass </h1>
+    <h1> Authorize for Rel </h1>
     <div class="column">
       <h2> Object </h2>
       <form action="{{ url_for('send_to_rel_obj') }}" method="post">
@@ -351,29 +387,7 @@
       </form>
     </div>
 
-    <div class="column">
-      <h2> Trans </h2>
-      <form action="{{ url_for('send_to_rel_trans') }}" method="post">
-        <div class="row">
-          <p>
-          {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
-          {{ forms["trans_video_coding_form"].videos_coded() }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-          {{ forms["trans_video_coding_form"].submit_send_to_rel() }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["trans_video_coding_form"].videos_not_coded() }}
-          </p>
-        </div>
-      </form>
-    </div>
-    <div class="row">
+
       <div class="column">
           <h2> Comm </h2>
           <form action="{{ url_for('send_to_rel_comm') }}" method="post">
@@ -396,7 +410,6 @@
             </div>
           </form>
         </div>
-    </div>
 
 
 
@@ -407,7 +420,7 @@
 
     -->
   <div class="row">
-    <h1> Rel Coding Pass </h1>
+    <h1> Assign to GOLD </h1>
     <div class="column">
       <form action="{{ url_for('send_to_gold_obj') }}" method="post">
         <h2> Object </h2>

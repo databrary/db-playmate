@@ -18,25 +18,25 @@ class Submission:
         self.ready_for_qa = False
         self.ready_for_coding = False
         self.moved_to_silver = False
-        self.assigned_coding_site_trans = None
-        self.assigned_coding_site_comm = None
+        self.assigned_coding_site_tra = None
+        self.assigned_coding_site_com = None
         self.assigned_coding_site_emo = None
         self.assigned_coding_site_loc = None
         self.assigned_coding_site_obj = None
-        self.primary_coding_finished_trans = False
-        self.primary_coding_finished_comm = False
+        self.primary_coding_finished_tra = False
+        self.primary_coding_finished_com = False
         self.primary_coding_finished_obj = False
         self.primary_coding_finished_loc = False
         self.primary_coding_finished_emo = False
-        self.ready_for_rel_comm = False
+        self.ready_for_rel_com = False
         self.ready_for_rel_obj = False
         self.ready_for_rel_loc = False
         self.ready_for_rel_emo = False
-        self.rel_coding_finished_comm = False
+        self.rel_coding_finished_com = False
         self.rel_coding_finished_obj = False
         self.rel_coding_finished_loc = False
         self.rel_coding_finished_emo = False
-        self.moved_to_gold_comm = False
+        self.moved_to_gold_com = False
         self.moved_to_gold_obj = False
         self.moved_to_gold_loc = False
         self.moved_to_gold_emo = False
@@ -48,9 +48,9 @@ class Submission:
             self.vol_id, self.asset_id
         )
         self.play_id = "PLAY_{}_{}".format(self.vol_id, self.asset_id)
-        self.qa_filename = "PLAY_{}_{}".format(self.site_id, self.subj_number)
+        self.qa_filename = "PLAY_{}_{}.opf".format(self.site_id, self.subj_number)
         self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.asset_id)
-        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{exclusion_status}-{language}-{release}".format(
+        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{exclusion_status}-{language}-R{release}".format(
             vol_id=self.vol_id,
             asset_id=self.asset_id,
             site_id=self.site_id,
@@ -133,8 +133,8 @@ class Lab:
         self.code_obj = False
         self.code_loc = False
         self.code_emo = False
-        self.code_comm = False
-        self.code_trans = False
+        self.code_com = False
+        self.code_tra = False
 
     def __str__(self):
         return "{}".format(self.lab_code)

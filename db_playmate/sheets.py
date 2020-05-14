@@ -3,7 +3,7 @@ import os.path
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
-from data_model import Lab, Site
+from db_playmate.data_model import Lab, Site
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -75,7 +75,7 @@ def read_lab_coding(labs):
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
                 if coding_pass == "Communication & Gesture":
-                    labs_dict[lab_code].code_comm = True
+                    labs_dict[lab_code].code_com = True
                 if coding_pass == "Emotion":
                     labs_dict[lab_code].code_emo = True
                 if coding_pass == "Locomotion":

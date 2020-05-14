@@ -8,6 +8,7 @@ from collections import deque
 from multiprocessing import Process
 from threading import Thread
 from boxsdk.object.collaboration import CollaborationRole
+from db_playmate.constants import PLAY_PREFIX, PRI_CODED_DIR, REL_CODED_DIR
 
 import boxsdk as bx
 import keyring
@@ -186,7 +187,7 @@ class Box:
             local_path = local_path + os.sep + box_file.get().name
 
         with open(local_path, "wb") as handle:
-            return download_file_stream(self, box_file, output_stream)
+            return self.download_file_stream(box_file, handle)
 
     def download_file_stream(self, box_file, output_stream):
         """
@@ -235,7 +236,7 @@ class Box:
         else:
             return False
 
-    def upload_file(self, local_filepath, dest_folder, new_name=None):
+    def upload_file(self, local_filepath, dest_folder, makedirs=False, new_name=None):
         """
         Main upload file function. Will call upload_large_file if the file
         is over 200MB so that the upload can be chunked or resumed.
@@ -244,11 +245,13 @@ class Box:
         new_name: assign a new name to the file (optional)
         """
         filesize = os.path.getsize(local_filepath) / 1000 / 1000
+        upload_folder = self.get_folder(dest_folder)
+        if upload_folder is None and makedirs is True:
+            upload_folder = self.create_folders(dest_folder)
         if filesize > 200:  # MB
             return self.upload_large_file(local_filepath, dest_folder, new_name)
         else:
             print("UPLOADING", new_name, local_filepath, dest_folder)
-            upload_folder = self.get_folder(dest_folder)
             uploaded_file = upload_folder.upload(local_filepath, file_name=new_name)
             return uploaded_file
 
@@ -329,6 +332,28 @@ class Box:
                 self.name = c.accessible_by.name if c.accessibly_by is not None else ""
 
         return [BoxCollab(c) for c in collabs]
+
+    def update_coded_videos(self, datastore):
+        # For each uncoded video in the datastore, check to see if it has been coded yet
+        # Pri coding check
+        passes = ["loc", "obj", "com", "emo", "tra"]
+        for sub in datastore.get_submissions():
+            print("Checking", sub.play_filename, sub.coding_filename_prefix + ".opf")
+            # Check for PRI files
+            for p in passes:
+                if getattr(sub, "assigned_coding_site_{}".format(p)) and not getattr(
+                    sub, "primary_coding_finished_{}".format(p)
+                ):
+                    lab = getattr(sub, "assigned_coding_site_{}".format(p))
+                    # Check for file
+                    pri_folder_name = PRI_CODED_DIR.format(p, lab.lab_code)
+                    print(pri_folder_name)
+                    pri_file_name = (
+                        pri_folder_name + "/" + sub.coding_filename_prefix + ".opf"
+                    )
+                    pri_file = self.get_file(pri_file_name)
+                    if pri_file:
+                        setattr(sub, "primary_coding_finished_{}".format(p), True)
 
 
 def get_client(client_id, client_secret):

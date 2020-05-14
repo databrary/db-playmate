@@ -1,11 +1,10 @@
-from box import get_client
+from db_playmate.box import get_client
 import toml
-from box import Box
-from databrary import Databrary
-from kobo import Kobo
+from db_playmate.databrary import Databrary
+from db_playmate.kobo import Kobo
 import os
 import shutil
-import constants
+import db_playmate.constants as constants
 
 """
 This is the bridge between Box and Kobo/Databrary.
@@ -45,8 +44,8 @@ class Bridge:
         # Now open an output stream into databrary
         # TODO
 
-    def transfer_file_to_box(self, filename, box_path):
-        self.box.upload_file(filename, box_path)
+    def transfer_file_to_box(self, filename, box_path, makedirs=False):
+        self.box.upload_file(filename, box_path, makedirs=makedirs)
 
     def transfer_databrary_to_box(self, db_asset, box_path):
         """
