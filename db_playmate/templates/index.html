@@ -14,8 +14,8 @@
       /* Create two equal columns that floats next to each other */
       .column {
         float: left;
-        width: 50%;
-        padding: 10px;
+        width: 35%;
+        padding: 5px;
       }
 
       /* Clear floats after the columns */
@@ -26,7 +26,7 @@
       }
 
       .main {
-        margin-left: 33%;
+        margin-left: 28%;
         padding: 0px 10px;
       }
 
@@ -53,23 +53,32 @@
         z-index: 1; /* Stay on top */
         top: 0; /* Stay at the top */
         left: 0;
-        background-color: #456; /* Black */
+        background-color: #669966; /* PLAY green */
         padding-top: 20px;
-        padding-left: 5%;
+        padding-left: 2%;
       }
 
       .tracolumn {
         height: 100%;
-        width: 20%;
+        width: 25%;
         z-index: 1;
         position: fixed;
         top: 0;
         float: right;
-        background-color: #555;
+        background-color: #bbb;
         padding-top: 20px;
         right: 0%;
         padding-left: 3%;
       }
+
+      .green {
+        color: #669966;
+        }
+
+      .grey {
+        color: #888888;
+        }
+
     </style>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
@@ -91,6 +100,7 @@
   <div class="sidenav">
     <form action="{{ url_for('queue_action') }}" method="post">
       <div class="row">
+        <h3>Action queue</h3>
         <p>
         {{ forms["queue_form"].actions.label }}<br>
         {{ forms["queue_form"].actions() }}
@@ -124,7 +134,7 @@
   </div>
     <div class="tracolumn">
       <div class="row">
-      <h2>Assign to Transcriber</h2>
+      <h3>Assign to Transcriber</h3>
       <form action="{{ url_for('send_to_lab_tra') }}" method="post">
         <div class="row">
           <p>
@@ -146,7 +156,8 @@
       </form>
       </div>
     <div class="row">
-      <h2> Tra Rel </h2>
+    <br>
+      <h3> Transcription Reliability </h3>
       <form action="{{ url_for('send_to_rel_trans') }}" method="post">
         <div class="row">
           <p>
@@ -170,7 +181,9 @@
     </div>
   <div class="main">
   <div class="row">
-    <h1>Add file to pipeline</h1>
+    <br>
+    <img src="PLAY-logo.png" height=150px>
+    <h3 class="green">Add file to pipeline</h3>
     <form action="{{ url_for('send_to_qa') }}" method="post">
     <div class="column">
       {{ forms["in_db_form"].hidden_tag() }}
@@ -215,10 +228,10 @@
     </form>
   </div>
   <div class="row">
-    <h1> Assign to Pri Labs </h1>
+    <h3 class="green">Assign to labs</h3>
     <div class="column">
       <form action="{{ url_for('send_to_lab_obj') }}" method="post">
-        <h2>Object</h2>
+        <h4 class="grey">Object</h4>
         <div class="row">
           <p>
             {{ forms["obj_coding_form"].ready_for_coding.label }}<br>
@@ -240,7 +253,7 @@
     </div>
     <div class="column">
       <form action="{{ url_for('send_to_lab_loc') }}" method="post">
-        <h2>Loc</h2>
+        <h4 class="grey">Locomotion</h4>
         <div class="row">
           <p>
             {{ forms["loc_coding_form"].ready_for_coding.label }}<br>
@@ -263,7 +276,7 @@
   </div>
   <div class="row">
     <div class="column">
-      <h2>Emo</h2>
+      <h4 class="grey">Emotion</h4>
       <form action="{{ url_for('send_to_lab_emo') }}" method="post">
         <div class="row">
           <p>
@@ -287,7 +300,7 @@
 
 
     <div class="column">
-      <h2>Comm</h2>
+      <h4 class="grey">Communication & Gesture</h4>
       <form action="{{ url_for('send_to_lab_comm') }}" method="post">
         <div class="row">
           <p>
@@ -317,9 +330,9 @@
 
   -->
   <div class="row">
-    <h1> Authorize for Rel </h1>
+    <h3 class="green">Authorize for reliability coding </h3>
     <div class="column">
-      <h2> Object </h2>
+      <h4 class="grey"> Object </h4>
       <form action="{{ url_for('send_to_rel_obj') }}" method="post">
         <div class="row">
           <p>
@@ -341,7 +354,7 @@
       </form>
     </div>
     <div class="column">
-      <h2> Loc </h2>
+      <h4 class="grey"> Locomotion </h4>
       <form action="{{ url_for('send_to_rel_loc') }}" method="post">
         <div class="row">
           <p>
@@ -365,7 +378,7 @@
   </div>
   <div class="row">
     <div class="column">
-      <h2> Emo </h2>
+      <h4 class="grey"> Emotion </h4>
       <form action="{{ url_for('send_to_rel_emo') }}" method="post">
         <div class="row">
           <p>
@@ -389,7 +402,7 @@
 
 
       <div class="column">
-          <h2> Comm </h2>
+          <h4 class="grey"> Communication & Gesture </h4>
           <form action="{{ url_for('send_to_rel_comm') }}" method="post">
             <div class="row">
               <p>
@@ -420,10 +433,10 @@
 
     -->
   <div class="row">
-    <h1> Assign to GOLD </h1>
+    <h3 class="green">Assign to GOLD </h3>
     <div class="column">
       <form action="{{ url_for('send_to_gold_obj') }}" method="post">
-        <h2> Object </h2>
+        <h4 class="grey"> Object </h4>
         <div class="row">
           <p>
           {{ forms["obj_rel_form"].ready_for_rel.label }}<br>
@@ -446,7 +459,7 @@
 
     <div class="column">
       <form action="{{ url_for('send_to_gold_loc') }}" method="post">
-        <h2> Loc </h2>
+        <h4 class="grey"> Locomotion </h4>
         <div class="row">
           <p>
           {{ forms["loc_rel_form"].ready_for_rel.label }}<br>
@@ -471,7 +484,7 @@
 
     <div class="column">
       <form action="{{ url_for('send_to_gold_emo') }}" method="post">
-        <h2> Emo </h2>
+        <h4 class="grey"> Emotion </h4>
         <div class="row">
           <p>
           {{ forms["emo_rel_form"].ready_for_rel.label }}<br>
@@ -494,7 +507,7 @@
 
     <div class="column">
       <form action="{{ url_for('send_to_gold_comm') }}" method="post">
-        <h2> Comm </h2>
+        <h4 class="grey"> Communication & Gesture </h4>
         <div class="row">
           <p>
           {{ forms["comm_rel_form"].ready_for_rel.label }}<br>
