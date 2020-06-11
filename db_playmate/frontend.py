@@ -8,20 +8,28 @@ from flask_wtf import FlaskForm
 from wtforms.fields import SelectField, SelectMultipleField, SubmitField
 
 from db_playmate.bridge import Bridge
-from db_playmate.data_model import Datastore
+from db_playmate.data_model import Datastore, Site
 from db_playmate.datavyu import DatavyuTemplateFactory
 from db_playmate.process_queue import Job, Queue
 from db_playmate.sheets import read_master
 
 import db_playmate.constants as constants
 
-SAVE_FILE = "env/db_playmate.pickle"
+from db_playmate.configure import config
+
+
+SAVE_FILE = constants.USER_DATA_DIR + "/db_playmate.pickle"
+CONFIG_FILE = constants.USER_DATA_DIR + "/config.toml"
+print(CONFIG_FILE, os.path.exists(CONFIG_FILE))
+
+# SAVE_FILE = "env/db_playmate.pickle"
 
 VIDEO_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/1_PLAY_videos_for_coding"
 QA_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/2_PLAY_qa_opfs/1_PLAY_qa_templates"
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "you-will-never-guess"
+app.register_blueprint(config, url_prefix="/config")
 global datastore
 datastore = Datastore()
 
@@ -77,8 +85,13 @@ class QueueForm(FlaskForm):
     cancel_queue = SubmitField("Cancel Queue")
 
 
+class RefreshButton(FlaskForm):
+    refresh_button = SubmitField("Refresh Videos from Box")
+
+
 def create_forms():
     global datastore
+    datastore.save(SAVE_FILE)
     in_db_form = InDbForm({"width": "200px"})
     in_db = [
         (x.id, x.display_name)
@@ -122,8 +135,6 @@ def create_forms():
         and x.assigned_coding_site_com is None
         and x.primary_coding_finished_tra
     ]
-    for x in comm_coding_videos:
-        print(x.id, x.primary_coding_finished_tra)
     comm_coding_form.ready_for_coding.choices = comm_coding_videos
     lab_list = [(x.lab_code, x.lab_code) for x in datastore.labs if x.code_com]
     comm_coding_form.lab_list.choices = lab_list
@@ -332,6 +343,8 @@ def create_forms():
     else:
         queue_form.results.choices = [(" " * 15, " " * 15)]
 
+    refresh_form = RefreshButton()
+
     forms = {
         "in_db_form": in_db_form,
         "qa_form": qa_form,
@@ -350,8 +363,10 @@ def create_forms():
         "emo_rel_form": emo_rel_form,
         "comm_rel_form": comm_rel_form,
         "queue_form": queue_form,
+        "refresh_button": refresh_form,
     }
 
+    datastore.save(SAVE_FILE)
     return forms
 
 
@@ -359,6 +374,37 @@ def create_forms():
 @app.route("/index.html", methods=["GET", "POST"])
 def populate_main_page():
     global forms
+    global datastore
+    global bridge
+    global queue
+    global CONFIG_FILE
+    global SAVE_FILE
+
+    bridge = Bridge(CONFIG_FILE)
+
+    # Load the data if it exists, otherwise populate from
+    # online resources
+    if os.path.exists(SAVE_FILE):
+        with open(SAVE_FILE, "rb") as handle:
+            datastore = pickle.load(handle)
+    else:
+        datastore.sites, datastore.labs, datastore.tra_names = get_labs(bridge)
+        get_kobo_forms(bridge)
+        get_submissions(datastore.sites, bridge, datastore)
+
+        datastore.save(SAVE_FILE)
+
+        for site_code in datastore.sites:
+            print(datastore.sites[site_code].submissions.keys())
+            for subj in datastore.sites[site_code].submissions:
+                print(site_code, subj, datastore.sites[site_code].submissions[subj])
+
+    # Create a server to show the data
+    print("Checking for changes to coded videos...")
+    bridge.box.update_coded_videos(datastore)
+
+    datastore.save(SAVE_FILE)
+
     forms = create_forms()
     return render_template("index.html", forms=forms, queue=queue)
 
@@ -387,6 +433,13 @@ def send_to_qa():
         )
     )
 
+    forms = create_forms()
+    return render_template("index.html", forms=forms, queue=queue)
+
+
+@app.route("/refresh_page", methods=["GET", "POST"])
+def refresh_page():
+    bridge.box.update_coded_videos(datastore)
     forms = create_forms()
     return render_template("index.html", forms=forms, queue=queue)
 
@@ -431,9 +484,9 @@ def send_to_lab_obj():
         if not qa_file:
             raise Exception("No completed QA file")
 
-        bridge.box.download_file(qa_file, constants.TMP_DIR)
+        bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
         output_file = DatavyuTemplateFactory.generate_obj_file(
-            x, constants.TMP_DIR + "/" + x.qa_filename
+            x, constants.TMP_DATA_DIR + "/" + x.qa_filename
         )
         print(
             "Uploading {} to {}".format(
@@ -475,9 +528,9 @@ def send_to_lab_loc():
 
         if not qa_file:
             raise Exception("No completed QA file")
-        bridge.box.download_file(qa_file, constants.TMP_DIR)
+        bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
         output_file = DatavyuTemplateFactory.generate_loc_file(
-            x, constants.TMP_DIR + "/" + x.qa_filename
+            x, constants.TMP_DATA_DIR + "/" + x.qa_filename
         )
         print(
             "Uploading {} to {}".format(
@@ -520,9 +573,9 @@ def send_to_lab_emo():
         if not qa_file:
             raise Exception("No completed QA file")
 
-        bridge.box.download_file(qa_file, constants.TMP_DIR)
+        bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
         output_file = DatavyuTemplateFactory.generate_emo_file(
-            x, constants.TMP_DIR + "/" + x.qa_filename
+            x, constants.TMP_DATA_DIR + "/" + x.qa_filename
         )
         print(
             "Uploading {} to {}".format(
@@ -564,9 +617,9 @@ def send_to_lab_tra():
         if not qa_file:
             raise Exception("No completed QA file")
 
-        bridge.box.download_file(qa_file, constants.TMP_DIR)
+        bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
         output_file = DatavyuTemplateFactory.generate_tra_file(
-            x, constants.TMP_DIR + "/" + x.qa_filename
+            x, constants.TMP_DATA_DIR + "/" + x.qa_filename
         )
         print(
             "Uploading {} to {}".format(
@@ -610,9 +663,9 @@ def send_to_lab_comm():
         if not qa_file:
             raise Exception("No completed Tra file")
 
-        bridge.box.download_file(qa_file, constants.TMP_DIR)
+        bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
         output_file = DatavyuTemplateFactory.generate_com_file(
-            x, constants.TMP_DIR + "/" + x.qa_filename
+            x, constants.TMP_DATA_DIR + "/" + x.qa_filename
         )
         print(
             "Uploading {} to {}".format(
@@ -882,6 +935,11 @@ def get_labs(bridge):
     sites, labs, tra_names = read_master()
     for site in sites.values():
         site.get_vol_id(bridge.db)
+
+    sites["TEST"] = Site("TEST5")
+    sites["TEST"].vol_id = "135"
+    sites["TEST2"] = Site("TEST6")
+    sites["TEST2"].vol_id = "152"
     return sites, labs, tra_names
 
 
@@ -898,8 +956,8 @@ def get_submissions(sites, bridge, datastore):
                     except IndexError as e:
                         print("Error adding video")
                         print(e)
-    for sub in datastore.get_submissions():
-        sub.check_for_form(bridge.kobo.get_forms())
+    #  for sub in datastore.get_submissions():
+    #  sub.check_for_form(bridge.kobo.get_forms())
 
 
 def get_kobo_forms(bridge):
@@ -913,32 +971,13 @@ def startup():
     global datastore
     global bridge
     global queue
+    global CONFIG_FILE
+    global SAVE_FILE
 
-    print(os.getcwd())
-    bridge = Bridge("env/config.toml")
-
-    # Load the data if it exists, otherwise populate from
-    # online resources
-    if os.path.exists(SAVE_FILE):
-        with open(SAVE_FILE, "rb") as handle:
-            datastore = pickle.load(handle)
+    if not os.path.exists(CONFIG_FILE):
+        url = "http://localhost:5000/config"
     else:
-        datastore.sites, datastore.labs, datastore.tra_names = get_labs(bridge)
-        get_kobo_forms(bridge)
-        get_submissions(datastore.sites, bridge, datastore)
-
-        datastore.save(SAVE_FILE)
-
-        for site_code in datastore.sites:
-            print(datastore.sites[site_code].submissions.keys())
-            for subj in datastore.sites[site_code].submissions:
-                print(site_code, subj, datastore.sites[site_code].submissions[subj])
-
-    # Create a server to show the data
-    print("Checking for changes to coded videos...")
-    bridge.box.update_coded_videos(datastore)
-    datastore.save(SAVE_FILE)
-    url = "http://localhost:5000"
+        url = "http://localhost:5000"
     threading.Timer(1.25, lambda: webbrowser.open(url)).start()
     app.run()
 

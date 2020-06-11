@@ -5,6 +5,7 @@ from db_playmate.kobo import Kobo
 import os
 import shutil
 import db_playmate.constants as constants
+from db_playmate.configure import get_creds
 
 """
 This is the bridge between Box and Kobo/Databrary.
@@ -19,10 +20,10 @@ class Bridge:
         with open(config_file) as config:
             cfg = toml.load(config)
             clid = cfg["box"]["client_id"]
-            clsec = cfg["box"]["client_secret"]
             databrary_username = cfg["databrary"]["username"]
             kobo_base_url = cfg["kobo"]["base_url"]
-            kobo_token = cfg["kobo"]["auth_token"]
+
+        kobo_token, clsec = get_creds()
 
         print("Connecting to Box...")
         self.box = get_client(clid, clsec)
@@ -54,13 +55,13 @@ class Bridge:
         # TODO expose the file name changing part of the download function
         file_stream, total_size, filename = self.db.download_asset_stream(db_asset)
         total_size_mb = total_size / 1000 / 1000
-        download_dir = constants.TMP_BOX
+        download_dir = constants.TMP_DATA_DIR
         if total_size_mb < 200:  # KB
             try:
                 os.mkdir(download_dir)
             except:
                 pass
-            f = self.db.download_asset(db_asset, constants.TMP_BOX)
+            f = self.db.download_asset(db_asset, download_dir)
             self.box.upload_file(f, box_path, db_asset.play_filename)
 
             try:
@@ -84,7 +85,7 @@ class Bridge:
         forms = self.kobo.get_forms()
         for form in forms.values():
             print(f"{form.name}: {form.num_submissions} submissions. Downloading...")
-            filename = form.name + ".csv"
+            filename = constants.TMP_DATA_DIR + "/" + form.name + ".csv"
             with open(filename, "w+") as outfile:
                 form.to_csv(outfile)
             print("Uploading to Box...")

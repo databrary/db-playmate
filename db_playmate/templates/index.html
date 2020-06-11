@@ -30,6 +30,10 @@
         padding: 0px 10px;
       }
 
+      div#content {
+        display: none;
+      }
+
       select:empty {
         min-width: 20%;
       }
@@ -86,8 +90,19 @@
         }
       }
     </script>
+
+    <script type="text/javascript">// <![CDATA[
+        function preloader(){
+            document.getElementById("loading").style.display = "none";
+            document.getElementById("content").style.display = "block";
+        }//preloader
+        window.onload = preloader;
+// ]]></script>
+
   </HEAD>
   <BODY>
+  <div id="loading"></div>
+  <div id="content">
   <div class="sidenav">
     <form action="{{ url_for('queue_action') }}" method="post">
       <div class="row">
@@ -121,6 +136,14 @@
         </p>
       </div>
     </form>
+    <form action="{{ url_for('refresh_page') }}" method="post">
+      <div class="row">
+        <p>
+        {{ forms["refresh_button"].refresh_button }}
+        </p>
+        </div>
+    </form>
+
   </div>
     <div class="tracolumn">
       <div class="row">
@@ -514,6 +537,7 @@
         </div>
       </form>
     </div>
+  </div>
   </div>
   </div>
  

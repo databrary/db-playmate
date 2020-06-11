@@ -1,5 +1,4 @@
 import csv
-from furl import furl
 from .question import Question
 from .submission import Submission
 import logging as log
@@ -112,9 +111,12 @@ class Form:
         self.submissions.append(Submission(parent=self, data=data))
 
     def _submission_url(self):
-        url = furl(self.url)
-        url.path.add("submissions")
-        return url.url
+        if "?" in self.url:
+            url_s = self.url.split("?")
+            url = url_s[0] + "submissions" + "?" + url_s[1]
+        else:
+            url = self.url + "submissions"
+        return url
 
     def get_submissions(self):
         rj = self.connection.send_query(url=self._submission_url()).json()

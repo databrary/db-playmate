@@ -1,7 +1,7 @@
 import io
 import logging as log
 import pytest
-from db_playmate import Kobo, Form
+from db_playmate.kobo import Kobo, Form
 
 
 @pytest.fixture(scope="session")

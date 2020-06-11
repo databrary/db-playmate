@@ -1,4 +1,5 @@
 import pickle
+import os
 import re
 
 
@@ -171,7 +172,11 @@ class Datastore:
         site_id = asset["filename"].split("_")[1].strip()
         self.sites[site_id].add_video(site_id, asset)
 
-    def save(self, filename):
+    def save(self, filename=None):
+        path = os.sep.join(filename.split(os.sep)[:-1])
+        os.makedirs(path, exist_ok=True)
+        if filename is None:
+            filename = constants.save_filename
         with open(filename, "wb") as handle:
             pickle.dump(self, handle)
 

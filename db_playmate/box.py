@@ -5,10 +5,9 @@ import os
 import time
 import webbrowser
 from collections import deque
-from multiprocessing import Process
 from threading import Thread
 from boxsdk.object.collaboration import CollaborationRole
-from db_playmate.constants import PLAY_PREFIX, PRI_CODED_DIR, REL_CODED_DIR
+import db_playmate.constants as constants
 
 import boxsdk as bx
 import keyring
@@ -262,7 +261,7 @@ class Box:
         new_name: assign a new name to the file (optional)
         """
         dest = self.get_folder(dest_folder)
-        uploader = dest.get_chunked_uploader(local_path)
+        uploader = dest.get_chunked_uploader(local_filepath)
         try:
             uploaded_file = uploader.start()
         except:
@@ -346,14 +345,38 @@ class Box:
                 ):
                     lab = getattr(sub, "assigned_coding_site_{}".format(p))
                     # Check for file
-                    pri_folder_name = PRI_CODED_DIR.format(p, lab.lab_code)
+                    pri_folder_name = constants.PRI_CODED_DIR.format(p, lab)
                     print(pri_folder_name)
-                    pri_file_name = (
-                        pri_folder_name + "/" + sub.coding_filename_prefix + ".opf"
+                    pri_file_name = "{}{}_{}.opf".format(
+                        pri_folder_name, sub.coding_filename_prefix, p
                     )
+                    print("Checking folder", pri_file_name)
                     pri_file = self.get_file(pri_file_name)
-                    if pri_file:
+                    print(pri_file)
+                    if pri_file is not None:
                         setattr(sub, "primary_coding_finished_{}".format(p), True)
+                        print("Found, setting to true")
+
+    def perform_initial_sync(self, datastore):
+        """Sync the current state of the box folder to this application"""
+        passes = ["loc", "obj", "com", "emo", "tra"]
+        # We want to walk the entire automation folder to try to find everything
+        # Check status of QA files
+        files = self.list_folder(constants.QA_CODED_DIR)
+
+    def set_permissions_read(self, folder, emails):
+        self.set_permissions(folder, emails, CollaborationRole.VIEWER)
+
+    def set_permissions_readwrite(self, folder, emails):
+        self.set_permissions(folder, emails, CollaborationRole.VIEWER_UPLOADER)
+
+    def set_permissions_write(self, folder, emails):
+        self.set_permissions(folder, emails, CollaborationRole.PREVIEWER_UPLOADER)
+
+    def set_permissions(self, folder, emails, role):
+        f = get_folder(folder)
+        for e in emails:
+            f.collaborate_with_login(e, role)
 
 
 def get_client(client_id, client_secret):
@@ -369,7 +392,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--config-file",
-        default="env/config.toml",
+        default=constants.USER_DATA_DIR + "config.toml",
         required=False,
         help="json file with box credentials",
     )

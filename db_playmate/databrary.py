@@ -9,6 +9,8 @@ import os
 from tqdm import tqdm
 import json
 
+import db_playmate.constants as constants
+
 
 class Databrary:
     PLAY_VOLUME = 899
@@ -110,7 +112,7 @@ class Databrary:
                 print("Please enter your Databrary user ID (email).")
                 username = input("User ID: ")
             if keyring.get_keyring() != "":
-                kl = keyring.get_password("databrary", username)
+                kl = keyring.get_password("db_playmate_databrary", username)
                 if kl != "None":
                     pw = kl
                 else:
@@ -415,6 +417,8 @@ class Databrary:
 
     # ------------------------------------------------------------------------------
     def download_asset(self, asset, download_dir="./"):
+        if download_dir=="./":
+            download_dir = constants.TMP_DATA_DIR
 
         print("DOWNLOADING", asset.asset)
         url = (

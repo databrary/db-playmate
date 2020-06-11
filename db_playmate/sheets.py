@@ -4,6 +4,7 @@ from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from db_playmate.data_model import Lab, Site
+import db_playmate.constants as constants
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -14,8 +15,8 @@ def _get_sheet(sheet_id, sheet_range, sheet_name=None):
     # The file token.pickle stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
     # time.
-    if os.path.exists("env/token.pickle"):
-        with open("env/token.pickle", "rb") as token:
+    if os.path.exists(constants.USER_DATA_DIR + "/token.pickle"):
+        with open(constants.USER_DATA_DIR + "/token.pickle", "rb") as token:
             creds = pickle.load(token)
     # If there are no (valid) credentials available, let the user log in.
     if not creds or not creds.valid:
@@ -23,11 +24,11 @@ def _get_sheet(sheet_id, sheet_range, sheet_name=None):
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                "env/credentials.json", SCOPES
+                constants.USER_DATA_DIR + "/credentials.json", SCOPES
             )
             creds = flow.run_local_server(port=0)
         # Save the credentials for the next run
-        with open("env/token.pickle", "wb") as token:
+        with open(constants.USER_DATA_DIR + "/token.pickle", "wb") as token:
             pickle.dump(creds, token)
 
     service = build("sheets", "v4", credentials=creds, cache_discovery=False)
@@ -51,6 +52,7 @@ def read_lab_coding(labs):
     LAB_CODE_COL = "LabCode"
     CODING_PASS_COL = "Coding pass"
     LAB_CODING_RANGE = "A2:X"
+
     header, values = _get_sheet(LAB_CODING_ID, LAB_CODING_RANGE, "CodingSites")
 
     labs_dict = {l.lab_code: l for l in labs}
@@ -95,11 +97,23 @@ def read_lab_coding(labs):
     return labs, tra_names
 
 
+def read_permissions_list():
+    # TODO Need to read from emails in Summary tab and TranscribersList tab
+    header, values = self._get_sheet(LAB_CODING_ID, "A1:R", "Summary")
+
+    header, values = self._get_sheet(LAB_CODING_ID, "A1:B", "TranscribersList")
+
+
 def read_master():
     """Shows basic usage of the Sheets API.
     Prints values from a sample spreadsheet.
     """
-    # The ID and range of a sample spreadsheet.
+    LAB_CODING_ID = "1iF3n-3THYrThApOoscJBykN7vbEyJdiFKAaz11DHUW4"
+    SITE_CODE_COL = "SiteCode"
+    LAB_CODE_COL = "LabCode"
+    CODING_PASS_COL = "Coding pass"
+    LAB_CODING_RANGE = "A2:X"
+
     PLAY_MASTER_ID = "1V9RuZJNRN4lehLzRSWO0MqVclsXPw7Z-Lxq-VQOvM-A"
     PLAY_MASTER_RANGE = "A2:X"
     PLAY_MASTER_NAME = "SiteTracking"
@@ -109,6 +123,8 @@ def read_master():
     INST_COL = "Institution"
     PI_COL = "PI_Fullname"
     ROLE_COL = "Role"
+
+    # The ID and range of a sample spreadsheet.
 
     header, values = _get_sheet(PLAY_MASTER_ID, PLAY_MASTER_RANGE, PLAY_MASTER_NAME)
 
