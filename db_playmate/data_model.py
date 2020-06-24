@@ -1,16 +1,17 @@
 import pickle
 import os
 import re
+import db_playmate.constants as constants
 
 
 class Submission:
     def __init__(self, site_id, subj_number, db_asset):
         self.asset = db_asset
         self.asset_id = db_asset["id"]
-        self.birthdate = db_asset["birthdate"]
-        self.gender = db_asset["gender"]
-        self.testdate = db_asset["testdate"]
-        self.language = db_asset["language"]
+        self.birthdate = db_asset["birthdate"] if "birthdate" in db_asset else ""
+        self.gender = db_asset["gender"] if "gender" in db_asset else ""
+        self.testdate = db_asset["testdate"] if "testdate" in db_asset else ""
+        self.language = db_asset["language"] if "language" in db_asset else ""
         self.permission = db_asset["permission"]
         self.vol_id = db_asset["vol_id"]
         self.site_id = site_id
@@ -33,10 +34,12 @@ class Submission:
         self.ready_for_rel_obj = False
         self.ready_for_rel_loc = False
         self.ready_for_rel_emo = False
+        self.ready_for_rel_tra = False
         self.rel_coding_finished_com = False
         self.rel_coding_finished_obj = False
         self.rel_coding_finished_loc = False
         self.rel_coding_finished_emo = False
+        self.rel_coding_finished_tra = False
         self.moved_to_gold_com = False
         self.moved_to_gold_obj = False
         self.moved_to_gold_loc = False
@@ -51,12 +54,12 @@ class Submission:
         self.play_id = "PLAY_{}_{}".format(self.vol_id, self.asset_id)
         self.qa_filename = "PLAY_{}_{}.opf".format(self.site_id, self.subj_number)
         self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.asset_id)
-        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{exclusion_status}-{language}-R{release}".format(
+        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{language}-R{release}".format(
             vol_id=self.vol_id,
             asset_id=self.asset_id,
             site_id=self.site_id,
             testdate=self.testdate,
-            exclusion_status="temp",  # TODO fixme
+            #  exclusion_status="temp",  # TODO fixme
             release=self.permission,
             language=self.language,
         )
@@ -68,6 +71,7 @@ class Submission:
         self.home_question = []
         self.structured_play = []
         self.consent = []
+        self.other = []
 
         self.video_map = {
             "NaturalPlay": self.natural_play,
@@ -75,6 +79,7 @@ class Submission:
             "HouseWalkthrough": self.house_walk,
             "Questionnaires": self.home_question,
             "Consent": self.consent,
+            "Other": self.other
         }
 
     def check_for_form(self, forms):
@@ -108,18 +113,21 @@ class Submission:
 
     def add_video(self, asset):
         filename = asset["filename"]
-        video_type = filename.split("_")[-1].split(".")[0]
-        if video_type[-1].isdigit():
-            video_type = video_type[:-1]
-        if video_type in self.video_map and asset not in self.video_map.values():
-            print(video_type)
-            self.video_map[video_type].append(asset)
-        else:
-            print(
-                "Warning: Could not find video_type",
-                video_type,
-                "in map or video was already in list",
-            )
+        try:
+            video_type = filename.split("_")[-1].split(".")[0]
+            if video_type[-1].isdigit():
+                video_type = video_type[:-1]
+            if video_type in self.video_map and asset not in self.video_map.values():
+                print(video_type)
+                self.video_map[video_type].append(asset)
+            else:
+                print(
+                    "Warning: Could not find video_type",
+                    video_type,
+                    "in map or video was already in list",
+                )
+        except IndexError:
+            self.video_map["Other"].append(asset)
 
 
 class Lab:
@@ -153,7 +161,10 @@ class Site:
 
     def add_video(self, site_id, asset):
         filename = asset["filename"]
-        subj_number = filename.split("_")[2]
+        try:
+            subj_number = filename.split("_")[2]
+        except IndexError:
+            subj_number = asset["id"]
         if subj_number not in self.submissions:
             self.submissions[subj_number] = Submission(site_id, subj_number, asset)
         self.submissions[subj_number].add_video(asset)
@@ -169,8 +180,15 @@ class Datastore:
         self.tra_names = []  # Translator names
 
     def add_video(self, asset):
-        site_id = asset["filename"].split("_")[1].strip()
-        self.sites[site_id].add_video(site_id, asset)
+        try:
+            site_id = asset["filename"].split("_")[1].strip()
+        except IndexError:
+            site_id = "TEST" if asset["vol_id"] == "135" else "TEST2"
+        try:
+            self.sites[site_id].add_video(site_id, asset)
+        except KeyError:
+            print("ERROR: Could not find video", site_id, asset)
+            pass # If the key isnt found just ignore it for now
 
     def save(self, filename=None):
         path = os.sep.join(filename.split(os.sep)[:-1])

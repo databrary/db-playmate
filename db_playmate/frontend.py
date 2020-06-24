@@ -2,6 +2,16 @@ import os
 import pickle
 import threading
 import webbrowser
+import time
+import sys
+
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtWebEngine import *
+from PyQt5.QtWebEngineWidgets import *
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 
 from flask import Flask, Response, render_template
 from flask_wtf import FlaskForm
@@ -33,6 +43,12 @@ app.register_blueprint(config, url_prefix="/config")
 global datastore
 datastore = Datastore()
 
+
+#  os.environ["QTWEBENGINEPROCESS_PATH"] = "./"
+qt_app = QApplication(sys.argv)
+WEB = QWebEngineView()
+WEB.setWindowTitle("DB Playmate")
+
 global forms
 forms = {}
 
@@ -61,8 +77,8 @@ class CodingForm(FlaskForm):
 
 class TraCodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Tra")
-    lab_list = SelectField("List of Translators")
-    submit_send_to_lab = SubmitField("Send to Selected Translator")
+    lab_list = SelectField("List of Transcribers")
+    submit_send_to_lab = SubmitField("Send to Selected Transcriber")
 
 
 class VideosCodedForm(FlaskForm):
@@ -183,7 +199,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.primary_coding_finished_tra and x.ready_for_rel is False
+        if not x.queued and x.primary_coding_finished_tra and x.ready_for_rel_tra is False
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -201,7 +217,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.primary_coding_finished_loc and x.ready_for_rel is False
+        if not x.queued and x.primary_coding_finished_loc and x.ready_for_rel_loc is False
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -219,7 +235,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.primary_coding_finished_com and x.ready_for_rel is False
+        if not x.queued and x.primary_coding_finished_com and x.ready_for_rel_com is False
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -237,7 +253,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.primary_coding_finished_emo and x.ready_for_rel is False
+        if not x.queued and x.primary_coding_finished_emo and x.ready_for_rel_emo is False
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -255,7 +271,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.primary_coding_finished_obj and x.ready_for_rel is False
+        if not x.queued and x.primary_coding_finished_obj and x.ready_for_rel_obj is False
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -273,7 +289,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.ready_for_rel_loc and x.rel_coding_finished_loc is False
+        if not x.queued and x.ready_for_rel_loc and x.rel_coding_finished_loc is False and not x.moved_to_gold_loc
     ]
     loc_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
@@ -289,7 +305,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.ready_for_rel_emo and x.rel_coding_finished_emo is False
+        if not x.queued and x.ready_for_rel_emo and x.rel_coding_finished_emo is False and not x.moved_to_gold_emo
     ]
     emo_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
@@ -305,7 +321,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.ready_for_rel_com and x.ready_for_rel_com is False
+        if not x.queued and x.ready_for_rel_com and x.rel_coding_finished_com is False and not x.moved_to_gold_com
     ]
     comm_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
@@ -321,14 +337,14 @@ def create_forms():
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.ready_for_rel_obj and x.ready_for_rel_obj is False
+        if not x.queued and x.ready_for_rel_obj and x.rel_coding_finished_com is False and not x.moved_to_gold_obj
     ]
     obj_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
         (x.id, x.display_name)
         for site in datastore.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.moved_to_gold_obj
+        if x.moved_to_gold_obj
     ]
     obj_rel_form.gold.choices = gold_videos
 
@@ -496,6 +512,7 @@ def send_to_lab_obj():
         bridge.transfer_file_to_box(
             output_file, constants.PRI_CODING_DIR.format("obj", lab), makedirs=True
         )
+        bridge.box.create_folders(constants.PRI_CODED_DIR.format("obj", lab))
         x.assigned_coding_site_obj = lab
 
     queue.add(
@@ -541,6 +558,7 @@ def send_to_lab_loc():
             output_file, constants.PRI_CODING_DIR.format("loc", lab), makedirs=True
         )
         x.assigned_coding_site_loc = lab
+        bridge.box.create_folders(constants.PRI_CODED_DIR.format("loc", lab))
 
     queue.add(
         Job(
@@ -585,6 +603,7 @@ def send_to_lab_emo():
         bridge.transfer_file_to_box(
             output_file, constants.PRI_CODING_DIR.format("emo", lab), makedirs=True
         )
+        bridge.box.create_folders(constants.PRI_CODED_DIR.format("emo", lab))
         x.assigned_coding_site_emo = lab
 
     queue.add(
@@ -629,6 +648,7 @@ def send_to_lab_tra():
         bridge.transfer_file_to_box(
             output_file, constants.PRI_CODING_DIR.format("tra", lab), makedirs=True
         )
+        bridge.box.create_folders(constants.PRI_CODED_DIR.format("tra", lab))
         x.assigned_coding_site_tra = lab
 
     queue.add(
@@ -654,10 +674,9 @@ def send_to_lab_comm():
     def fn(x, lab):
         # Download the coded QA file:
 
-        print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
         qa_file = bridge.box.get_file(
-            constants.PRI_CODED_DIR.format(x.site_id, "tra")
-            + x.coding_filename_prefix
+            constants.PRI_CODED_DIR.format("tra", x.assigned_coding_site_tra)
+            + "/" + x.coding_filename_prefix
             + "_tra.opf"
         )
         if not qa_file:
@@ -672,9 +691,11 @@ def send_to_lab_comm():
                 output_file, constants.PRI_CODING_DIR.format("com", lab)
             )
         )
-        bridge.comnsfer_file_to_box(
+        bridge.transfer_file_to_box(
             output_file, constants.PRI_CODING_DIR.format("com", lab), makedirs=True
         )
+
+        bridge.box.create_folders(constants.PRI_CODED_DIR.format("com", lab))
         x.assigned_coding_site_com = lab
 
     queue.add(
@@ -768,7 +789,7 @@ def send_to_rel_trans():
     queue.add(
         Job(
             target=fn,
-            name="READY FOR TRANS REL: {}".format(submitted_data.qa_filename),
+            name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
             args=[submitted_data],
             item=submitted_data,
         )
@@ -790,7 +811,7 @@ def send_to_rel_comm():
     queue.add(
         Job(
             target=fn,
-            name="READY FOR TRANS REL: {}".format(submitted_data.qa_filename),
+            name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
             args=[submitted_data],
             item=submitted_data,
         )
@@ -878,7 +899,7 @@ def send_to_gold_comm():
     queue.add(
         Job(
             target=fn,
-            name="MOVE TO GOLD TRANS: {}".format(submitted_data.qa_filename),
+            name="MOVE TO GOLD TRA: {}".format(submitted_data.qa_filename),
             args=[submitted_data],
             item=submitted_data,
         )
@@ -936,16 +957,17 @@ def get_labs(bridge):
     for site in sites.values():
         site.get_vol_id(bridge.db)
 
-    sites["TEST"] = Site("TEST5")
+    sites["TEST"] = Site("TEST")
     sites["TEST"].vol_id = "135"
-    sites["TEST2"] = Site("TEST6")
+    sites["TEST2"] = Site("TEST2")
     sites["TEST2"].vol_id = "152"
     return sites, labs, tra_names
 
 
 def get_submissions(sites, bridge, datastore):
     for site in sites.values():
-        assets = bridge.db.get_assets_for_volume(site.vol_id)
+        print("Getting submissions for vol_id", site.vol_id)
+        assets = bridge.db.get_assets_for_volume(site.vol_id, gold_only=False)
         if assets is not None:
             for a in assets:
                 print(a)
@@ -973,14 +995,22 @@ def startup():
     global queue
     global CONFIG_FILE
     global SAVE_FILE
+    global WEB
 
     if not os.path.exists(CONFIG_FILE):
         url = "http://localhost:5000/config"
     else:
         url = "http://localhost:5000"
-    threading.Timer(1.25, lambda: webbrowser.open(url)).start()
-    app.run()
 
+    def load_browser(web, url):
+        time.sleep(1.25)
+        WEB.load(QUrl(url))
+        WEB.show()
+
+    server = threading.Thread(target=lambda x: x.run(), args=(app,))
+    server.start()
+    load_browser(WEB, url)
+    sys.exit(qt_app.exec_())
 
 if __name__ == "__main__":
     startup()

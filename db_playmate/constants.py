@@ -16,7 +16,7 @@ PRI_CODING_DIR = (
 )  # type / lab / 3_Submitted_CannotEditAnymore
 PRI_CODED_DIR = (
     PLAY_PREFIX
-    + "automation_doNotTouch/4a_PLAY_coding_opf_templates_and_submissions/PLAY_opfs_{}/PLAY_opfs_{}/3_Submitted_CannotEditAnymore/"
+    + "automation_doNotTouch/4a_PLAY_coding_opf_templates_and_submissions/PLAY_opfs_{}/PLAY_opfs_{}/3_Submitted_CannotEditAnymore"
 )  # type / lab / 3_Submitted_CannotEditAnymore
 REL_CODED_DIR = (
     PLAY_PREFIX + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}/"

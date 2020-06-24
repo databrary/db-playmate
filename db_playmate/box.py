@@ -10,7 +10,15 @@ from boxsdk.object.collaboration import CollaborationRole
 import db_playmate.constants as constants
 
 import boxsdk as bx
+import sys
 import keyring
+if hasattr(sys, "frozen"):
+    if sys.platform.startswith("win"):
+        import keyring.backends.Windows
+        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+    elif sys.platform.startswith("darwin"):
+        import keyring.backends.OS_X
+        keyring.set_keyring(keyring.backends.OS_X.Keyring())
 from flask import Flask
 from flask import request
 
@@ -243,6 +251,9 @@ class Box:
         dest_folder: Destination folder of the file (string)
         new_name: assign a new name to the file (optional)
         """
+        if self.get_file(dest_folder + os.sep + local_filepath.split(os.sep)[-1]):
+            self.delete(dest_folder + os.sep + local_filepath.split(os.sep)[-1])
+            # TODO Remove this
         filesize = os.path.getsize(local_filepath) / 1000 / 1000
         upload_folder = self.get_folder(dest_folder)
         if upload_folder is None and makedirs is True:
@@ -347,7 +358,7 @@ class Box:
                     # Check for file
                     pri_folder_name = constants.PRI_CODED_DIR.format(p, lab)
                     print(pri_folder_name)
-                    pri_file_name = "{}{}_{}.opf".format(
+                    pri_file_name = "{}/{}_{}.opf".format(
                         pri_folder_name, sub.coding_filename_prefix, p
                     )
                     print("Checking folder", pri_file_name)

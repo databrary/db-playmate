@@ -26,7 +26,10 @@ google-auth-httplib2 = "^0.0.3"
 google-auth-oauthlib = "^0.4.1"
 flask-wtf = "^0.14.3"
 pyvyu = "^0.3.2"
-pyinstaller = "^3.6"
+pylint = "^2.5.3"
+PyQt5 = "^5.15.0"
+PyQtWebEngine = "^5.15.0"
+pyinstaller = {git = "https://github.com/pyinstaller/pyinstaller"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

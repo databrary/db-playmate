@@ -3,7 +3,15 @@
 # Import dependencies
 import requests
 import pandas
+import sys
 import keyring
+if hasattr(sys, "frozen"):
+    if sys.platform.startswith("win"):
+        import keyring.backends.Windows
+        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+    elif sys.platform.startswith("darwin"):
+        import keyring.backends.OS_X
+        keyring.set_keyring(keyring.backends.OS_X.Keyring())
 import io
 import os
 from tqdm import tqdm
@@ -617,16 +625,19 @@ class Databrary:
                 for asset in assets:
                     asset["filename"] = self.asset_to_filename(asset)
                     asset["vol_id"] = vol_id
-                    asset["testdate"] = c["date"]
+                    asset["testdate"] = c["date"] if "date" in c else "test"
                     for record in c["records"]:
-                        print(record)
-                        if record["record"]["category"] == 1:
-                            asset["gender"] = record["record"]["measures"]["5"]
-                            asset["birthdate"] = record["record"]["measures"]["4"]
-                            if "12" in record["record"]["measures"]:
-                                asset["language"] = record["record"]["measures"]["12"]
-                            else:
-                                asset["language"] = "English"
+                        try:
+                            print(record)
+                            if record["record"]["category"] == 1:
+                                asset["gender"] = record["record"]["measures"]["5"]
+                                asset["birthdate"] = record["record"]["measures"]["4"]
+                                if "12" in record["record"]["measures"]:
+                                    asset["language"] = record["record"]["measures"]["12"]
+                                else:
+                                    asset["language"] = "English"
+                        except KeyError:
+                            pass
                 all_assets += assets
             else:
                 print(
@@ -639,7 +650,10 @@ class Databrary:
 
     def asset_to_filename(self, asset):
         formats = self.get_file_formats()
-        return asset["name"] + "." + formats[str(asset["format"])]["extension"]
+        if "name" in asset and "format" in asset:
+            return asset["name"] + "." + formats[str(asset["format"])]["extension"]
+        else:
+            return str(asset["id"]) + "-testdata.mp4"
 
     def get_file_formats(self):
         try:

@@ -3,7 +3,15 @@ import pickle
 import threading
 import webbrowser
 
+import sys
 import keyring
+if hasattr(sys, "frozen"):
+    if sys.platform.startswith("win"):
+        import keyring.backends.Windows
+        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+    elif sys.platform.startswith("darwin"):
+        import keyring.backends.OS_X
+        keyring.set_keyring(keyring.backends.OS_X.Keyring())
 
 from flask import render_template, Blueprint, redirect
 from flask_wtf import FlaskForm
