@@ -1,7 +1,7 @@
 import appdirs
 import os
 
-APP_NAME = "DB Playmate"
+APP_NAME = "db-playmate"
 APP_AUTHOR = "Databrary"
 
 QA_DIR = ""
