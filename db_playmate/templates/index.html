@@ -199,8 +199,25 @@
           {{ forms["trans_video_coding_form"].videos_not_coded() }}
           </p>
         </div>
+        <div class="row">
+          <p>
+          {{ forms["trans_video_coding_form"].submit_send_to_gold(cols=50) }}
+          <br>  {{ forms["trans_video_coding_form"].submit_send_to_silver(cols=50) }}
+          </p>
+        </div>
       </form>
     </div>
+    <div class="row">
+      <h3>{{ forms["in_silver"].in_silver.label }}</h3>
+      <br>
+      {{ forms['in_silver'].in_silver() }}
+    </div>
+    <div class="row">
+      <h3>{{ forms["in_gold"].in_gold.label }}</h3>
+      <br>
+      {{ forms['in_gold'].in_gold() }}
+    </div>
+
     </div>
   <div class="main">
   <div class="row">
@@ -468,7 +485,8 @@
         </div>
         <div class="row">
         <p>
-        {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}
+        {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}<br>
+        {{ forms["obj_rel_form"].submit_send_to_silver(cols=50) }}
         </p>
         </div>
         <div class="row">
@@ -492,6 +510,7 @@
         <div class="row">
         <p>
         {{ forms["loc_rel_form"].submit_send_to_gold(cols=50) }}
+        <br>  {{ forms["loc_rel_form"].submit_send_to_silver(cols=50) }}
         </p>
         </div>
         <div class="row">
@@ -517,6 +536,7 @@
         <div class="row">
         <p>
         {{ forms["emo_rel_form"].submit_send_to_gold(cols=50) }}
+        <br>  {{ forms["emo_rel_form"].submit_send_to_silver(cols=50) }}
         </p>
         </div>
         <div class="row">
@@ -540,6 +560,7 @@
         <div class="row">
         <p>
         {{ forms["comm_rel_form"].submit_send_to_gold(cols=50) }}
+        <br>  {{ forms["comm_rel_form"].submit_send_to_silver(cols=50) }}
         </p>
         </div>
         <div class="row">

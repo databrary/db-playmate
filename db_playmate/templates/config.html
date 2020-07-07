@@ -151,6 +151,14 @@
       {{ forms["config_form"].databrary_password() }}
       </p>
     </div>
+
+    <div class="row">
+      <p>
+      {{ forms["config_form"].google_sheet_secret.label }} <br>
+      {{ forms["config_form"].google_sheet_secret() }}
+      </p>
+    </div>
+
     <div class="row">
       <p>
       {{ forms["config_form"].submit_button() }}
@@ -158,7 +166,6 @@
     </div>
     </form>
     </div>
-  </div>
   </div>
 
     <!-- <div id="ready_for_qa"></div> -->

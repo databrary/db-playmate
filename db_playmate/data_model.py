@@ -40,7 +40,13 @@ class Submission:
         self.rel_coding_finished_loc = False
         self.rel_coding_finished_emo = False
         self.rel_coding_finished_tra = False
+        self.moved_to_silver_com = False
+        self.moved_to_silver_tra = False
+        self.moved_to_silver_obj = False
+        self.moved_to_silver_loc = False
+        self.moved_to_silver_emo = False
         self.moved_to_gold_com = False
+        self.moved_to_gold_tra = False
         self.moved_to_gold_obj = False
         self.moved_to_gold_loc = False
         self.moved_to_gold_emo = False

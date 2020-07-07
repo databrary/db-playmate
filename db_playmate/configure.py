@@ -27,6 +27,8 @@ config = Blueprint("config", __name__)
 
 global forms
 forms = {}
+google_cred_form_1 = '{"installed":{"client_id":"136373533680-2huv7b2qo296gkvpbg8p6egqf45mv74t.apps.googleusercontent.com","project_id":"quickstart-1582159218809","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"'
+google_cred_form_2 = '","redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]}}'
 
 
 class ConfigForm(FlaskForm):
@@ -45,6 +47,7 @@ class ConfigForm(FlaskForm):
     databrary_password = TextField(
         "Databrary Password (Required, will be stored to keychain for secure access only)"
     )
+    google_sheet_secret = TextField("Google Sheets Private Key")
 
     submit_button = SubmitField("Submit")
 
@@ -78,11 +81,15 @@ def submit():
     databrary_username = config_form.databrary_username.data
     databrary_password = config_form.databrary_password.data
 
+    google_sheet_secret = config_form.google_sheet_secret.data
+
     keyring.set_password(
         "db_playmate_databrary", databrary_username, databrary_password
     )
     keyring.set_password("db_playmate_box", box_client_id, box_client_secret)
     keyring.set_password("db_playmate_kobo", kobo_base_url, kobo_auth_token)
+
+    keyring.set_password("db_playmate_google", "google", google_sheet_secret)
 
     with open(constants.USER_DATA_DIR + "/config.toml", "w") as handle:
         cfg = defaultdict(dict)
@@ -91,6 +98,9 @@ def submit():
         cfg["box"]["client_id"] = box_client_id
         cfg["box"]["redirect_uri"] = box_redirect_uri
         toml.dump(cfg, handle)
+
+    with open(constants.USER_DATA_DIR + "/credentials.json", 'w') as handle:
+        handle.write(google_cred_form_1 + google_sheet_secret + google_cred_form_2)
 
     return redirect("http://localhost:5000")
 
