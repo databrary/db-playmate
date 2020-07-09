@@ -12,12 +12,15 @@ import db_playmate.constants as constants
 import boxsdk as bx
 import sys
 import keyring
+
 if hasattr(sys, "frozen"):
     if sys.platform.startswith("win"):
         import keyring.backends.Windows
+
         keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
     elif sys.platform.startswith("darwin"):
         import keyring.backends.OS_X
+
         keyring.set_keyring(keyring.backends.OS_X.Keyring())
 from flask import Flask
 from flask import request
@@ -388,6 +391,31 @@ class Box:
         f = get_folder(folder)
         for e in emails:
             f.collaborate_with_login(e, role)
+
+    def get_finished_opf_files(self, asset):
+        filenames = []
+        # if we cant find the file then get the primary, it is silver
+        for p in ["tra", "loc", "emo", "com", "obj"]:
+            filepath = "/".join(
+                [
+                    constants.REL_CODED_DIR,
+                    getattr(asset, "assigned_coding_site_" + p),
+                    asset.coding_filename_prefix + p,
+                ]
+            )
+            if self.get_file(filepath):
+                filenames.append(self.download_file(filepath, constants.TMP_DATA_DIR,))
+            else:
+                filepath = "/".join(
+                    [
+                        constants.PRI_CODED_DIR,
+                        getattr(asset, "assigned_coding_site_" + p),
+                        asset.coding_filename_prefix + p,
+                    ]
+                )
+                filenames.append(self.download_file(filepath, constants.TMP_DATA_DIR,))
+
+        return filenames
 
 
 def get_client(client_id, client_secret):

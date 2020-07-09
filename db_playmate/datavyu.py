@@ -39,9 +39,7 @@ class DatavyuTemplateFactory:
         spreadsheet.get_column("PLAY_id").new_cell(play_id, birthdate, testdate)
         spreadsheet.get_column("qa_id").new_cell("", site_id, subjn)
 
-        output_filename = (
-            constants.TMP_DATA_DIR + os.sep + submission.qa_filename
-        )
+        output_filename = constants.TMP_DATA_DIR + os.sep + submission.qa_filename
 
         print(output_filename)
 
@@ -71,7 +69,14 @@ class DatavyuTemplateFactory:
             "PLAY_id", "play_id", "birthdate", "testdate", "language_1", "language_2"
         )
 
-        tra_spreadsheet.new_column("transcribeQA", "OnsetError", "SpeakerError", "ParsingError", "ContentError", "MissingExtraUtterance")
+        tra_spreadsheet.new_column(
+            "transcribeQA",
+            "OnsetError",
+            "SpeakerError",
+            "ParsingError",
+            "ContentError",
+            "MissingExtraUtterance",
+        )
         output_filename = "{}/{}_tra.opf".format(
             constants.TMP_DATA_DIR, submission.coding_filename_prefix
         )
@@ -255,9 +260,39 @@ class DatavyuTemplateFactory:
         )
         return output_filename
 
-    def generate_rel_loc_file(submission, coding_pass):
+    def generate_rel_file(submission, coding_pass):
+        # TODO once we get the rel scripts
         site = getattr(submission, "assigned_coding_site_" + coding_pass)
         d = constants.PRI_CODED_DIR.format(coding_pass, site)
-        spreadsheet = pyvyu.load_opf(d + "/" + submission.coding_filename_prefix + coding_pass + ".opf")
+        spreadsheet = pyvyu.load_opf(
+            d + "/" + submission.coding_filename_prefix + coding_pass + ".opf"
+        )
+        all_columns = []
+        for col in spreadsheet.get_column_list():
+            spreadsheet.new_column("rel_" + col.name, *col.codelist)
+        output_filename = "{}/{}_{}_rel.opf".format(
+            constants.TMP_DATA_DIR, submission.coding_filename_prefix, coding_pass
+        )
+        os.makedirs(constants.TMP_DATA_DIR, exist_ok=True)
+        pyvyu.save_opf(
+            spreadsheet, output_filename, True, *spreadsheet.columns.values()
+        )
+        return output_filename
 
+    def combine_files(output_filename, *passes):
+        """
+        Combines OPF files listed in passes
 
+        passes: list of filenames that have already been locally downloaded
+                from box.
+        """
+        all_columns = {}
+        for x in passes:
+            sp = pyvyu.load_opf(x)
+            column_list = sp.get_column_list()
+            for c in column_list:
+                all_columns[c] = sp.get_column(c)
+        sp = pyvyu.Spreadsheet()
+        sp.name = output_filename
+        sp.columns = all_columns
+        pyvyu.save_opf(sp, output_filename, True, *all_columns.keys())

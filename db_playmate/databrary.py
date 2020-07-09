@@ -5,19 +5,22 @@ import requests
 import pandas
 import sys
 import keyring
-if hasattr(sys, "frozen"):
-    if sys.platform.startswith("win"):
-        import keyring.backends.Windows
-        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
-    elif sys.platform.startswith("darwin"):
-        import keyring.backends.OS_X
-        keyring.set_keyring(keyring.backends.OS_X.Keyring())
+
 import io
 import os
 from tqdm import tqdm
 import json
-
 import db_playmate.constants as constants
+
+if hasattr(sys, "frozen"):
+    if sys.platform.startswith("win"):
+        import keyring.backends.Windows
+
+        keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
+    elif sys.platform.startswith("darwin"):
+        import keyring.backends.OS_X
+
+        keyring.set_keyring(keyring.backends.OS_X.Keyring())
 
 
 class Databrary:
@@ -425,7 +428,7 @@ class Databrary:
 
     # ------------------------------------------------------------------------------
     def download_asset(self, asset, download_dir="./"):
-        if download_dir=="./":
+        if download_dir == "./":
             download_dir = constants.TMP_DATA_DIR
 
         print("DOWNLOADING", asset.asset)
@@ -596,6 +599,13 @@ class Databrary:
             print("Getting slots for vol failed with HTTP status ", r.status_code, url)
             return None
 
+    def write_tag_for_asset(self, asset, tag):
+        url = "https://nyu.databrary.org/api/slot/{}/-/tag/{}".format(
+            asset.asset_id, tag
+        )
+        r = self.session.get(url)
+        return r.status_code
+
     def get_assets_for_volume(self, vol_id, gold_only=True):
         slots = self.get_slots_for_volume(vol_id)
         if slots is None:
@@ -633,7 +643,9 @@ class Databrary:
                                 asset["gender"] = record["record"]["measures"]["5"]
                                 asset["birthdate"] = record["record"]["measures"]["4"]
                                 if "12" in record["record"]["measures"]:
-                                    asset["language"] = record["record"]["measures"]["12"]
+                                    asset["language"] = record["record"]["measures"][
+                                        "12"
+                                    ]
                                 else:
                                     asset["language"] = "English"
                         except KeyError:

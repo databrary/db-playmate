@@ -85,7 +85,7 @@ class Submission:
             "HouseWalkthrough": self.house_walk,
             "Questionnaires": self.home_question,
             "Consent": self.consent,
-            "Other": self.other
+            "Other": self.other,
         }
 
     def check_for_form(self, forms):
@@ -100,6 +100,42 @@ class Submission:
                     self.kobo_data = sub
                     return True
         return False
+
+    def is_finished(self):
+        flag_sum = sum(
+            [
+                self.moved_to_gold_tra,
+                self.moved_to_gold_emo,
+                self.moved_to_gold_loc,
+                self.moved_to_gold_obj,
+                self.moved_to_gold_com,
+                self.moved_to_silver_emo,
+                self.moved_to_silver_obj,
+                self.moved_to_silver_loc,
+                self.moved_to_silver_tra,
+                self.moved_to_silver_com,
+            ]
+        )
+        if self.moved_to_gold_tra and flag_sum == 5:
+            return True
+        elif self.moved_to_silver_tra and flag_sum == 4:
+            return True
+        else:
+            return False
+
+    def is_all_gold(self):
+        if all(
+            [
+                self.moved_to_gold_tra,
+                self.moved_to_gold_com,
+                self.moved_to_gold_obj,
+                self.moved_to_gold_loc,
+                self.moved_to_gold_emo,
+            ]
+        ):
+            return True
+        else:
+            return False
 
     def _to_csv(self):
         # Return a CSV string rep
@@ -194,7 +230,7 @@ class Datastore:
             self.sites[site_id].add_video(site_id, asset)
         except KeyError:
             print("ERROR: Could not find video", site_id, asset)
-            pass # If the key isnt found just ignore it for now
+            pass  # If the key isnt found just ignore it for now
 
     def save(self, filename=None):
         path = os.sep.join(filename.split(os.sep)[:-1])
