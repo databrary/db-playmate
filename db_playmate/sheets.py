@@ -50,10 +50,13 @@ def read_lab_coding(labs):
     LAB_CODING_ID = "1iF3n-3THYrThApOoscJBykN7vbEyJdiFKAaz11DHUW4"
     SITE_CODE_COL = "SiteCode"
     LAB_CODE_COL = "LabCode"
-    CODING_PASS_COL = "Coding pass"
+    CODING_PASS_COL = "CodingType"
+    CONTACT_COLS = "Contact"
     LAB_CODING_RANGE = "A2:X"
 
-    header, values = _get_sheet(LAB_CODING_ID, LAB_CODING_RANGE, "CodingSites")
+    contact_columns = []
+
+    header, values = _get_sheet(LAB_CODING_ID, LAB_CODING_RANGE, "Summary")
 
     labs_dict = {l.lab_code: l for l in labs}
     for row in header:
@@ -66,6 +69,8 @@ def read_lab_coding(labs):
                 LAB_CODE_COL = i
             if col == CODING_PASS_COL:
                 CODING_PASS_COL = i
+            if col.startswith(CONTACT_COLS):
+                contact_columns.append(i)
 
     if not values:
         print("No data found.")
@@ -76,6 +81,7 @@ def read_lab_coding(labs):
                 site_code = row[SITE_CODE_COL]
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
+                contacts = []
                 if coding_pass == "Communication & Gesture":
                     labs_dict[lab_code].code_com = True
                 if coding_pass == "Emotion":
@@ -84,8 +90,21 @@ def read_lab_coding(labs):
                     labs_dict[lab_code].code_loc = True
                 if coding_pass == "Object":
                     labs_dict[lab_code].code_obj = True
-            except:
-                print("ERROR in CODING PASS ROW:", row)
+                for c in contact_columns:
+                    if row[c] and len(row[c]) > 0:
+                        labs_dict[lab_code].coders.append(row[c])
+            except Exception as e:
+                import traceback
+
+                traceback.print_exc()
+                print(
+                    "ERROR in CODING PASS ROW:",
+                    row,
+                    LAB_CODE_COL,
+                    SITE_CODE_COL,
+                    CODING_PASS_COL,
+                )
+                print(e)
                 continue
     header, values = _get_sheet(LAB_CODING_ID, "A1:A", "TranscribersList")
     tra_names = []
