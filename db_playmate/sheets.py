@@ -58,7 +58,6 @@ def read_lab_coding(labs):
 
     header, values = _get_sheet(LAB_CODING_ID, LAB_CODING_RANGE, "Summary")
 
-    labs_dict = {l.lab_code: l for l in labs}
     for row in header:
         print(row)
         for i, col in enumerate(row):
@@ -81,18 +80,17 @@ def read_lab_coding(labs):
                 site_code = row[SITE_CODE_COL]
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
-                contacts = []
                 if coding_pass == "Communication & Gesture":
-                    labs_dict[lab_code].code_com = True
+                    labs[lab_code].code_com = True
                 if coding_pass == "Emotion":
-                    labs_dict[lab_code].code_emo = True
+                    labs[lab_code].code_emo = True
                 if coding_pass == "Locomotion":
-                    labs_dict[lab_code].code_loc = True
+                    labs[lab_code].code_loc = True
                 if coding_pass == "Object":
-                    labs_dict[lab_code].code_obj = True
+                    labs[lab_code].code_obj = True
                 for c in contact_columns:
                     if row[c] and len(row[c]) > 0:
-                        labs_dict[lab_code].coders.append(row[c])
+                        labs[lab_code].coders.append(row[c])
             except Exception as e:
                 import traceback
 
@@ -165,7 +163,7 @@ def read_master():
     if not values:
         print("No data found.")
     else:
-        labs = []
+        labs = {}
         sites = {}
         for row in values:
             print("%s, %s" % (row[INST_COL], row[LAB_CODE_COL]))
@@ -186,7 +184,7 @@ def read_master():
             if "Coding" in role:
                 lab = Lab(site_code, lab_code, pi, email, inst)
                 sites[site_code].labs[lab_code] = lab
-                labs.append(lab)
+                labs[lab_code] = lab
         labs, tra_names = read_lab_coding(labs)
         return sites, labs, tra_names
 
