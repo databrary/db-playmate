@@ -191,6 +191,9 @@ class Box:
         """
         Downloads a file from box to the local path
         """
+        if type(box_file) == str:
+            box_file = self.get_file(box_file)
+
         if local_filename is not None:
             local_path = local_path + os.sep + local_filename
         else:
@@ -254,6 +257,8 @@ class Box:
         dest_folder: Destination folder of the file (string)
         new_name: assign a new name to the file (optional)
         """
+        if self.get_folder(dest_folder) is None:
+            self.create_folders(dest_folder)
         if self.get_file(dest_folder + os.sep + local_filepath.split(os.sep)[-1]):
             self.delete(dest_folder + os.sep + local_filepath.split(os.sep)[-1])
             # TODO Remove this
@@ -311,12 +316,40 @@ class Box:
             print(e)
         return False
 
+    def add_collab_editor(self, item, email_address):
+        """
+        item: The Box File or Folder to add a collaborator to
+        email_address: String form of the email address to collab
+        """
+        try:
+            item.collaborate_with_login(email_address, CollaborationRole.EDITOR)
+            return True
+        except Exception as e:
+            print("Error: could not add user")
+            print(e)
+        return False
+
+    def add_collab_write_only(self, item, email_address):
+        """
+        item: The Box File or Folder to add a collaborator to
+        email_address: String form of the email address to collab
+        """
+        try:
+            item.collaborate_with_login(
+                email_address, CollaborationRole.PREVIEWER_UPLOADER
+            )
+            return True
+        except Exception as e:
+            print("Error: could not add user")
+            print(e)
+        return False
+
     def remove_collab_viewer(self, item, email_address):
         """
         item: The Box File or Folder to remove collab from
         email_address: String form of the email address to collab
         returns True if the collab was successfully removed,
-                False if the collab could not be found. 
+                False if the collab could not be found.
         """
         collabs = item.get_collaborations()
         for c in collabs:
@@ -342,7 +375,7 @@ class Box:
                     else c.invite_email
                 )
                 self.status = c.status
-                self.name = c.accessible_by.name if c.accessibly_by is not None else ""
+                self.name = c.accessible_by.name if c.accessible_by is not None else ""
 
         return [BoxCollab(c) for c in collabs]
 
@@ -396,26 +429,117 @@ class Box:
         filenames = []
         # if we cant find the file then get the primary, it is silver
         for p in ["tra", "loc", "emo", "com", "obj"]:
-            filepath = "/".join(
-                [
-                    constants.REL_CODED_DIR,
-                    getattr(asset, "assigned_coding_site_" + p),
-                    asset.coding_filename_prefix + p,
-                ]
-            )
-            if self.get_file(filepath):
-                filenames.append(self.download_file(filepath, constants.TMP_DATA_DIR,))
-            else:
+            try:  # TODO remove this
                 filepath = "/".join(
                     [
-                        constants.PRI_CODED_DIR,
+                        constants.REL_CODED_DIR,
                         getattr(asset, "assigned_coding_site_" + p),
                         asset.coding_filename_prefix + p,
                     ]
                 )
-                filenames.append(self.download_file(filepath, constants.TMP_DATA_DIR,))
+                if self.get_file(filepath):
+                    filenames.append(
+                        self.download_file(filepath, constants.TMP_DATA_DIR,)
+                    )
+                else:
+                    filepath = "/".join(
+                        [
+                            constants.PRI_CODED_DIR,
+                            getattr(asset, "assigned_coding_site_" + p),
+                            asset.coding_filename_prefix + p,
+                        ]
+                    )
+                    filenames.append(
+                        self.download_file(filepath, constants.TMP_DATA_DIR,)
+                    )
+            except:
+                pass
 
         return filenames
+
+    def get_files_in_folder(self, folder):
+        files = []
+        dirs = []
+        for x in folder.get_items():
+            if type(x) is bx.object.folder:
+                dirs.append(x)
+            else:
+                files.append(x)
+        return dirs, files
+
+    def get_file_tree(self, directory):
+        return self._get_file_tree(directory, [])
+
+    def _get_file_tree(self, directory, files):
+        dirs, files_in_folder = self.get_files_in_folder(directory)
+        files += files_in_folder
+        for d in dirs:
+            return self._get_file_tree(d, files)
+
+    def sync_datastore_to_box(self, datastore):
+        pass
+
+    def update_permissions(self, datastore):
+        admin_emails = datastore.labs["PLAYT_1"].coders
+        print("ADMIN EMAILS", admin_emails)
+        for lab in datastore.labs:
+            # Generate each of the folders we need to check
+            print(lab)
+            lab = datastore.labs[lab]
+            for coding_pass in ["loc", "emo", "com", "tra", "obj"]:
+                if getattr(lab, "code_" + coding_pass):
+                    coding_dir = constants.PRI_CODING_DIR.format(
+                        coding_pass, lab.lab_code
+                    )
+                    coded_dir = constants.PRI_CODED_DIR.format(
+                        coding_pass, lab.lab_code
+                    )
+                    work_dir = constants.PRI_WORK_DIR.format(coding_pass, lab.lab_code)
+                    #  rel_dir = constants.REL_CODING_DIR.format(coding_pass, lab.name)
+                    #  rel_coded_dir = constants.REL_CODED_DIR.format(
+                    #  coding_pass, lab.name
+                    #  )
+                    coding_folder = self.get_folder(coding_dir)
+                    coded_folder = self.get_folder(coded_dir)
+                    work_folder = self.get_folder(work_dir)
+                    if not coding_folder:
+                        coding_folder = self.create_folders(coding_dir)
+                    if not coded_folder:
+                        coded_folder = self.create_folders(coded_dir)
+                    if not work_folder:
+                        work_folder = self.create_folders(work_dir)
+
+                    # Confirm file permissions
+                    collabs = self.list_collabs(coding_folder)
+                    current_emails = [x.email for x in collabs]
+                    print("Authorized collabs", collabs)
+                    print("Current emails", current_emails)
+                    for email in lab.coders:
+                        if email not in current_emails:
+                            print("ADDING", email, "TO", coding_dir)
+                            #  self.add_collab_write_only(coded_folder, email)
+                            #  self.add_collab_viewer(coding_folder, email)
+                            #  self.add_collab_editor(work_folder, email)
+                    for email in current_emails:
+                        if email not in lab.coders and email not in admin_emails:
+                            print("REMOVING", email, "FROM", coding_dir)
+                            #  self.remove_collab_viewer(coded_folder, email)
+                            #  self.remove_collab_viewer(coding_folder, email)
+                            #  self.remove_collab_viewer(work_folder, email)
+
+                    # Confirm video permissions
+                    for asset in lab.assigned_videos:
+                        video_file = self.get_file(
+                            constants.VIDEO_DIR + "/" + asset.play_filename
+                        )
+                        for email in lab.coders:
+                            if email not in current_emails:
+                                print("ADDING", email, "TO", asset.play_filename)
+                                #  self.add_collab_viewer(video_file, email)
+                        for email in current_emails:
+                            if email not in lab.coders and email not in admin_emails:
+                                print("REMOVING", email, "FROM", asset.play_filename)
+                                #  self.remove_collab_viewer(video_file, email)
 
 
 def get_client(client_id, client_secret):
