@@ -108,8 +108,7 @@ class Box:
 
     def list_folder(self, directory):
         items = directory.get_items()
-        for i in items:
-            print("{0} {1} is named {2}".format(i.type.capitalize(), i.id, i.name))
+        return items
 
     def create_folder(self, base_folder, new_folder_name):
         """
@@ -161,6 +160,8 @@ class Box:
         curdir = rootdir
         while len(path) > 0:
             p = path.popleft()
+            if p.endswith(os.sep):
+                p = p[:-1]
             for item in curdir.get_items():
                 if item.name == p:
                     curdir = item
@@ -461,7 +462,7 @@ class Box:
         files = []
         dirs = []
         for x in folder.get_items():
-            if type(x) is bx.object.folder:
+            if type(x) is bx.object.folder.Folder:
                 dirs.append(x)
             else:
                 files.append(x)
@@ -470,14 +471,115 @@ class Box:
     def get_file_tree(self, directory):
         return self._get_file_tree(directory, [])
 
-    def _get_file_tree(self, directory, files):
-        dirs, files_in_folder = self.get_files_in_folder(directory)
-        files += files_in_folder
+    def _get_file_tree(self, directory, files, dirpath=""):
+        print(directory)
+        if directory.endswith("/"):
+            directory = directory[:-1]
+        dirpath += directory + "/"
+        print(directory, dirpath, dirpath[:-1])
+        dirs, files_in_folder = self.get_files_in_folder(self.get_folder(dirpath[:-1]))
+        print(dirs, files_in_folder)
+        files += [dirpath + f.get().name for f in files_in_folder]
         for d in dirs:
-            return self._get_file_tree(d, files)
+            self._get_file_tree(d.name, files, dirpath)
+        return files
 
     def sync_datastore_to_box(self, datastore):
-        pass
+        qa_dir = constants.QA_CODING_DIR
+        print(qa_dir)
+        print("QA TEMP SYNC")
+        for path in self.get_file_tree(qa_dir):
+            if path.endswith(".opf"):
+                filename = path.split("/")[-1]
+                print(path, filename)
+                _, site, subj_number = filename.replace(".opf", "").split("_")
+                if site != "SITID" and subj_number != "PPP":
+                    print(site, subj_number)
+                    print(datastore.sites[site].submissions)
+                    try:
+                        submission = datastore.find_submission_by_site_subj(
+                            site, subj_number
+                        )
+                        submission.ready_for_qa = True
+                    except KeyError:
+                        continue
+
+        # Check QA files
+        qa_dir = "/".join(constants.QA_CODED_DIR.split("/")[0:3])
+        print(qa_dir)
+        print("QA SYNC")
+        print(self.get_file_tree(qa_dir))
+        sys.exit()
+        for path in self.get_file_tree(qa_dir):
+            if path.endswith(".opf"):
+                print(path)
+                filename = path.split("/")[-1]
+                try:
+                    _, site, subj_number = filename.replace(".opf", "").split("_")
+                except ValueError:
+                    _, site, subj_number, hqa = filename.replace(".opf", "").split("_")
+                try:
+                    submission = datastore.find_submission_by_site_subj(
+                        site, subj_number
+                    )
+                    submission.ready_for_qa = True
+                    submission.ready_for_coding = True
+                except KeyError:
+                    continue
+
+        coding_dir = "/".join(constants.PRI_CODING_DIR.split("/")[0:2])
+        files = self.get_file_tree(coding_dir)
+        # These are the paths to all of the files in the dir, parse them
+        print(files)
+        print("PRIMARY CODING SYNC")
+        for path in files:
+            print(path)
+            if path.endswith(".opf"):
+                _, _, coding_pass, lab_folder, status, filename = path.split("/")
+                coding_pass = coding_pass[-3:]
+                lab_code = lab_folder[-7:]
+                status = status[0]
+                print(coding_pass, lab_code, status)
+
+                # Update the file based on the information we just saw
+                try:
+                    submission = datastore.find_submission_by_name(filename)
+                    setattr(submission, "assigned_coding_site_" + coding_pass, lab_code)
+                    submission.ready_for_qa = True
+                    submission.ready_for_coding = True
+                    if status == "3":
+                        setattr(
+                            submission, "primary_coding_finished_" + coding_pass, True
+                        )
+                except KeyError:
+                    continue
+
+        coding_dir = "/".join(constants.REL_CODING_DIR.split("/")[0:2])
+        files = self.get_file_tree(coding_dir)
+        # These are the paths to all of the files in the dir, parse them
+        for path in files:
+            if path.endswith(".opf"):
+                _, _, coding_pass, lab_folder, status, filename = path.split("/")
+                coding_pass = coding_pass[-3:]
+                lab_code = lab_folder[-7:]
+                status = status[0]
+
+                # Update the file based on the information we just saw
+                try:
+                    submission = datastore.find_submission_by_name(filename)
+                    setattr(submission, "ready_for_rel_" + coding_pass, True)
+                    submission.ready_for_qa = True
+                    submission.ready_for_coding = True
+                    if status == "3":
+                        setattr(submission, "rel_coding_finished_" + coding_pass, True)
+                except KeyError:
+                    continue
+
+        silver_dir = constants.SILVER_FINAL_DIR
+        # TODO Check silver dir
+
+        gold_dir = constants.GOLD_FINAL_DIR
+        # TODO Check gold dir
 
     def update_permissions(self, datastore):
         admin_emails = datastore.labs["PLAYT_1"].coders
