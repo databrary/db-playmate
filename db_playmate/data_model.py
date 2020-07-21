@@ -186,12 +186,11 @@ class Lab:
         self.code_emo = False
         self.code_com = False
         self.code_tra = False
+        self.coders = []
+        self.assigned_videos = []
 
     def __str__(self):
         return "{}".format(self.lab_code)
-
-    def assign_video(self, asset):
-        pass
 
 
 class Site:
@@ -207,6 +206,11 @@ class Site:
             subj_number = filename.split("_")[2]
         except IndexError:
             subj_number = asset["id"]
+        print("SN", site_id, subj_number)
+        if "-" in subj_number:
+            subj_number = subj_number.split("-")[0]
+        if subj_number.startswith("S"):
+            subj_number = subj_number[1:]
         if subj_number not in self.submissions:
             self.submissions[subj_number] = Submission(site_id, subj_number, asset)
         self.submissions[subj_number].add_video(asset)
@@ -221,6 +225,36 @@ class Datastore:
         self.sites = {}  # site_code -> site
         self.tra_names = []  # Translator names
 
+        self.statuses = [
+            "Connecting to Box, Google, Databrary, and Kobo...",
+            "Downloading files from Kobo...",
+            "Getting data from Google Sheets...",
+            "Getting data from Databrary...",
+            "Checking for changes to coded videos...",
+            "Checking that permissions are correct...",
+            "Performing first-time sync to Box's current state (you might want to get a cup of coffee)...",
+            "Finished!",
+        ]
+
+        self.error_status = "Error! Please report: {}"
+
+        self.curr_status = 0
+        self.synced = False
+        self.error_flag = False
+
+    def set_error_state(self, e):
+        self.error_status = self.error_status.format(e)
+        self.error_flag = True
+
+    def increment_status(self):
+        print("INCREMENTING")
+        self.curr_status += 1
+
+    def get_status(self):
+        if self.error_flag:
+            return self.error_status
+        return self.statuses[self.curr_status]
+
     def add_video(self, asset):
         try:
             site_id = asset["filename"].split("_")[1].strip()
@@ -232,12 +266,10 @@ class Datastore:
             print("ERROR: Could not find video", site_id, asset)
             pass  # If the key isnt found just ignore it for now
 
-    def save(self, filename=None):
+    def save(self):
         path = os.sep.join(filename.split(os.sep)[:-1])
         os.makedirs(path, exist_ok=True)
-        if filename is None:
-            filename = constants.save_filename
-        with open(filename, "wb") as handle:
+        with open(constants.SAVE_FILE_NAME, "wb") as handle:
             pickle.dump(self, handle)
 
     def get_submissions(self):
@@ -252,6 +284,16 @@ class Datastore:
             if s.id == sub_id:
                 return s
         return None
+
+    def find_submission_by_name(self, filename):
+        for s in self.get_submissions():
+            if s.play_filename == filename:
+                return s
+        return None
+
+    def find_submission_by_site_subj(self, site, subj):
+        print("Finding", site, subj, self.sites[site].submissions)
+        return self.sites[site].submissions[subj]
 
     def find_lab(self, lab_id):
         for s in self.labs:
