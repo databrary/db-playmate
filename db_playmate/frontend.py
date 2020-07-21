@@ -3,6 +3,11 @@ import pickle
 import threading
 import time
 import sys
+import traceback
+
+from PyQt5.QtWebEngineWidgets import QWebEngineView
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QUrl
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import *
@@ -29,11 +34,9 @@ import db_playmate.constants as constants
 from db_playmate.configure import config
 
 
-SAVE_FILE = constants.USER_DATA_DIR + "/db_playmate.pickle"
 CONFIG_FILE = constants.USER_DATA_DIR + "/config.toml"
 print(CONFIG_FILE, os.path.exists(CONFIG_FILE))
 
-# SAVE_FILE = "env/db_playmate.pickle"
 
 VIDEO_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/1_PLAY_videos_for_coding"
 QA_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/2_PLAY_qa_opfs/1_PLAY_qa_templates"
@@ -41,21 +44,31 @@ QA_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/2_PLAY_qa_opfs/1_PLAY_qa_te
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "you-will-never-guess"
 app.register_blueprint(config, url_prefix="/config")
-global datastore
-datastore = Datastore()
+
+DATASTORE = Datastore()
+
+BRIDGE = 0
+
+
+class QWebEngineViewWindow(QWebEngineView):
+    def closeEvent(self, event):
+        print("Close event fired")
+        from flask import request
+
+        func = request.environ.get("werkzeug.server.shutdown")
+        try:
+            func()
+        except:
+            pass
+        quit()
 
 
 #  os.environ["QTWEBENGINEPROCESS_PATH"] = "./"
 qt_app = QApplication(sys.argv)
-WEB = QWebEngineView()
+WEB = QWebEngineViewWindow()
 WEB.setWindowTitle("DB Playmate")
 
-global forms
-forms = {}
-
-global bridge
-global queue
-queue = Queue()
+QUEUE = Queue()
 
 
 class InDbForm(FlaskForm):
@@ -79,6 +92,7 @@ class CodingForm(FlaskForm):
 class TraCodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Tra")
     lab_list = SelectField("List of Transcribers")
+    being_coded = SelectField("List of Videos being Transcribed")
     submit_send_to_lab = SubmitField("Send to Selected Transcriber")
     submit_send_to_silver = SubmitField("Send to SILVER")
     submit_send_to_gold = SubmitField("Send to GOLD/COM")
@@ -103,7 +117,7 @@ class RelForm(FlaskForm):
 class QueueForm(FlaskForm):
     actions = SelectMultipleField("Queued Actions")
     results = SelectMultipleField("Results")
-    submit_queue = SubmitField("Submit Queue")
+    submit_queue = SubmitField("Submit Queue", id="submit_queue")
     remove_item_queue = SubmitField("Remove Selected Action")
     cancel_queue = SubmitField("Cancel Queue")
 
@@ -121,14 +135,15 @@ class InGold(FlaskForm):
 
 
 def create_forms():
-    global datastore
-    datastore.save(SAVE_FILE)
+    global DATASTORE
+    DATASTORE.save()
+    labs = DATASTORE.labs.values()
     in_db_form = InDbForm({"width": "200px"})
     in_db = [
         (x.id, x.display_name)
         if not x.in_kobo_forms
         else (x.id, x.display_name + " (in Kobo)")
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued and x.ready_for_qa is False
     ]
@@ -137,7 +152,7 @@ def create_forms():
     qa_form = QAForm()
     qa = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued and x.ready_for_qa is True and x.ready_for_coding is False
     ]
@@ -146,20 +161,20 @@ def create_forms():
     trans_coding_form = TraCodingForm()
     trans_coding_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_coding is True
         and x.assigned_coding_site_tra is None
     ]
     trans_coding_form.ready_for_coding.choices = trans_coding_videos
-    lab_list = [(x, x) for x in datastore.tra_names]
+    lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
     trans_coding_form.lab_list.choices = lab_list
 
     comm_coding_form = CodingForm()
     comm_coding_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_coding is True
@@ -167,52 +182,52 @@ def create_forms():
         and x.primary_coding_finished_tra
     ]
     comm_coding_form.ready_for_coding.choices = comm_coding_videos
-    lab_list = [(x.lab_code, x.lab_code) for x in datastore.labs if x.code_com]
+    lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_com])
     comm_coding_form.lab_list.choices = lab_list
 
     loc_coding_form = CodingForm()
     loc_coding_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_coding is True
         and x.assigned_coding_site_loc is None
     ]
     loc_coding_form.ready_for_coding.choices = loc_coding_videos
-    lab_list = [(x.lab_code, x.lab_code) for x in datastore.labs if x.code_loc]
+    lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_loc])
     loc_coding_form.lab_list.choices = lab_list
 
     obj_coding_form = CodingForm()
     obj_coding_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_coding is True
         and x.assigned_coding_site_obj is None
     ]
     obj_coding_form.ready_for_coding.choices = obj_coding_videos
-    lab_list = [(x.lab_code, x.lab_code) for x in datastore.labs if x.code_obj]
+    lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_obj])
     obj_coding_form.lab_list.choices = lab_list
 
     emo_coding_form = CodingForm()
     emo_coding_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_coding is True
         and x.assigned_coding_site_emo is None
     ]
     emo_coding_form.ready_for_coding.choices = emo_coding_videos
-    lab_list = [(x.lab_code, x.lab_code) for x in datastore.labs if x.code_emo]
+    lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_emo])
     emo_coding_form.lab_list.choices = lab_list
 
     trans_video_coding_form = VideosCodedForm()
     v_coding_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and (
@@ -226,7 +241,7 @@ def create_forms():
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and (
@@ -243,7 +258,7 @@ def create_forms():
     loc_video_coding_form = VideosCodedForm()
     v_coding_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_loc
@@ -251,7 +266,7 @@ def create_forms():
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_loc is False
@@ -263,7 +278,7 @@ def create_forms():
     comm_video_coding_form = VideosCodedForm()
     v_coding_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_com
@@ -271,7 +286,7 @@ def create_forms():
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_com is False
@@ -284,7 +299,7 @@ def create_forms():
     emo_video_coding_form = VideosCodedForm()
     v_coding_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_emo
@@ -292,7 +307,7 @@ def create_forms():
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_emo is False
@@ -304,7 +319,7 @@ def create_forms():
     obj_video_coding_form = VideosCodedForm()
     v_coding_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_obj
@@ -312,7 +327,7 @@ def create_forms():
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.primary_coding_finished_obj is False
@@ -324,7 +339,7 @@ def create_forms():
     loc_rel_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_rel_loc
@@ -334,7 +349,7 @@ def create_forms():
     loc_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued and x.moved_to_gold_loc
     ]
@@ -343,7 +358,7 @@ def create_forms():
     emo_rel_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_rel_emo
@@ -353,7 +368,7 @@ def create_forms():
     emo_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued and x.moved_to_gold_emo
     ]
@@ -362,7 +377,7 @@ def create_forms():
     comm_rel_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_rel_com
@@ -372,7 +387,7 @@ def create_forms():
     comm_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued and x.moved_to_gold_com
     ]
@@ -381,7 +396,7 @@ def create_forms():
     obj_rel_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
         and x.ready_for_rel_obj
@@ -391,20 +406,20 @@ def create_forms():
     obj_rel_form.ready_for_rel.choices = ready_for_rel
     gold_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if x.moved_to_gold_obj
     ]
     obj_rel_form.gold.choices = gold_videos
 
     queue_form = QueueForm()
-    if len(queue.queued_jobs) > 0:
-        queue_items = [(q.display_name, q.display_name) for q in queue.queued_jobs]
+    if len(QUEUE.queued_jobs) > 0:
+        queue_items = [(q.display_name, q.display_name) for q in QUEUE.queued_jobs]
     else:
         queue_items = [(" " * 15, " " * 15)]
     queue_form.actions.choices = queue_items
-    if len(queue.results) > 0:
-        queue_form.results.choices = [(x, x) for x in queue.results]
+    if len(QUEUE.results) > 0:
+        queue_form.results.choices = [(x, x) for x in QUEUE.results]
     else:
         queue_form.results.choices = [(" " * 15, " " * 15)]
 
@@ -413,7 +428,7 @@ def create_forms():
     in_silver = InSilver()
     silver_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if any(
             [
@@ -435,7 +450,7 @@ def create_forms():
     in_gold = InGold()
     gold_videos = [
         (x.id, x.display_name)
-        for site in datastore.sites.values()
+        for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if all(
             [
@@ -472,65 +487,77 @@ def create_forms():
         "in_gold": in_gold,
     }
 
-    datastore.save(SAVE_FILE)
+    DATASTORE.save()
     return forms
+
+
+def initialize():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
+    global CONFIG_FILE
+
+    BRIDGE = Bridge(CONFIG_FILE)
+
+    if os.path.exists(constants.SAVE_FILE_NAME):
+        with open(constants.SAVE_FILE_NAME, "rb") as handle:
+            DATASTORE = pickle.load(handle)
+    try:
+        DATASTORE.increment_status()
+
+        # Load the data if it exists, otherwise populate from
+        # online resources
+        get_kobo_forms(BRIDGE)
+        DATASTORE.increment_status()
+        DATASTORE.sites, DATASTORE.labs, DATASTORE.tra_names = get_labs(BRIDGE)
+        DATASTORE.increment_status()
+        get_submissions(DATASTORE.sites, BRIDGE, DATASTORE)
+        DATASTORE.increment_status()
+
+        # Create a server to show the data
+        print("Checking for changes to coded videos...")
+        BRIDGE.box.update_coded_videos(DATASTORE)
+        DATASTORE.increment_status()
+
+        print("Checking permissions and fixing if needed...")
+        BRIDGE.box.update_permissions(DATASTORE)
+        DATASTORE.increment_status()
+
+        print("Syncing datastore to Box")
+        if not DATASTORE.synced:
+            BRIDGE.box.sync_datastore_to_box(DATASTORE)
+        DATASTORE.increment_status()
+
+        DATASTORE.save()
+    except Exception as e:
+        print(traceback.format_exc())
+        DATASTORE.set_error_state(traceback.format_exc().replace("\n", " "))
+    print("FINISHED")
 
 
 @app.route("/")
 @app.route("/index.html", methods=["GET", "POST"])
+@app.route("/index", methods=["GET", "POST"])
 def populate_main_page():
-    global forms
-    global datastore
-    global bridge
-    global queue
-    global CONFIG_FILE
-    global SAVE_FILE
-
-    bridge = Bridge(CONFIG_FILE)
-
-    # Load the data if it exists, otherwise populate from
-    # online resources
-    if os.path.exists(SAVE_FILE):
-        with open(SAVE_FILE, "rb") as handle:
-            datastore = pickle.load(handle)
-    else:
-        datastore.sites, datastore.labs, datastore.tra_names = get_labs(bridge)
-        get_kobo_forms(bridge)
-        get_submissions(datastore.sites, bridge, datastore)
-
-        datastore.save(SAVE_FILE)
-
-        for site_code in datastore.sites:
-            print(datastore.sites[site_code].submissions.keys())
-            for subj in datastore.sites[site_code].submissions:
-                print(site_code, subj, datastore.sites[site_code].submissions[subj])
-
-    # Create a server to show the data
-    print("Checking for changes to coded videos...")
-    bridge.box.update_coded_videos(datastore)
-
-    datastore.save(SAVE_FILE)
-
+    global QUEUE
     forms = create_forms()
-    return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_qa", methods=["GET", "POST"])
 def send_to_qa():
-    global datastore
-    global bridge
-    global forms
+    global DATASTORE
+    global BRIDGE
     in_db_form = InDbForm()
-    print(in_db_form.in_databrary.data, forms["in_db_form"].in_databrary.data)
-    submitted_data = datastore.find_submission(in_db_form.in_databrary.data)
+    submitted_data = DATASTORE.find_submission(in_db_form.in_databrary.data)
 
     def fn(x, box_path, qa_folder):
         x.ready_for_qa = True
-        bridge.transfer_databrary_to_box(x, box_path)
+        BRIDGE.transfer_databrary_to_box(x, box_path)
         qa_filename = DatavyuTemplateFactory.generate_qa_file(x)
-        bridge.transfer_file_to_box(qa_filename, qa_folder)
+        BRIDGE.transfer_file_to_box(qa_filename, qa_folder)
 
-    queue.add(
+    QUEUE.add(
         Job(
             target=fn,
             name="SEND TO QA: {}".format(submitted_data.qa_filename),
@@ -540,30 +567,32 @@ def send_to_qa():
     )
 
     forms = create_forms()
-    return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/refresh_page", methods=["GET", "POST"])
 def refresh_page():
+    global BRIDGE
     try:
-        bridge.box.update_coded_videos(datastore)
+        BRIDGE.box.update_coded_videos(DATASTORE)
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
 
 @app.route("/send_to_coding", methods=["GET", "POST"])
 def send_to_coding():
+    global DATASTORE
+    global QUEUE
     try:
-        global datastore
         qa_form = QAForm()
-        submitted_data = datastore.find_submission(qa_form.ready_for_qa.data)
+        submitted_data = DATASTORE.find_submission(qa_form.ready_for_qa.data)
 
         def fn(x):
             x.ready_for_coding = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="SEND TO CODING: {}".format(submitted_data.qa_filename),
@@ -577,29 +606,31 @@ def send_to_coding():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_lab_obj", methods=["GET", "POST"])
 def send_to_lab_obj():
+    global DATASTORE
+    global BRIDGE
+    global QUEUE
     try:
-        global datastore
         coding_form = CodingForm()
-        submitted_data = datastore.find_submission(coding_form.ready_for_coding.data)
-        lab = datastore.find_lab(coding_form.lab_list.data)
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
+        lab = DATASTORE.find_lab(coding_form.lab_list.data)
 
         def fn(x, lab):
             # Download the coded QA file:
 
             print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
-            qa_file = bridge.box.get_file(
+            qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
 
             if not qa_file:
                 raise Exception("No completed QA file")
 
-            bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_obj_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
@@ -608,13 +639,14 @@ def send_to_lab_obj():
                     output_file, constants.PRI_CODING_DIR.format("obj", lab)
                 )
             )
-            bridge.transfer_file_to_box(
+            BRIDGE.transfer_file_to_box(
                 output_file, constants.PRI_CODING_DIR.format("obj", lab), makedirs=True
             )
-            bridge.box.create_folders(constants.PRI_CODED_DIR.format("obj", lab))
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("obj", lab))
             x.assigned_coding_site_obj = lab
+            lab.assigned_videos.append(x)
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="ASSIGN OBJ LAB: {} -> {}".format(submitted_data.qa_filename, lab),
@@ -628,28 +660,30 @@ def send_to_lab_obj():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_lab_loc", methods=["GET", "POST"])
 def send_to_lab_loc():
+    global DATASTORE
+    global BRIDGE
+    global QUEUE
     try:
-        global datastore
         coding_form = CodingForm()
-        submitted_data = datastore.find_submission(coding_form.ready_for_coding.data)
-        lab = datastore.find_lab(coding_form.lab_list.data)
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
+        lab = DATASTORE.find_lab(coding_form.lab_list.data)
 
         def fn(x, lab):
             # Download the coded QA file:
 
             print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
-            qa_file = bridge.box.get_file(
+            qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
 
             if not qa_file:
                 raise Exception("No completed QA file")
-            bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_loc_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
@@ -658,13 +692,14 @@ def send_to_lab_loc():
                     output_file, constants.PRI_CODING_DIR.format("loc", lab)
                 )
             )
-            bridge.transfer_file_to_box(
+            BRIDGE.transfer_file_to_box(
                 output_file, constants.PRI_CODING_DIR.format("loc", lab), makedirs=True
             )
             x.assigned_coding_site_loc = lab
-            bridge.box.create_folders(constants.PRI_CODED_DIR.format("loc", lab))
+            lab.assigned_videos.append(x)
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("loc", lab))
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="ASSIGN LOC LAB: {} -> {}".format(submitted_data.qa_filename, lab),
@@ -678,29 +713,31 @@ def send_to_lab_loc():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_lab_emo", methods=["GET", "POST"])
 def send_to_lab_emo():
+    global DATASTORE
+    global BRIDGE
+    global QUEUE
     try:
-        global datastore
         coding_form = CodingForm()
-        submitted_data = datastore.find_submission(coding_form.ready_for_coding.data)
-        lab = datastore.find_lab(coding_form.lab_list.data)
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
+        lab = DATASTORE.find_lab(coding_form.lab_list.data)
 
         def fn(x, lab):
             # Download the coded QA file:
 
             print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
-            qa_file = bridge.box.get_file(
+            qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
 
             if not qa_file:
                 raise Exception("No completed QA file")
 
-            bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_emo_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
@@ -709,13 +746,14 @@ def send_to_lab_emo():
                     output_file, constants.PRI_CODING_DIR.format("emo", lab)
                 )
             )
-            bridge.transfer_file_to_box(
+            BRIDGE.transfer_file_to_box(
                 output_file, constants.PRI_CODING_DIR.format("emo", lab), makedirs=True
             )
-            bridge.box.create_folders(constants.PRI_CODED_DIR.format("emo", lab))
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("emo", lab))
             x.assigned_coding_site_emo = lab
+            lab.assigned_videos.append(x)
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="ASSIGN EMO LAB: {} -> {}".format(submitted_data.qa_filename, lab),
@@ -729,28 +767,30 @@ def send_to_lab_emo():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_lab_tra", methods=["GET", "POST"])
 def send_to_lab_tra():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
         coding_form = TraCodingForm()
-        submitted_data = datastore.find_submission(coding_form.ready_for_coding.data)
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
         lab = coding_form.lab_list.data
 
         def fn(x, lab):
             # Download the coded QA file:
 
             print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
-            qa_file = bridge.box.get_file(
+            qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
             if not qa_file:
                 raise Exception("No completed QA file")
 
-            bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_tra_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
@@ -759,13 +799,14 @@ def send_to_lab_tra():
                     output_file, constants.PRI_CODING_DIR.format("tra", lab)
                 )
             )
-            bridge.transfer_file_to_box(
+            BRIDGE.transfer_file_to_box(
                 output_file, constants.PRI_CODING_DIR.format("tra", lab), makedirs=True
             )
-            bridge.box.create_folders(constants.PRI_CODED_DIR.format("tra", lab))
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("tra", lab))
             x.assigned_coding_site_tra = lab
+            lab.assigned_videos.append(x)
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="ASSIGN TRA LAB: {} -> {}".format(submitted_data.qa_filename, lab),
@@ -779,21 +820,23 @@ def send_to_lab_tra():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_lab_comm", methods=["GET", "POST"])
 def send_to_lab_comm():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
         coding_form = CodingForm()
-        submitted_data = datastore.find_submission(coding_form.ready_for_coding.data)
-        lab = datastore.find_lab(coding_form.lab_list.data)
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
+        lab = DATASTORE.find_lab(coding_form.lab_list.data)
 
         def fn(x, lab):
             # Download the coded QA file:
 
-            qa_file = bridge.box.get_file(
+            qa_file = BRIDGE.box.get_file(
                 constants.PRI_CODED_DIR.format("tra", x.assigned_coding_site_tra)
                 + "/"
                 + x.coding_filename_prefix
@@ -802,7 +845,7 @@ def send_to_lab_comm():
             if not qa_file:
                 raise Exception("No completed Tra file")
 
-            bridge.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_com_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
@@ -811,15 +854,16 @@ def send_to_lab_comm():
                     output_file, constants.PRI_CODING_DIR.format("com", lab)
                 )
             )
-            bridge.transfer_file_to_box(
+            BRIDGE.transfer_file_to_box(
                 output_file, constants.PRI_CODING_DIR.format("com", lab), makedirs=True
             )
 
-            bridge.box.create_folders(constants.PRI_CODED_DIR.format("com", lab))
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("com", lab))
             x.assigned_coding_site_com = lab
+            lab.assigned_videos.append(x)
             x.moved_to_gold_tra = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="ASSIGN COMM LAB: {} -> {}".format(
@@ -835,28 +879,39 @@ def send_to_lab_comm():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_rel_obj", methods=["GET", "POST"])
 def send_to_rel_obj():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
-        global bridge
         video_coding_form = VideosCodedForm()
-        submitted_data = datastore.find_submission(video_coding_form.videos_coded.data)
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
         def fn(x):
-            x.ready_for_rel_obj = True
+            site = x.assigned_coding_site_obj
+            BRIDGE.box.download_file(
+                "/".join(
+                    [
+                        constants.PRI_CODED_DIR.format("obj", site),
+                        x.coding_filename_prefix + "_obj.opf",
+                    ]
+                ),
+                constants.TMP_DATA_DIR,
+            )
             f = Datavyu.generate_rel_file(x, "obj")
-            bridge.box.upload_file(
+            BRIDGE.box.upload_file(
                 f,
                 constants.REL_CODING_DIR.format(
                     "obj", submitted_data.assigned_coding_site_loc
                 ),
             )
+            x.ready_for_rel_obj = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="READY FOR OBJ REL: {}".format(submitted_data.qa_filename),
@@ -870,28 +925,40 @@ def send_to_rel_obj():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_rel_loc", methods=["GET", "POST"])
 def send_to_rel_loc():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
-        global bridge
         video_coding_form = VideosCodedForm()
-        submitted_data = datastore.find_submission(video_coding_form.videos_coded.data)
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
         def fn(x):
-            x.ready_for_rel_loc = True
+            site = x.assigned_coding_site_loc
+            BRIDGE.box.download_file(
+                "/".join(
+                    [
+                        constants.PRI_CODED_DIR.format("loc", site),
+                        x.coding_filename_prefix + "_loc.opf",
+                    ]
+                ),
+                constants.TMP_DATA_DIR,
+            )
+
             f = Datavyu.generate_rel_file(x, "loc")
-            bridge.box.upload_file(
+            BRIDGE.box.upload_file(
                 f,
                 constants.REL_CODING_DIR.format(
                     "loc", submitted_data.assigned_coding_site_loc
                 ),
             )
+            x.ready_for_rel_loc = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="READY FOR LOC REL: {}".format(submitted_data.qa_filename),
@@ -905,28 +972,40 @@ def send_to_rel_loc():
 
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_rel_emo", methods=["GET", "POST"])
 def send_to_rel_emo():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
-        global bridge
         video_coding_form = VideosCodedForm()
-        submitted_data = datastore.find_submission(video_coding_form.videos_coded.data)
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
         def fn(x):
-            x.ready_for_rel_emo = True
+            site = x.assigned_coding_site_emo
+            BRIDGE.box.download_file(
+                "/".join(
+                    [
+                        constants.PRI_CODED_DIR.format("emo", site),
+                        x.coding_filename_prefix + "_emo.opf",
+                    ]
+                ),
+                constants.TMP_DATA_DIR,
+            )
+
             f = Datavyu.generate_rel_file(x, "emo")
-            bridge.box.upload_file(
+            BRIDGE.box.upload_file(
                 f,
                 constants.REL_CODING_DIR.format(
                     "emo", submitted_data.assigned_coding_site_emo
                 ),
             )
+            x.ready_for_rel_emo = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="READY FOR EMO REL: {}".format(submitted_data.qa_filename),
@@ -939,30 +1018,43 @@ def send_to_rel_emo():
         pass
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_rel_trans", methods=["GET", "POST"])
 def send_to_rel_trans():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
     try:
-        global datastore
-        global bridge
         video_coding_form = VideosCodedForm()
-        submitted_data = datastore.find_submission(video_coding_form.videos_coded.data)
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
         if video_coding_form.submit_send_to_rel:
 
             def fn(x):
-                x.ready_for_rel_tra = True
+                site = x.assigned_coding_site_tra
+                BRIDGE.box.download_file(
+                    "/".join(
+                        [
+                            constants.PRI_CODED_DIR.format("tra", site),
+                            x.coding_filename_prefix + "_tra.opf",
+                        ]
+                    ),
+                    constants.TMP_DATA_DIR,
+                )
+
                 f = Datavyu.generate_rel_file(x, "tra")
-                bridge.box.upload_file(
+                BRIDGE.box.upload_file(
                     f,
                     constants.REL_CODING_DIR.format(
                         "tra", submitted_data.assigned_coding_site_tra
                     ),
                 )
+                x.ready_for_rel_tra = True
+                x.moved_to_gold_tra = True  # TODO REMOVE THIS
 
-            queue.add(
+            QUEUE.add(
                 Job(
                     target=fn,
                     name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
@@ -974,7 +1066,7 @@ def send_to_rel_trans():
 
             def fn(x):
                 x.moved_to_gold_tra = True
-                queue.add(
+                QUEUE.add(
                     Job(
                         target=fn,
                         name="READY FOR TRA GOLD/COM: {}".format(
@@ -989,10 +1081,10 @@ def send_to_rel_trans():
 
             def fn(x):
                 x.moved_to_silver_tra = True
-                queue.add(
+                QUEUE.add(
                     Job(
                         target=fn,
-                        name="MOVE TO SILVER TRA: {}".format(
+                        name="MARK AS SILVER TRA: {}".format(
                             submitted_data.qa_filename
                         ),
                         args=[submitted_data],
@@ -1004,28 +1096,40 @@ def send_to_rel_trans():
         pass
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_rel_comm", methods=["GET", "POST"])
 def send_to_rel_comm():
+    global DATASTORE
+    global BRIDGE
+    global QUEUE
     try:
-        global datastore
-        global bridge
         video_coding_form = VideosCodedForm()
-        submitted_data = datastore.find_submission(video_coding_form.videos_coded.data)
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
         def fn(x):
-            x.ready_for_rel_com = True
+            site = x.assigned_coding_site_com
+            BRIDGE.box.download_file(
+                "/".join(
+                    [
+                        constants.PRI_CODED_DIR.format("com", site),
+                        x.coding_filename_prefix + "_com.opf",
+                    ]
+                ),
+                constants.TMP_DATA_DIR,
+            )
+
             f = Datavyu.generate_rel_file(x, "com")
-            bridge.box.upload_file(
+            BRIDGE.box.upload_file(
                 f,
                 constants.REL_CODING_DIR.format(
                     "tra", submitted_data.assigned_coding_site_tra
                 ),
             )
+            x.ready_for_rel_com = True
 
-        queue.add(
+        QUEUE.add(
             Job(
                 target=fn,
                 name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
@@ -1038,15 +1142,15 @@ def send_to_rel_comm():
         pass
     finally:
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+    return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/send_to_gold_obj", methods=["GET", "POST"])
 def send_to_gold_obj():
     try:
         rel_form = RelForm()
-        global datastore
-        submitted_data = datastore.find_submission(rel_form.ready_for_rel.data)
+        global DATASTORE
+        submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
         if rel_form.submit_send_to_gold.data:
 
@@ -1054,21 +1158,21 @@ def send_to_gold_obj():
                 x.moved_to_gold_obj = True
                 process_finished_asset(x)
 
-            name = "MOVE TO GOLD OBJ: {}".format(submitted_data.qa_filename)
+            name = "MARK AS GOLD OBJ: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
                 x.moved_to_silver_obj = True
                 process_finished_asset(x)
 
-            name = "MOVE TO SILVER OBJ: {}".format(submitted_data.qa_filename)
+            name = "MARK AS SILVER OBJ: {}".format(submitted_data.qa_filename)
 
-        queue.add(
+        QUEUE.add(
             Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
         )
 
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
@@ -1077,8 +1181,8 @@ def send_to_gold_obj():
 def send_to_gold_loc():
     try:
         rel_form = RelForm()
-        global datastore
-        submitted_data = datastore.find_submission(rel_form.ready_for_rel.data)
+        global DATASTORE
+        submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
         if rel_form.submit_send_to_gold.data:
 
@@ -1086,21 +1190,21 @@ def send_to_gold_loc():
                 x.moved_to_gold_loc = True
                 process_finished_asset(x)
 
-            name = "MOVE TO GOLD LOC: {}".format(submitted_data.qa_filename)
+            name = "MARK AS GOLD LOC: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
                 x.moved_to_silver_loc = True
                 process_finished_asset(x)
 
-            name = "MOVE TO SILVER LOC: {}".format(submitted_data.qa_filename)
+            name = "MARK AS SILVER LOC: {}".format(submitted_data.qa_filename)
 
-        queue.add(
+        QUEUE.add(
             Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
         )
 
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
@@ -1109,8 +1213,8 @@ def send_to_gold_loc():
 def send_to_gold_emo():
     try:
         rel_form = RelForm()
-        global datastore
-        submitted_data = datastore.find_submission(rel_form.ready_for_rel.data)
+        global DATASTORE
+        submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
         if rel_form.submit_send_to_gold.data:
 
@@ -1118,21 +1222,21 @@ def send_to_gold_emo():
                 x.moved_to_gold_emo = True
                 process_finished_asset(x)
 
-            name = "MOVE TO GOLD EMO: {}".format(submitted_data.qa_filename)
+            name = "MARK AS GOLD EMO: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
                 x.moved_to_silver_emo = True
                 process_finished_asset(x)
 
-            name = "MOVE TO SILVER EMO: {}".format(submitted_data.qa_filename)
+            name = "MARK AS SILVER EMO: {}".format(submitted_data.qa_filename)
 
-        queue.add(
+        QUEUE.add(
             Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
         )
 
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
@@ -1141,8 +1245,8 @@ def send_to_gold_emo():
 def send_to_gold_comm():
     try:
         rel_form = RelForm()
-        global datastore
-        submitted_data = datastore.find_submission(rel_form.ready_for_rel.data)
+        global DATASTORE
+        submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
         if rel_form.submit_send_to_gold.data:
 
@@ -1150,79 +1254,100 @@ def send_to_gold_comm():
                 x.moved_to_gold_com = True
                 process_finished_asset(x)
 
-            name = "MOVE TO GOLD COM: {}".format(submitted_data.qa_filename)
+            name = "MARK AS GOLD COM: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
                 x.moved_to_silver_com = True
                 process_finished_asset(x)
 
-            name = "MOVE TO SILVER COM: {}".format(submitted_data.qa_filename)
+            name = "MARK AS SILVER COM: {}".format(submitted_data.qa_filename)
 
-        queue.add(
+        QUEUE.add(
             Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
         )
 
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
 
 def process_finished_asset(asset):
     # Make sure that we are in fact done with this video
+    print("All gold?", asset.is_all_gold())
+    print("Finished?", asset.is_finished())
     if asset.is_finished():
+        print("Detected finished video")
         if asset.is_all_gold():
+            print("Video is GOLD!")
             send_to_gold(asset)
         else:
+            print("Video is Silver!")
             send_to_silver(asset)
 
 
 def send_to_gold(asset):
-    global bridge
+    global BRIDGE
     # Stich OPF
-    files = bridge.box.get_finished_opf_files(asset)
+    files = BRIDGE.box.get_finished_opf_files(asset)
     combined_file = Datavyu.combine_files(
         "/".join(
-            [constants.TMP_DATA_DIR, asset.coding_filename_prefix + "combined.opf"]
+            [constants.TMP_DATA_DIR, asset.coding_filename_prefix + "_combined.opf"]
         ),
         *files
     )
-    bridge.box.upload_file(
-        combined_file, constants.GOLD_FINAL_DIR.format(asset.site_id)
+    print("COMBINED FILENAME", combined_file)
+    print("DEST", constants.GOLD_FINAL_DIR.format(asset.site_id))
+    print(
+        "/".join(
+            [constants.TMP_DATA_DIR, asset.coding_filename_prefix + "_combined.opf"]
+        )
     )
+    BRIDGE.box.upload_file(
+        combined_file, constants.GOLD_FINAL_DIR.format(asset.site_id), True
+    )
+    # Mark in DB
+    for p in ["tra", "com", "loc", "obj", "emo"]:
+        mark_as_gold(asset, p)
 
 
 def send_to_silver(asset):
-    global bridge
-    files = bridge.box.get_finished_opf_files(asset)
+    global BRIDGE
+    files = BRIDGE.box.get_finished_opf_files(asset)
     for f in files:
-        bridge.box.upload_file(
+        BRIDGE.box.upload_file(
             f, constants.SILVER_FINAL_DIR.format(asset.site_id, asset.subj_number)
         )
+
+    for p in ["tra", "com", "loc", "obj", "emo"]:
+        if getattr(asset, "moved_to_gold_" + p):
+            mark_as_gold(asset, p)
+        else:
+            mark_as_silver(asset, p)
 
 
 def mark_as_gold(asset, coding_pass):
     # Mark the video as GOLD in databrary
-    global bridge
-    bridge.databrary.write_tag(asset, coding_pass + "_GOLD")
+    global BRIDGE
+    BRIDGE.databrary.write_tag(asset, coding_pass + "_GOLD")
 
 
-def mark_as_silver():
-    global bridge
-    bridge.databrary.write_tag(asset, coding_pass + "_SILVER")
+def mark_as_silver(asset, coding_pass):
+    global BRIDGE
+    BRIDGE.databrary.write_tag(asset, coding_pass + "_SILVER")
 
 
 @app.route("/queue_action", methods=["GET", "POST"])
 def queue_action():
+    global QUEUE
     try:
         queue_form = QueueForm()
-        global queue
         if queue_form.submit_queue.data:
             # Execute queue
-            queue.run()
+            QUEUE.run()
             results = []
-            for i, job in enumerate(queue.queued_jobs):
+            for i, job in enumerate(QUEUE.queued_jobs):
                 if job.status == 0:
                     results.append((i, " Completed"))
                 else:
@@ -1233,25 +1358,41 @@ def queue_action():
             # Handle any errors that have occurred
         if queue_form.remove_item_queue.data:
             to_remove = queue_form.actions.data
-            for i in queue.queued_jobs:
+            for i in QUEUE.queued_jobs:
                 if i.display_name == to_remove:
-                    queue.queued_jobs.remove(i)
+                    QUEUE.queued_jobs.remove(i)
                     break
         if queue_form.cancel_queue:
-            queue.clear()
+            QUEUE.clear()
 
         forms = create_forms()
-        return render_template("index.html", forms=forms, queue=queue)
+        return render_template("index.html", forms=forms, queue=QUEUE)
     except:
         pass
 
 
 @app.route("/progress")
 def progress():
-    global queue
+    global QUEUE
 
-    print(queue.status)
-    return Response("data:{}\n\n".format(queue.status), mimetype="text/event-stream")
+    print(QUEUE.status)
+    return Response("data:{}\n\n".format(QUEUE.status), mimetype="text/event-stream")
+
+
+@app.route("/loading")
+def loading():
+    global DATASTORE
+    return render_template("loading.html")
+
+
+@app.route("/status")
+def status():
+    global DATASTORE
+
+    print(DATASTORE.get_status())
+    return Response(
+        "data:{}\n\n".format(DATASTORE.get_status()), mimetype="text/event-stream"
+    )
 
 
 def check_for_new():
@@ -1264,15 +1405,13 @@ def get_labs(bridge):
     for site in sites.values():
         site.get_vol_id(bridge.db)
 
-    sites["TEST"] = Site("TEST")
-    sites["TEST"].vol_id = "135"
-    sites["TEST2"] = Site("TEST2")
-    sites["TEST2"].vol_id = "152"
     return sites, labs, tra_names
 
 
 def get_submissions(sites, bridge, datastore):
     for site in sites.values():
+        if site.vol_id is None:
+            continue
         print("Getting submissions for vol_id", site.vol_id)
         assets = bridge.db.get_assets_for_volume(site.vol_id, gold_only=False)
         if assets is not None:
@@ -1285,8 +1424,8 @@ def get_submissions(sites, bridge, datastore):
                     except IndexError as e:
                         print("Error adding video")
                         print(e)
-    #  for sub in datastore.get_submissions():
-    #  sub.check_for_form(bridge.kobo.get_forms())
+    for sub in datastore.get_submissions():
+        sub.check_for_form(bridge.kobo.get_forms())
 
 
 def get_kobo_forms(bridge):
@@ -1296,24 +1435,24 @@ def get_kobo_forms(bridge):
 def startup():
     # Set up the Flask server we'll be using
 
-    # Set up the DB/Box/Kobo bridge
-    global datastore
-    global bridge
-    global queue
+    # Set up the DB/Box/Kobo BRIDGE
+    global DATASTORE
+    global QUEUE
     global CONFIG_FILE
-    global SAVE_FILE
     global WEB
 
     if not os.path.exists(CONFIG_FILE):
         url = "http://localhost:5000/config"
     else:
-        url = "http://localhost:5000"
+        url = "http://localhost:5000/loading"
 
     def load_browser(web, url):
         time.sleep(1.25)
         WEB.load(QUrl(url))
         WEB.show()
 
+    init_thread = threading.Thread(target=initialize)
+    init_thread.start()
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)
