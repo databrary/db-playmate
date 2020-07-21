@@ -1,0 +1,137 @@
+<!DOCTYPE HTML>
+<HTML>
+  <HEAD>
+    <TITLE>
+      Databrary PLAY-Mate
+    </TITLE>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> -->
+    <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}"> -->
+    <style>
+      * {
+        box-sizing: border-box;
+        background-color: #000
+      }
+
+      /* Create two equal columns that floats next to each other */
+      .column {
+        float: left;
+        width: 35%;
+        padding: 5px;
+      }
+
+      /* Clear floats after the columns */
+      .row:after {
+        content: "";
+        display: table;
+        clear: both;
+      }
+
+      .main {
+        margin-left: 28%;
+        padding: 0px 10px;
+      }
+
+      div#content {
+        display: none;
+      }
+
+      select:empty {
+        min-width: 20%;
+      }
+
+      select[multiple]:empty {
+        min-width: 20%;
+        height: 30px;
+      }
+      select[multiple] {
+        min-width: 20%;
+        height: 30px;
+      }
+
+      div#content {
+          display: none;
+          }
+
+      div#loading {
+          top: 200 px;
+          margin: auto;
+          position: absolute;
+          z-index: 1000;
+          width: 160px;
+          height: 24px;
+          background: url(loadingimage.gif) no-repeat;
+          cursor: wait;
+          }
+
+      /* The sidebar menu */
+      .sidenav {
+        height: 100%; /* Full-height: remove this if you want "auto" height */
+        width: 25%; /* Set the width of the sidebar */
+        position: fixed; /* Fixed Sidebar (stay in place on scroll) */
+        z-index: 1; /* Stay on top */
+        top: 0; /* Stay at the top */
+        left: 0;
+        background-color: #669966; /* PLAY green */
+        padding-top: 20px;
+        padding-left: 2%;
+      }
+
+      .tracolumn {
+        height: 100%;
+        width: 25%;
+        z-index: 1;
+        position: fixed;
+        top: 0;
+        float: right;
+        background-color: #bbb;
+        padding-top: 20px;
+        right: 0%;
+        padding-left: 3%;
+      }
+
+      .green {
+        color: #669966;
+        }
+
+      .grey {
+        color: #888888;
+        }
+
+      .aligncenter {
+        text-align: center;
+        font-size:large;
+        color: #fff;
+        font-weight: bolder;
+      }
+
+
+    </style>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script>
+
+    var source = new EventSource("/status");
+      source.onmessage = function(event) {
+        $('.status').text(event.data);
+
+        if(event.data == "Finished!"){
+          source.close();
+          window.location("{{ url_for('populate_main_page') }}");
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+  </HEAD>
+  <BODY>
+  <p class="aligncenter"> 
+    <img src="/static/db-playmate-loading.gif">
+  </p>
+  <p class="aligncenter">
+    <div class="status aligncenter"></div>
+  </p>
+  </BODY>
+</HTML>
+
+
