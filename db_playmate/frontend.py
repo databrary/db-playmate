@@ -51,6 +51,10 @@ BRIDGE = 0
 
 
 class QWebEngineViewWindow(QWebEngineView):
+    def __init__(self):
+        super().__init__()
+        self.page().createStandardContextMenu()
+
     def closeEvent(self, event):
         print("Close event fired")
         from flask import request
@@ -230,14 +234,7 @@ def create_forms():
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued
-        and (
-            (x.primary_coding_finished_tra and x.ready_for_rel_tra is False)
-            or (
-                x.rel_coding_finished_tra
-                and x.moved_to_gold_tra is False
-                and x.moved_to_silver_tra is False
-            )
-        )
+        and ((x.primary_coding_finished_tra and x.ready_for_rel_tra is False))
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
@@ -249,7 +246,6 @@ def create_forms():
                 x.primary_coding_finished_tra is False
                 and x.assigned_coding_site_tra is not None
             )
-            or (x.primary_coding_finished_tra and x.rel_coding_finished_tra is False)
         )
     ]
     trans_video_coding_form.videos_coded.choices = v_coding_done
@@ -374,6 +370,25 @@ def create_forms():
     ]
     emo_rel_form.gold.choices = gold_videos
 
+    trans_rel_video_coding_form = RelForm()
+    ready_for_rel = [
+        (x.id, x.display_name)
+        for site in DATASTORE.sites.values()
+        for x in site.submissions.values()
+        if not x.queued
+        and x.primary_coding_finished_tra
+        and x.ready_for_rel_tra
+        and x.rel_coding_finished_tra is False
+    ]
+    gold_videos = [
+        (x.id, x.display_name)
+        for site in DATASTORE.sites.values()
+        for x in site.submissions.values()
+        if not x.queued and x.moved_to_gold_tra
+    ]
+    trans_rel_video_coding_form.ready_for_rel.choices = ready_for_rel
+    trans_rel_video_coding_form.gold.choices = gold_videos
+
     comm_rel_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
@@ -481,6 +496,7 @@ def create_forms():
         "loc_rel_form": loc_rel_form,
         "emo_rel_form": emo_rel_form,
         "comm_rel_form": comm_rel_form,
+        "tra_rel_form": trans_rel_video_coding_form,
         "queue_form": queue_form,
         "refresh_button": refresh_form,
         "in_silver": in_silver,
@@ -488,6 +504,7 @@ def create_forms():
     }
 
     DATASTORE.save()
+    print("Forms generated!")
     return forms
 
 
@@ -544,6 +561,7 @@ def initialize():
 @app.route("/index", methods=["GET", "POST"])
 def populate_main_page():
     global QUEUE
+    print("Generating forms")
     forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
 
@@ -660,7 +678,7 @@ def send_to_lab_obj():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -713,7 +731,7 @@ def send_to_lab_loc():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -767,7 +785,7 @@ def send_to_lab_emo():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -820,7 +838,7 @@ def send_to_lab_tra():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -879,6 +897,52 @@ def send_to_lab_comm():
         )
 
     except:
+        print(traceback.format_exc())
+
+    finally:
+        forms = create_forms()
+    return render_template("index.html", forms=forms, queue=QUEUE)
+
+
+@app.route("/send_to_rel_tra", methods=["GET", "POST"])
+def send_to_rel_tra():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
+    try:
+        video_coding_form = VideosCodedForm()
+        submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
+
+        def fn(x):
+            site = x.assigned_coding_site_tra
+            BRIDGE.box.download_file(
+                "/".join(
+                    [
+                        constants.PRI_CODED_DIR.format("tra", site),
+                        x.coding_filename_prefix + "_tra.opf",
+                    ]
+                ),
+                constants.TMP_DATA_DIR,
+            )
+            f = Datavyu.generate_rel_file(x, "tra")
+            BRIDGE.box.upload_file(
+                f,
+                constants.REL_CODING_DIR.format(
+                    "tra", submitted_data.assigned_coding_site_loc
+                ),
+            )
+            x.ready_for_rel_tra = True
+
+        QUEUE.add(
+            Job(
+                target=fn,
+                name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
+                args=[submitted_data],
+                item=submitted_data,
+            )
+        )
+
+    except:
         pass
 
     finally:
@@ -925,7 +989,7 @@ def send_to_rel_obj():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -1019,7 +1083,7 @@ def send_to_rel_emo():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
@@ -1097,7 +1161,7 @@ def send_to_rel_trans():
                 )
 
     except:
-        pass
+        print(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
@@ -1143,10 +1207,42 @@ def send_to_rel_comm():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
+
+
+@app.route("/send_to_gold_tra", methods=["GET", "POST"])
+def send_to_gold_tra():
+    try:
+        rel_form = RelForm()
+        global DATASTORE
+        submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
+
+        if rel_form.submit_send_to_gold.data:
+
+            def fn(x):
+                x.moved_to_gold_tra = True
+                process_finished_asset(x)
+
+            name = "MARK AS GOLD TRA: {}".format(submitted_data.qa_filename)
+        else:
+
+            def fn(x):
+                x.moved_to_silver_tra = True
+                process_finished_asset(x)
+
+            name = "MARK AS SILVER TRA: {}".format(submitted_data.qa_filename)
+
+        QUEUE.add(
+            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+        )
+
+        forms = create_forms()
+        return render_template("index.html", forms=forms, queue=QUEUE)
+    except:
+        print(traceback.format_exc())
 
 
 @app.route("/send_to_gold_obj", methods=["GET", "POST"])
@@ -1178,7 +1274,7 @@ def send_to_gold_obj():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        print(traceback.format_exc())
 
 
 @app.route("/send_to_gold_loc", methods=["GET", "POST"])
@@ -1210,7 +1306,7 @@ def send_to_gold_loc():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        print(traceback.format_exc())
 
 
 @app.route("/send_to_gold_emo", methods=["GET", "POST"])
@@ -1242,7 +1338,7 @@ def send_to_gold_emo():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        print(traceback.format_exc())
 
 
 @app.route("/send_to_gold_comm", methods=["GET", "POST"])
@@ -1274,7 +1370,7 @@ def send_to_gold_comm():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        print(traceback.format_exc())
 
 
 def process_finished_asset(asset):

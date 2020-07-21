@@ -206,12 +206,11 @@ class Site:
             subj_number = filename.split("_")[2]
         except IndexError:
             subj_number = asset["id"]
-        print("SN", site_id, subj_number)
         if "-" in subj_number:
             subj_number = subj_number.split("-")[0]
         if subj_number.startswith("S"):
             subj_number = subj_number[1:]
-        if subj_number not in self.submissions:
+        if asset["id"] not in [s.asset_id for s in self.submissions.values()]:
             self.submissions[subj_number] = Submission(site_id, subj_number, asset)
         self.submissions[subj_number].add_video(asset)
 
@@ -247,7 +246,7 @@ class Datastore:
         self.error_flag = True
 
     def increment_status(self):
-        print("INCREMENTING")
+        print("INCREMENTING", self.curr_status)
         self.curr_status += 1
 
     def get_status(self):
@@ -283,9 +282,10 @@ class Datastore:
                 return s
         return None
 
-    def find_submission_by_name(self, filename):
+    def find_submission_by_name(self, coding_prefix):
+        coding_number = coding_prefix.split("_")[1]
         for s in self.get_submissions():
-            if s.play_filename == filename:
+            if str(s.coding_filename_prefix.split("_")[1]) == str(coding_number):
                 return s
         return None
 
@@ -294,7 +294,4 @@ class Datastore:
         return self.sites[site].submissions[subj]
 
     def find_lab(self, lab_id):
-        for s in self.labs:
-            if lab_id == s.lab_code:
-                return s
-        return None
+        return self.labs[lab_id]

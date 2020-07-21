@@ -77,13 +77,13 @@ def read_lab_coding(labs):
                 print("%s, %s" % (row[LAB_CODE_COL], row[CODING_PASS_COL]))
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
-                if coding_pass == "Communication & Gesture":
+                if coding_pass == "Communicative Acts & Gesture":
                     labs[lab_code].code_com = True
                 if coding_pass == "Emotion":
                     labs[lab_code].code_emo = True
                 if coding_pass == "Locomotion":
                     labs[lab_code].code_loc = True
-                if coding_pass == "Object":
+                if coding_pass == "Object Interaction":
                     labs[lab_code].code_obj = True
                 for c in contact_columns:
                     if row[c] and len(row[c]) > 0:

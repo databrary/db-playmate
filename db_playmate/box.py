@@ -8,6 +8,7 @@ from collections import deque
 from threading import Thread
 from boxsdk.object.collaboration import CollaborationRole
 import db_playmate.constants as constants
+import traceback
 
 import boxsdk as bx
 import sys
@@ -405,13 +406,6 @@ class Box:
                         setattr(sub, "primary_coding_finished_{}".format(p), True)
                         print("Found, setting to true")
 
-    def perform_initial_sync(self, datastore):
-        """Sync the current state of the box folder to this application"""
-        passes = ["loc", "obj", "com", "emo", "tra"]
-        # We want to walk the entire automation folder to try to find everything
-        # Check status of QA files
-        files = self.list_folder(constants.QA_CODED_DIR)
-
     def set_permissions_read(self, folder, emails):
         self.set_permissions(folder, emails, CollaborationRole.VIEWER)
 
@@ -539,25 +533,31 @@ class Box:
                 try:
                     _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
                     coding_pass = coding_pass[-3:]
-                    lab_code = lab_folder[-7:]
+                    lab_code = lab_folder.split("_")[2]
                     status = status[0]
                     print(coding_pass, lab_code, status)
 
                     # Update the file based on the information we just saw
                     submission = datastore.find_submission_by_name(filename)
                     setattr(submission, "assigned_coding_site_" + coding_pass, lab_code)
+                    print(
+                        "PRIMARY SYNC", submission.play_filename, coding_pass, lab_code
+                    )
                     submission.ready_for_qa = True
                     submission.ready_for_coding = True
                     if status == "3":
                         setattr(
                             submission, "primary_coding_finished_" + coding_pass, True
                         )
-                except KeyError:
+                except KeyError as e:
+                    print(traceback.format_exc())
                     continue
-                except AttributeError:
+                except AttributeError as e:
+                    print(traceback.format_exc())
                     print("Not found")
                     continue
-                except ValueError:
+                except ValueError as e:
+                    print(traceback.format_exc())
                     continue
 
         coding_dir = "/".join(constants.REL_CODING_DIR.split("/")[0:3])
@@ -569,7 +569,7 @@ class Box:
                 try:
                     _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
                     coding_pass = coding_pass[-3:]
-                    lab_code = lab_folder[-7:]
+                    lab_code = lab_folder.split("_")[2]
                     status = status[0]
 
                     # Update the file based on the information we just saw
@@ -580,10 +580,16 @@ class Box:
                     if status == "3":
                         setattr(submission, "rel_coding_finished_" + coding_pass, True)
                 except KeyError:
+                    print(traceback.format_exc())
                     continue
                 except AttributeError:
+                    print(traceback.format_exc())
                     continue
                 except ValueError:
+                    print(traceback.format_exc())
+                    continue
+                except IndexError:
+                    print(traceback.format_exc())
                     continue
 
         silver_dir = constants.SILVER_FINAL_DIR
