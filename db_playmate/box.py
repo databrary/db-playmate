@@ -503,13 +503,14 @@ class Box:
                         submission.ready_for_qa = True
                     except KeyError:
                         continue
+                    except ValueError:
+                        continue
 
         # Check QA files
         qa_dir = "/".join(constants.QA_CODED_DIR.split("/")[0:3])
         print(qa_dir)
         print("QA SYNC")
         print(self.get_file_tree(qa_dir))
-        sys.exit()
         for path in self.get_file_tree(qa_dir):
             if path.endswith(".opf"):
                 print(path)
@@ -527,22 +528,22 @@ class Box:
                 except KeyError:
                     continue
 
-        coding_dir = "/".join(constants.PRI_CODING_DIR.split("/")[0:2])
+        coding_dir = "/".join(constants.PRI_CODING_DIR.split("/")[0:3])
+        print("PRIMARY CODING SYNC", coding_dir)
         files = self.get_file_tree(coding_dir)
         # These are the paths to all of the files in the dir, parse them
         print(files)
-        print("PRIMARY CODING SYNC")
         for path in files:
             print(path)
             if path.endswith(".opf"):
-                _, _, coding_pass, lab_folder, status, filename = path.split("/")
-                coding_pass = coding_pass[-3:]
-                lab_code = lab_folder[-7:]
-                status = status[0]
-                print(coding_pass, lab_code, status)
-
-                # Update the file based on the information we just saw
                 try:
+                    _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
+                    coding_pass = coding_pass[-3:]
+                    lab_code = lab_folder[-7:]
+                    status = status[0]
+                    print(coding_pass, lab_code, status)
+
+                    # Update the file based on the information we just saw
                     submission = datastore.find_submission_by_name(filename)
                     setattr(submission, "assigned_coding_site_" + coding_pass, lab_code)
                     submission.ready_for_qa = True
@@ -553,19 +554,25 @@ class Box:
                         )
                 except KeyError:
                     continue
+                except AttributeError:
+                    print("Not found")
+                    continue
+                except ValueError:
+                    continue
 
-        coding_dir = "/".join(constants.REL_CODING_DIR.split("/")[0:2])
+        coding_dir = "/".join(constants.REL_CODING_DIR.split("/")[0:3])
+        print("REL CODING SYNC", coding_dir)
         files = self.get_file_tree(coding_dir)
         # These are the paths to all of the files in the dir, parse them
         for path in files:
             if path.endswith(".opf"):
-                _, _, coding_pass, lab_folder, status, filename = path.split("/")
-                coding_pass = coding_pass[-3:]
-                lab_code = lab_folder[-7:]
-                status = status[0]
-
-                # Update the file based on the information we just saw
                 try:
+                    _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
+                    coding_pass = coding_pass[-3:]
+                    lab_code = lab_folder[-7:]
+                    status = status[0]
+
+                    # Update the file based on the information we just saw
                     submission = datastore.find_submission_by_name(filename)
                     setattr(submission, "ready_for_rel_" + coding_pass, True)
                     submission.ready_for_qa = True
@@ -573,6 +580,10 @@ class Box:
                     if status == "3":
                         setattr(submission, "rel_coding_finished_" + coding_pass, True)
                 except KeyError:
+                    continue
+                except AttributeError:
+                    continue
+                except ValueError:
                     continue
 
         silver_dir = constants.SILVER_FINAL_DIR
