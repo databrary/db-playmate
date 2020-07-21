@@ -62,8 +62,6 @@ def read_lab_coding(labs):
         print(row)
         for i, col in enumerate(row):
             print(i, col)
-            if col == SITE_CODE_COL:
-                SITE_CODE_COL = i
             if col == LAB_CODE_COL:
                 LAB_CODE_COL = i
             if col == CODING_PASS_COL:
@@ -77,7 +75,6 @@ def read_lab_coding(labs):
         for row in values:
             try:
                 print("%s, %s" % (row[LAB_CODE_COL], row[CODING_PASS_COL]))
-                site_code = row[SITE_CODE_COL]
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
                 if coding_pass == "Communication & Gesture":
