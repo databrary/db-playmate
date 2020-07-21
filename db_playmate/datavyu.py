@@ -263,20 +263,19 @@ class DatavyuTemplateFactory:
     def generate_rel_file(submission, coding_pass):
         # TODO once we get the rel scripts
         site = getattr(submission, "assigned_coding_site_" + coding_pass)
-        d = constants.PRI_CODED_DIR.format(coding_pass, site)
+        d = constants.TMP_DATA_DIR
         spreadsheet = pyvyu.load_opf(
-            d + "/" + submission.coding_filename_prefix + coding_pass + ".opf"
+            d + "/" + submission.coding_filename_prefix + "_" + coding_pass + ".opf"
         )
         all_columns = []
         for col in spreadsheet.get_column_list():
+            col = spreadsheet.get_column(col)
             spreadsheet.new_column("rel_" + col.name, *col.codelist)
         output_filename = "{}/{}_{}_rel.opf".format(
             constants.TMP_DATA_DIR, submission.coding_filename_prefix, coding_pass
         )
         os.makedirs(constants.TMP_DATA_DIR, exist_ok=True)
-        pyvyu.save_opf(
-            spreadsheet, output_filename, True, *spreadsheet.columns.values()
-        )
+        pyvyu.save_opf(spreadsheet, output_filename, True, *spreadsheet.columns.keys())
         return output_filename
 
     def combine_files(output_filename, *passes):
@@ -296,3 +295,4 @@ class DatavyuTemplateFactory:
         sp.name = output_filename
         sp.columns = all_columns
         pyvyu.save_opf(sp, output_filename, True, *all_columns.keys())
+        return output_filename

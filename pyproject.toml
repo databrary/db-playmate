@@ -31,6 +31,7 @@ PyQt5 = "^5.15.0"
 PyQtWebEngine = "^5.15.0"
 pyinstaller = {git = "https://github.com/pyinstaller/pyinstaller", 'branch' = "develop"}
 pytest = "^5.4.3"
+rope = "^0.17.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

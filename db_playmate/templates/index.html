@@ -4,6 +4,7 @@
     <TITLE>
       Databrary PLAY-Mate
     </TITLE>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script> -->
     <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}"> -->
     <style>
@@ -84,7 +85,6 @@
         }
 
     </style>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
     <script>
@@ -100,20 +100,20 @@
       }
     </script>
 
-    <script type="text/javascript">// <![CDATA[
-        function preloader(){
-            document.getElementById("loading").style.display = "none";
-            document.getElementById("content").style.display = "block";
-        }//preloader
-        window.onload = preloader;
-// ]]></script>
+      <script type="text/javascript">
+          $('.submit_queue').click(function() {
+            // update disabled property
+            $(".submit_queue").prop('disabled', this.value == 1);
+          });
+      </script>
+
 
   </HEAD>
   <BODY>
   <div id="loading"></div>
   <div id="content">
   <div class="sidenav">
-    <form action="{{ url_for('queue_action') }}" method="post">
+    <form action="{{ url_for('queue_action') }}" method="post" id="queue">
       <div class="row">
         <h3>Action queue</h3>
         <p>
@@ -121,7 +121,7 @@
         {{ forms["queue_form"].actions() }}
         </p>
         <p>
-        {{ forms["queue_form"].submit_queue() }}
+        {{ forms["queue_form"].submit_queue(class_="submit_queue", _name="submit_queue") }}
         {{ forms["queue_form"].remove_item_queue() }}
         </p>
         <p>
@@ -184,6 +184,13 @@
       <form action="{{ url_for('send_to_rel_trans') }}" method="post">
         <div class="row">
           <p>
+          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["trans_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+
+        <div class="row">
+          <p>
           {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
           {{ forms["trans_video_coding_form"].videos_coded() }}
           </p>
@@ -191,12 +198,6 @@
         <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].submit_send_to_rel() }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["trans_video_coding_form"].videos_not_coded() }}
           </p>
         </div>
         <div class="row">
@@ -376,6 +377,12 @@
       <form action="{{ url_for('send_to_rel_obj') }}" method="post">
         <div class="row">
           <p>
+          {{ forms["obj_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["obj_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
           {{ forms["obj_video_coding_form"].videos_coded.label }}<br>
           {{ forms["obj_video_coding_form"].videos_coded() }}
           </p>
@@ -385,17 +392,18 @@
           {{ forms["obj_video_coding_form"].submit_send_to_rel() }}
           </p>
         </div>
-        <div class="row">
-          <p>
-          {{ forms["obj_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["obj_video_coding_form"].videos_not_coded() }}
-          </p>
-        </div>
       </form>
     </div>
     <div class="column">
       <h4 class="grey"> Locomotion </h4>
       <form action="{{ url_for('send_to_rel_loc') }}" method="post">
+
+        <div class="row">
+          <p>
+          {{ forms["loc_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["loc_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
         <div class="row">
           <p>
           {{ forms["loc_video_coding_form"].videos_coded.label }}<br>
@@ -407,12 +415,6 @@
           {{ forms["loc_video_coding_form"].submit_send_to_rel() }}
           </p>
         </div>
-        <div class="row">
-          <p>
-          {{ forms["loc_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["loc_video_coding_form"].videos_not_coded() }}
-          </p>
-        </div>
       </form>
     </div>
   </div>
@@ -420,6 +422,12 @@
     <div class="column">
       <h4 class="grey"> Emotion </h4>
       <form action="{{ url_for('send_to_rel_emo') }}" method="post">
+        <div class="row">
+          <p>
+          {{ forms["emo_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["emo_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
         <div class="row">
           <p>
           {{ forms["emo_video_coding_form"].videos_coded.label }}<br>
@@ -431,12 +439,6 @@
           {{ forms["emo_video_coding_form"].submit_send_to_rel() }}
           </p>
         </div>
-        <div class="row">
-          <p>
-          {{ forms["emo_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["emo_video_coding_form"].videos_not_coded() }}
-          </p>
-        </div>
       </form>
     </div>
 
@@ -446,6 +448,12 @@
           <form action="{{ url_for('send_to_rel_comm') }}" method="post">
             <div class="row">
               <p>
+              {{ forms["comm_video_coding_form"].videos_not_coded.label }}<br>
+              {{ forms["comm_video_coding_form"].videos_not_coded() }}
+              </p>
+            </div>
+            <div class="row">
+              <p>
               {{ forms["comm_video_coding_form"].videos_coded.label }}<br>
               {{ forms["comm_video_coding_form"].videos_coded() }}
               </p>
@@ -453,12 +461,6 @@
             <div class="row">
               <p>
               {{ forms["comm_video_coding_form"].submit_send_to_rel() }}
-              </p>
-            </div>
-            <div class="row">
-              <p>
-              {{ forms["comm_video_coding_form"].videos_not_coded.label }}<br>
-              {{ forms["comm_video_coding_form"].videos_not_coded() }}
               </p>
             </div>
           </form>

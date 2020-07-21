@@ -607,6 +607,8 @@ class Databrary:
         return r.status_code
 
     def get_assets_for_volume(self, vol_id, gold_only=True):
+        if vol_id is None:
+            return None
         slots = self.get_slots_for_volume(vol_id)
         if slots is None:
             return None
