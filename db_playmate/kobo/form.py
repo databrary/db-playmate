@@ -119,10 +119,13 @@ class Form:
         return url
 
     def get_submissions(self):
-        rj = self.connection.send_query(url=self._submission_url()).json()
-        self._subs_raw = rj
-        for data in rj:
-            self.add_submission(data)
+        try:
+            rj = self.connection.send_query(url=self._submission_url()).json()
+            self._subs_raw = rj
+            for data in rj:
+                self.add_submission(data)
+        except AttributeError as e:
+            print("Error, could not connect to kobo", e)
 
         return self.submissions
 
