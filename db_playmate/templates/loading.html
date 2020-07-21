@@ -114,9 +114,9 @@
       source.onmessage = function(event) {
         $('.status').text(event.data);
 
-        if(event.data == "Finished!"){
+        if(event.data.equals("Finished!")){
           source.close();
-          window.location("{{ url_for('populate_main_page') }}");
+          window.location.href = "{{ url_for('populate_main_page') }}";
         }
       }
     </script>
