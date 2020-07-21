@@ -497,12 +497,13 @@ def initialize():
     global BRIDGE
     global CONFIG_FILE
 
-    BRIDGE = Bridge(CONFIG_FILE)
-
-    if os.path.exists(constants.SAVE_FILE_NAME):
-        with open(constants.SAVE_FILE_NAME, "rb") as handle:
-            DATASTORE = pickle.load(handle)
     try:
+        BRIDGE = Bridge(CONFIG_FILE)
+
+        if os.path.exists(constants.SAVE_FILE_NAME):
+            with open(constants.SAVE_FILE_NAME, "rb") as handle:
+                DATASTORE = pickle.load(handle)
+        DATASTORE.curr_status = 0
         DATASTORE.increment_status()
 
         # Load the data if it exists, otherwise populate from
@@ -526,9 +527,12 @@ def initialize():
         print("Syncing datastore to Box")
         if not DATASTORE.synced:
             BRIDGE.box.sync_datastore_to_box(DATASTORE)
+            DATASTORE.synced = True
         DATASTORE.increment_status()
 
         DATASTORE.save()
+        if DATASTORE.get_status() != "Finished!":
+            DATASTORE.increment_status()
     except Exception as e:
         print(traceback.format_exc())
         DATASTORE.set_error_state(traceback.format_exc().replace("\n", " "))
