@@ -267,8 +267,6 @@ class Datastore:
             pass  # If the key isnt found just ignore it for now
 
     def save(self):
-        path = os.sep.join(filename.split(os.sep)[:-1])
-        os.makedirs(path, exist_ok=True)
         with open(constants.SAVE_FILE_NAME, "wb") as handle:
             pickle.dump(self, handle)
 
