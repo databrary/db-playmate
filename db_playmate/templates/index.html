@@ -155,7 +155,7 @@
   </div>
     <div class="tracolumn">
       <div class="row">
-      <h3>Assign to Transcriber</h3>
+a      <h3>Assigning videos to Transcribers</h3>
       <form action="{{ url_for('send_to_lab_tra') }}" method="post">
         <div class="row">
           <p>
@@ -178,7 +178,7 @@
       </div>
     <div class="row">
     <br>
-      <h3> Transcription Primary Coding </h3>
+      <h3> Send Tran files to rel coders </h3>
       <form action="{{ url_for('send_to_rel_tra') }}" method="post">
         <div class="row">
           <p>
@@ -202,7 +202,7 @@
     </div>
 
     <div class="row">
-    <h3>Transcription Reliability</h3>
+    <h3>Mark Tran files as GOLD/SILVER </h3>
       <form action="{{ url_for('send_to_gold_tra') }}" method="post">
         <div class="row">
           <p>
@@ -226,6 +226,7 @@
 
     </div>
 
+<hr style="height:3px;width:80%;background-color:white">
 
     <div class="row">
       <h3>{{ forms["in_silver"].in_silver.label }}</h3>
@@ -243,7 +244,7 @@
   <div class="row">
     <br>
     <img src="/static/PLAY-logo.png" height=150px>
-    <h3 class="green">Add file to pipeline</h3>
+    <h3 class="green">Add videos to the workflow</h3>
     <form action="{{ url_for('send_to_qa') }}" method="post">
     <div class="column">
       {{ forms["in_db_form"].hidden_tag() }}
@@ -288,7 +289,7 @@
     </form>
   </div>
   <div class="row">
-    <h3 class="green">Assign to labs</h3>
+    <h3 class="green">Assign videos to labs for coding</h3>
     <div class="column">
       <form action="{{ url_for('send_to_lab_obj') }}" method="post">
         <h4 class="grey">Object</h4>
@@ -390,7 +391,7 @@
 
   -->
   <div class="row">
-    <h3 class="green">Authorize for reliability coding </h3>
+    <h3 class="green">Send coded files to rel coders </h3>
     <div class="column">
       <h4 class="grey"> Object </h4>
       <form action="{{ url_for('send_to_rel_obj') }}" method="post">
@@ -494,7 +495,7 @@
 
     -->
   <div class="row">
-    <h3 class="green">Assign to GOLD </h3>
+    <h3 class="green">Mark coded files as GOLD or SILVER </h3>
     <div class="column">
       <form action="{{ url_for('send_to_gold_obj') }}" method="post">
         <h4 class="grey"> Object </h4>
