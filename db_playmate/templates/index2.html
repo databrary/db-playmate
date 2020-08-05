@@ -9,14 +9,9 @@
     <!-- <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}"> -->
     <style>
 
-
-div{
-  display:inline-block;
-  float:left;
-}
-
 /* Create two equal columns that float next to each other */
 .column {
+display: table-cell;
 float: left;
 width: 35%;
 padding: 5px;
@@ -29,47 +24,50 @@ display: table;
 clear: both;
 }
 
-
 .band1{
   width:100%;
-  height:20%;
+  height:100%;
   background:#669966;
+  padding: 15px;
 }
 
 .band2{
   width:100%;
-  height:80%;
+  height:100%;
   background:white;
+  padding: 15px;
 }
 
 .colpipe{
-  width:60%;
+  display: table-cell;
+  width:47.5%;
   height:100%;
   background:#669966;
-}
-
-.colqueue{
-  width:40%;
-  height:100%;
-  background:#669966;
+  padding: 5px;
 }
 
 .collab{
+  display: table-cell;
   width:40%;
   height:100%;
   background:lightgrey;
+  padding: 5px;
 }
 
 .coltran{
-    width:35%;
+  display: table-cell;
+  width:35%;
   height:100%;
   background:#bbb;
+  padding: 5px;
 }
 
 .colfin{
-    width:25%;
+  display: table-cell;
+  width:25%;
   height:100%;
-    background:gold;
+  background:gold;
+  padding: 5px;
 }
 
 
@@ -155,7 +153,7 @@ clear: both;
     <!-- Pipeline ends-->
 
     <!-- Action queue begins-->
-    <div class="colqueue">    
+    <div class="colpipe">    
       <!--old action Q begins-->
       <form action="{{ url_for('queue_action') }}" method="post" id="queue">
         <div class="row">
@@ -625,6 +623,6 @@ clear: both;
 
 
 </div>
-<!-- White band ends-->
+
   </BODY>
 </HTML>
