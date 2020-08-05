@@ -10,9 +10,16 @@
     <style>
 
 
+html, body {
+    height: 100%;
+}
+
 div{
-  display:inline-block;
   float:left;
+}
+
+.mainbox{
+  height: 100%;
 }
 
 /* Create two equal columns that float next to each other */
@@ -29,47 +36,58 @@ display: table;
 clear: both;
 }
 
+.container{
+  width:100%;
+  padding:50px;
+}
 
 .band1{
   width:100%;
-  height:20%;
   background:#669966;
+  padding:0px 0px 0px 30px;
+
 }
 
 .band2{
+  display: table;
   width:100%;
-  height:80%;
+  height:100%;
   background:white;
+  padding:0px 0px 0px 30px;
 }
 
 .colpipe{
-  width:60%;
+  width:50%;
   height:100%;
   background:#669966;
+  padding: 0px 30px;
 }
 
-.colqueue{
-  width:40%;
+.colcode{
+  width:33.33%;
   height:100%;
-  background:#669966;
+  padding: 0px 30px;
 }
+
 
 .collab{
   width:40%;
   height:100%;
-  background:lightgrey;
+  padding: 0px 30px;
 }
 
 .coltran{
-    width:35%;
+  width:35%;
   height:100%;
   background:#bbb;
+  padding: 0px 30px;
 }
 
 .colfin{
     width:25%;
   height:100%;
     background:gold;
+    padding: 0px 30px;
 }
 
 
@@ -99,6 +117,7 @@ clear: both;
 
   </HEAD>
   <BODY>
+<div class="mainbox">
 <!-- Green band begins-->
 <div class="band1">
     <!-- Pipeline begins-->
@@ -155,7 +174,7 @@ clear: both;
     <!-- Pipeline ends-->
 
     <!-- Action queue begins-->
-    <div class="colqueue">    
+    <div class="colpipe">    
       <!--old action Q begins-->
       <form action="{{ url_for('queue_action') }}" method="post" id="queue">
         <div class="row">
@@ -213,7 +232,7 @@ clear: both;
 
 
   <!-- Labs begins-->
-  <div class="collab">
+  <div class="collab"  width=50%>
       <!-- 2L begings-->
         <div class="row">
           <h4 class="green">2L. Assign videos to labs for coding</h4>
@@ -626,5 +645,6 @@ clear: both;
 
 </div>
 <!-- White band ends-->
+</div>
   </BODY>
 </HTML>
