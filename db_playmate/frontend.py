@@ -527,7 +527,16 @@ def initialize():
         # online resources
         get_kobo_forms(BRIDGE)
         DATASTORE.increment_status()
-        DATASTORE.sites, DATASTORE.labs, DATASTORE.tra_names = get_labs(BRIDGE)
+        sites, labs, tra_names = get_labs(BRIDGE)
+        for s in sites:
+            if s not in DATASTORE.sites:
+                DATASTORE.sites[s] = sites[s]
+        for l in labs:
+            if l not in DATASTORE.labs:
+                DATASTORE.labs[l] = labs[l]
+        for t in tra_names:
+            if t not in DATASTORE.tra_names:
+                DATASTORE.tra_names.append(t)
         DATASTORE.increment_status()
         get_submissions(DATASTORE.sites, BRIDGE, DATASTORE)
         DATASTORE.increment_status()
@@ -1468,7 +1477,8 @@ def queue_action():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        forms = create_forms()
+        return render_template("index.html", forms=forms, queue=QUEUE)
 
 
 @app.route("/progress")
