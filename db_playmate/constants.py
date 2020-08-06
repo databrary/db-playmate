@@ -27,12 +27,7 @@ VIDEO_DIR = PLAY_PREFIX + "automation_doNotTouch/1_PLAY_videos_for_coding"
 
 
 REL_CODING_DIR = (
-    PLAY_PREFIX
-    + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}/1_ToBeCoded_DownloadOnly"
-)
-REL_CODED_DIR = (
-    PLAY_PREFIX
-    + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}/3_Submitted_CannotEditAnymore"
+    PLAY_PREFIX + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}"
 )
 DEFAULT_SAVE_DIR = "env/db_playmate.pickle"
 

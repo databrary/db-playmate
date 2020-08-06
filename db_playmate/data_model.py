@@ -1,6 +1,4 @@
 import pickle
-import os
-import re
 import db_playmate.constants as constants
 
 
@@ -211,8 +209,9 @@ class Site:
         if subj_number.startswith("S"):
             subj_number = subj_number[1:]
         if asset["id"] not in [s.asset_id for s in self.submissions.values()]:
-            self.submissions[subj_number] = Submission(site_id, subj_number, asset)
-        self.submissions[subj_number].add_video(asset)
+            if subj_number not in self.submissions:
+                self.submissions[subj_number] = Submission(site_id, subj_number, asset)
+            self.submissions[subj_number].add_video(asset)
 
     def get_vol_id(self, databrary_instance):
         self.vol_id = databrary_instance.get_volume_by_name(self.db_volume)

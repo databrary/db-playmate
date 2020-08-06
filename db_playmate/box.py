@@ -427,7 +427,7 @@ class Box:
             try:  # TODO remove this
                 filepath = "/".join(
                     [
-                        constants.REL_CODED_DIR,
+                        constants.SILVER_FINAL_DIR,
                         getattr(asset, "assigned_coding_site_" + p),
                         asset.coding_filename_prefix + p,
                     ]
@@ -483,6 +483,7 @@ class Box:
         print(qa_dir)
         print("QA TEMP SYNC")
         for path in self.get_file_tree(qa_dir):
+            print(path)
             if path.endswith(".opf"):
                 filename = path.split("/")[-1]
                 print(path, filename)
@@ -506,6 +507,7 @@ class Box:
         print("QA SYNC")
         print(self.get_file_tree(qa_dir))
         for path in self.get_file_tree(qa_dir):
+            print(path)
             if path.endswith(".opf"):
                 print(path)
                 filename = path.split("/")[-1]
@@ -531,9 +533,10 @@ class Box:
             print(path)
             if path.endswith(".opf"):
                 try:
+                    print(path)
                     _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
                     coding_pass = coding_pass[-3:]
-                    lab_code = lab_folder.split("_")[2]
+                    lab_code = "_".join(lab_folder.split("_")[2:])
                     status = status[0]
                     print(coding_pass, lab_code, status)
 
@@ -566,19 +569,18 @@ class Box:
         # These are the paths to all of the files in the dir, parse them
         for path in files:
             if path.endswith(".opf"):
+                print(path)
                 try:
-                    _, _, _, coding_pass, lab_folder, status, filename = path.split("/")
+                    _, _, _, coding_pass, lab_folder, filename = path.split("/")
                     coding_pass = coding_pass[-3:]
-                    lab_code = lab_folder.split("_")[2]
-                    status = status[0]
+                    lab_code = lab_folder.split("_")[1]
 
                     # Update the file based on the information we just saw
                     submission = datastore.find_submission_by_name(filename)
                     setattr(submission, "ready_for_rel_" + coding_pass, True)
+                    setattr(submission, "assigned_coding_site_" + coding_pass, lab_code)
                     submission.ready_for_qa = True
                     submission.ready_for_coding = True
-                    if status == "3":
-                        setattr(submission, "rel_coding_finished_" + coding_pass, True)
                 except KeyError:
                     print(traceback.format_exc())
                     continue
