@@ -59,9 +59,10 @@ class QWebEngineViewWindow(QWebEngineView):
         print("Close event fired")
         from flask import request
 
-        func = request.environ.get("werkzeug.server.shutdown")
         global DATASTORE
         DATASTORE.box.remove_lockfile()
+
+        func = request.environ.get("werkzeug.server.shutdown")
         try:
             func()
         except:
