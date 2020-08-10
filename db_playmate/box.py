@@ -9,6 +9,7 @@ from threading import Thread
 from boxsdk.object.collaboration import CollaborationRole
 import db_playmate.constants as constants
 import traceback
+import getpass
 
 import boxsdk as bx
 import sys
@@ -661,6 +662,26 @@ class Box:
                             if email not in lab.coders and email not in admin_emails:
                                 print("REMOVING", email, "FROM", asset.play_filename)
                                 #  self.remove_collab_viewer(video_file, email)
+
+    def check_lockfile(self):
+        lock_file = self.get_file(constants.LOCKFILE)
+        if lock_file:
+            # Read in who is using it so we can return the message
+            lock_user = lock_file.content().decode("utf-8")
+            raise Exception(
+                "Error: Data is currently locked by {}. If this is an error, please delete {} on Box.".format(
+                    lock_user, constants.LOCKFILE
+                )
+            )
+        else:
+            filename = constants.TMP_DATA_DIR + os.sep + "lock"
+            with open(filename, "w") as handle:
+                handle.write(getpass.getuser())
+            self.upload_file(filename, constants.PLAY_PREFIX[:-1])
+            return None
+
+    def remove_lockfile(self):
+        self.delete(constants.LOCKFILE)
 
 
 def get_client(client_id, client_secret):

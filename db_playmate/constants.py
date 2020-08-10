@@ -30,6 +30,7 @@ REL_CODING_DIR = (
     PLAY_PREFIX + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}"
 )
 DEFAULT_SAVE_DIR = "env/db_playmate.pickle"
+LOCKFILE = PLAY_PREFIX + "lock"
 
 USER_DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 TMP_DATA_DIR = appdirs.user_cache_dir(APP_NAME, APP_AUTHOR)

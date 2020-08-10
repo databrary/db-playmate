@@ -60,6 +60,8 @@ class QWebEngineViewWindow(QWebEngineView):
         from flask import request
 
         func = request.environ.get("werkzeug.server.shutdown")
+        global DATASTORE
+        DATASTORE.box.remove_lockfile()
         try:
             func()
         except:
@@ -522,6 +524,8 @@ def initialize():
                 DATASTORE = pickle.load(handle)
         DATASTORE.curr_status = 0
         DATASTORE.increment_status()
+
+        BRIDGE.box.check_lockfile()
 
         # Load the data if it exists, otherwise populate from
         # online resources
