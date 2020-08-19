@@ -32,6 +32,8 @@ REL_CODING_DIR = (
 DEFAULT_SAVE_DIR = "env/db_playmate.pickle"
 LOCKFILE = PLAY_PREFIX + "lock"
 
+GIT_TEMPLATE_LINK = "https://raw.githubusercontent.com/databrary/db-playmate/main/db_playmate/templates/index.html"
+
 USER_DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 TMP_DATA_DIR = appdirs.user_cache_dir(APP_NAME, APP_AUTHOR)
 SAVE_FILE_NAME = USER_DATA_DIR + "/" + "db_playmate.pickle"

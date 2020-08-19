@@ -4,6 +4,8 @@ import threading
 import time
 import sys
 import traceback
+import requests
+import jinja2
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QApplication
@@ -1566,11 +1568,23 @@ def startup():
         WEB.load(QUrl(url))
         WEB.show()
 
+    # Grab the latest template.html from github for use in index.html
+    with open(constants.TMP_DATA_DIR + "/index.html", "w") as handle:
+        print("Downloading index.html from Git")
+        template_file = requests.get(constants.GIT_TEMPLATE_LINK)
+        handle.write(template_file.text)
+
+    my_loader = jinja2.ChoiceLoader(
+        [jinja2.FileSystemLoader([constants.TMP_DATA_DIR]), app.jinja_loader]
+    )
+    app.jinja_loader = my_loader
+
     init_thread = threading.Thread(target=initialize)
     init_thread.start()
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)
+    DATASTORE.box.remove_lockfile()
     sys.exit(qt_app.exec_())
 
 
