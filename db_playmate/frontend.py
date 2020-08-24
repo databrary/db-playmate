@@ -528,7 +528,7 @@ def initialize():
         DATASTORE.curr_status = 0
         DATASTORE.increment_status()
 
-        BRIDGE.box.check_lockfile()
+        #  BRIDGE.box.check_lockfile()
 
         # Load the data if it exists, otherwise populate from
         # online resources
@@ -1584,8 +1584,6 @@ def startup():
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)
-    DATASTORE.box.remove_lockfile()
-    sys.exit(qt_app.exec_())
 
 
 if __name__ == "__main__":
