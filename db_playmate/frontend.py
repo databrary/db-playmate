@@ -6,6 +6,7 @@ import sys
 import traceback
 import requests
 import jinja2
+import multiprocessing
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QApplication
@@ -1584,6 +1585,9 @@ def startup():
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)
+
+    # This line is critical to avoid a PyQT race condition
+    sys.exit(qt_app.exec_())
 
 
 if __name__ == "__main__":
