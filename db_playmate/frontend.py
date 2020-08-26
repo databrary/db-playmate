@@ -52,6 +52,8 @@ DATASTORE = Datastore()
 
 BRIDGE = 0
 
+INIT_THREAD = None # making global so we can start it from config
+
 
 class QWebEngineViewWindow(QWebEngineView):
     def __init__(self):
@@ -63,7 +65,7 @@ class QWebEngineViewWindow(QWebEngineView):
         from flask import request
 
         global DATASTORE
-        DATASTORE.box.remove_lockfile()
+        #  DATASTORE.box.remove_lockfile()
 
         func = request.environ.get("werkzeug.server.shutdown")
         try:
@@ -1500,6 +1502,8 @@ def progress():
 @app.route("/loading")
 def loading():
     global DATASTORE
+    global INIT_THREAD
+    INIT_THREAD.start()
     return render_template("loading.html")
 
 
@@ -1558,6 +1562,7 @@ def startup():
     global QUEUE
     global CONFIG_FILE
     global WEB
+    global INIT_THREAD
 
     if not os.path.exists(CONFIG_FILE):
         url = "http://localhost:5000/config"
@@ -1580,8 +1585,7 @@ def startup():
     )
     app.jinja_loader = my_loader
 
-    init_thread = threading.Thread(target=initialize)
-    init_thread.start()
+    INIT_THREAD = threading.Thread(target=initialize)
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)
