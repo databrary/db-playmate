@@ -17,11 +17,14 @@ This class also will hold instances of all three connections
 class Bridge:
     def __init__(self, config_file):
 
-        with open(config_file) as config:
-            cfg = toml.load(config)
-            clid = cfg["box"]["client_id"]
-            databrary_username = cfg["databrary"]["username"]
-            kobo_base_url = cfg["kobo"]["base_url"]
+        try:
+            with open(config_file) as config:
+                cfg = toml.load(config)
+                clid = cfg["box"]["client_id"]
+                databrary_username = cfg["databrary"]["username"]
+                kobo_base_url = cfg["kobo"]["base_url"]
+        except:
+            pass # It is OK if the creds are already in place and we called twice
 
         kobo_token, clsec = get_creds()
 
