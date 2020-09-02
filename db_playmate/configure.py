@@ -18,7 +18,6 @@ from flask_wtf import FlaskForm
 from wtforms.fields import SubmitField, TextField
 from collections import defaultdict
 
-
 import db_playmate.constants as constants
 
 import toml
@@ -102,7 +101,7 @@ def submit():
     with open(constants.USER_DATA_DIR + "/credentials.json", 'w') as handle:
         handle.write(google_cred_form_1 + google_sheet_secret + google_cred_form_2)
 
-    return redirect("http://localhost:5000")
+    return redirect("http://localhost:5000/loading")
 
 
 def get_creds():
