@@ -14,7 +14,7 @@ html, body {
     height: 100%;
 }
 
-select {
+.select {
   max-width: 150px;
   min-width: 150px;
 }
@@ -199,7 +199,7 @@ clear: both;*/
             {% endif %}
           {% endblock content %}
 
-          <div class="progress" style="width: 50%; margin: 50px;">
+          <div class="progress" style="width: 50%; margin: 50px 50px 50px 0px;">
             <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
               <span class="progress-bar-label">0%</span>
             </div>
@@ -339,6 +339,7 @@ clear: both;*/
         -->
         <!-- 3L begings-->
         <div class="row">
+        <hr>
           <h4 class="green">3L. Send coded files to rel coders </h4>
           <div class="column">
             <h4 class="grey"> Object </h4>
@@ -445,6 +446,7 @@ clear: both;*/
           -->
       <!-- 4L begings-->
         <div class="row">
+        <hr>
           <h4 class="green">4L. Mark coded files: GOLD/SILVER </h4>
           <div class="column">
             <form action="{{ url_for('send_to_gold_obj') }}" method="post">
@@ -575,7 +577,7 @@ clear: both;*/
       </form>
       </div>
     <div class="row">
-    <br>
+    <br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
       <h4> 3T. Send Tran files to rel coders </h4>
       <form action="{{ url_for('send_to_rel_tra') }}" method="post">
         <div class="column">
@@ -600,6 +602,8 @@ clear: both;*/
     </div>
 
     <div class="row">
+        <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
+
     <h4>4T. Mark Tran files: GOLD/SILVER </h4>
       <form action="{{ url_for('send_to_gold_tra') }}" method="post">
         <div class="column">
