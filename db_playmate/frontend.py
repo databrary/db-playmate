@@ -7,6 +7,8 @@ import traceback
 import requests
 import jinja2
 import multiprocessing
+from markupsafe import Markup
+from wtforms.widgets.core import html_params
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QApplication
@@ -52,7 +54,37 @@ DATASTORE = Datastore()
 
 BRIDGE = 0
 
-INIT_THREAD = None # making global so we can start it from config
+INIT_THREAD = None  # making global so we can start it from config
+
+
+class CustomSelect:
+    """
+    Renders a select field allowing custom attributes for options.
+    Expects the field to be an iterable object of Option fields.
+    The render function accepts a dictionary of option ids ("{field_id}-{option_index}")
+    which contain a dictionary of attributes to be passed to the option.
+
+    Example:
+    form.customselect(option_attr={"customselect-0": {"disabled": ""} })
+    """
+
+    def __init__(self, multiple=False):
+        self.multiple = multiple
+
+    def __call__(self, field, option_attr=None, **kwargs):
+        if option_attr is None:
+            option_attr = {}
+        kwargs.setdefault("id", field.id)
+        if self.multiple:
+            kwargs["multiple"] = True
+        if "required" not in kwargs and "required" in getattr(field, "flags", []):
+            kwargs["required"] = True
+        html = ["<select %s>" % html_params(name=field.name, **kwargs)]
+        for option in field:
+            attr = option_attr.get(option.id, {})
+            html.append(option(**attr))
+        html.append("</select>")
+        return Markup("".join(html))
 
 
 class QWebEngineViewWindow(QWebEngineView):
@@ -97,13 +129,15 @@ class QAForm(FlaskForm):
 
 class CodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Coding")
-    lab_list = SelectField("List of Labs")
+    lab_list = SelectField("List of Labs", widget=CustomSelect(), default="default")
     submit_send_to_lab = SubmitField("Send to Selected Lab")
 
 
 class TraCodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Tra")
-    lab_list = SelectField("List of Transcribers")
+    lab_list = SelectField(
+        "List of Transcribers", widget=CustomSelect(), default="default"
+    )
     being_coded = SelectField("List of Videos being Transcribed")
     submit_send_to_lab = SubmitField("Send to Selected Transcriber")
     submit_send_to_silver = SubmitField("Send to SILVER")
@@ -146,6 +180,10 @@ class InGold(FlaskForm):
     in_gold = SelectField("In Gold")
 
 
+def prep_select_list(options):
+    return [("default", "")] + options
+
+
 def create_forms():
     global DATASTORE
     DATASTORE.save()
@@ -159,7 +197,9 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued and x.ready_for_qa is False
     ]
-    in_db_form.in_databrary.choices = in_db if len(in_db) > 0 else [("-", "-")]
+    in_db_form.in_databrary.choices = prep_select_list(
+        in_db if len(in_db) > 0 else [("-", "-")]
+    )
 
     qa_form = QAForm()
     qa = [
@@ -168,7 +208,7 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued and x.ready_for_qa is True and x.ready_for_coding is False
     ]
-    qa_form.ready_for_qa.choices = qa if len(qa) > 0 else [("-", "-")]
+    qa_form.ready_for_qa.choices = prep_select_list(qa if len(qa) > 0 else [("-", "-")])
 
     trans_coding_form = TraCodingForm()
     trans_coding_videos = [
@@ -181,7 +221,7 @@ def create_forms():
     ]
     trans_coding_form.ready_for_coding.choices = trans_coding_videos
     lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
-    trans_coding_form.lab_list.choices = lab_list
+    trans_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     comm_coding_form = CodingForm()
     comm_coding_videos = [
@@ -195,7 +235,7 @@ def create_forms():
     ]
     comm_coding_form.ready_for_coding.choices = comm_coding_videos
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_com])
-    comm_coding_form.lab_list.choices = lab_list
+    comm_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     loc_coding_form = CodingForm()
     loc_coding_videos = [
@@ -208,7 +248,7 @@ def create_forms():
     ]
     loc_coding_form.ready_for_coding.choices = loc_coding_videos
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_loc])
-    loc_coding_form.lab_list.choices = lab_list
+    loc_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     obj_coding_form = CodingForm()
     obj_coding_videos = [
@@ -221,7 +261,7 @@ def create_forms():
     ]
     obj_coding_form.ready_for_coding.choices = obj_coding_videos
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_obj])
-    obj_coding_form.lab_list.choices = lab_list
+    obj_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     emo_coding_form = CodingForm()
     emo_coding_videos = [
@@ -234,7 +274,7 @@ def create_forms():
     ]
     emo_coding_form.ready_for_coding.choices = emo_coding_videos
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_emo])
-    emo_coding_form.lab_list.choices = lab_list
+    emo_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     trans_video_coding_form = VideosCodedForm()
     v_coding_done = [
@@ -1255,7 +1295,12 @@ def send_to_gold_tra():
             name = "MARK AS SILVER TRA: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
-            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+            Job(
+                target=fn,
+                name=name,
+                args=[submitted_data],
+                item=submitted_data,
+            )
         )
 
         forms = create_forms()
@@ -1287,7 +1332,12 @@ def send_to_gold_obj():
             name = "MARK AS SILVER OBJ: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
-            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+            Job(
+                target=fn,
+                name=name,
+                args=[submitted_data],
+                item=submitted_data,
+            )
         )
 
         forms = create_forms()
@@ -1319,7 +1369,12 @@ def send_to_gold_loc():
             name = "MARK AS SILVER LOC: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
-            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+            Job(
+                target=fn,
+                name=name,
+                args=[submitted_data],
+                item=submitted_data,
+            )
         )
 
         forms = create_forms()
@@ -1351,7 +1406,12 @@ def send_to_gold_emo():
             name = "MARK AS SILVER EMO: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
-            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+            Job(
+                target=fn,
+                name=name,
+                args=[submitted_data],
+                item=submitted_data,
+            )
         )
 
         forms = create_forms()
@@ -1383,7 +1443,12 @@ def send_to_gold_comm():
             name = "MARK AS SILVER COM: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
-            Job(target=fn, name=name, args=[submitted_data], item=submitted_data,)
+            Job(
+                target=fn,
+                name=name,
+                args=[submitted_data],
+                item=submitted_data,
+            )
         )
 
         forms = create_forms()
