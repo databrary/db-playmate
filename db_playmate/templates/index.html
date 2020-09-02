@@ -251,7 +251,7 @@ clear: both;*/
               <div class="column">
                 <p>
                   {{ forms["obj_coding_form"].lab_list.label }}<br>
-                  {{ forms["obj_coding_form"].lab_list() }}
+                  {{ forms["obj_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
                 </p>
               </div>
               <div class="row">
@@ -273,7 +273,7 @@ clear: both;*/
               <div class="column">
                 <p>
                   {{ forms["loc_coding_form"].lab_list.label }}<br>
-                  {{ forms["loc_coding_form"].lab_list() }}
+                  {{ forms["loc_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
                 </p>
               </div>
               <div class="row">
@@ -297,7 +297,7 @@ clear: both;*/
               <div class="column">
                 <p>
                   {{ forms["emo_coding_form"].lab_list.label }}<br>
-                  {{ forms["emo_coding_form"].lab_list() }}
+                  {{ forms["emo_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
                 </p>
               </div>
               <div class="row">
@@ -319,7 +319,7 @@ clear: both;*/
               <div class="column">
                 <p>
                   {{ forms["comm_coding_form"].lab_list.label }}<br>
-                  {{ forms["comm_coding_form"].lab_list() }}
+                  {{ forms["comm_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
                 </p>
               </div>
               <div class="row">
@@ -566,7 +566,7 @@ clear: both;*/
         <div class="column">
           <p>
             {{ forms["trans_coding_form"].lab_list.label }}<br>
-            {{ forms["trans_coding_form"].lab_list() }}
+            {{ forms["trans_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
           </p>
         </div>
         <div class="row">
