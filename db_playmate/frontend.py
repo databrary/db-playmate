@@ -1630,9 +1630,9 @@ def startup():
     global INIT_THREAD
 
     if not os.path.exists(CONFIG_FILE):
-        url = "http://localhost:5000/config"
+        url = "http://localhost:{}/config".format(constants.SERVER_PORT)
     else:
-        url = "http://localhost:5000/loading"
+        url = "http://localhost:{}/loading".format(constants.SERVER_PORT)
 
     def load_browser(web, url):
         time.sleep(1.25)
@@ -1651,7 +1651,9 @@ def startup():
     app.jinja_loader = my_loader
 
     INIT_THREAD = threading.Thread(target=initialize)
-    server = threading.Thread(target=lambda x: x.run(), args=(app,))
+    server = threading.Thread(
+        target=app.run, daemon=True, kwargs=dict(port=constants.SERVER_PORT)
+    )
     server.start()
     load_browser(WEB, url)
 

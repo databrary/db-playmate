@@ -1,5 +1,6 @@
 import appdirs
 import os
+import random
 
 APP_NAME = "db-playmate"
 APP_AUTHOR = "Databrary"
@@ -33,6 +34,9 @@ DEFAULT_SAVE_DIR = "env/db_playmate.pickle"
 LOCKFILE = PLAY_PREFIX + "lock"
 
 GIT_TEMPLATE_LINK = "https://raw.githubusercontent.com/databrary/db-playmate/main/db_playmate/templates/index.html"
+
+BOX_PORT = str(random.randint(6000, 25000))
+SERVER_PORT = str(random.randint(6000, 25000))
 
 USER_DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 TMP_DATA_DIR = appdirs.user_cache_dir(APP_NAME, APP_AUTHOR)

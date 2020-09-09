@@ -24,6 +24,8 @@ if hasattr(sys, "frozen"):
         import keyring.backends.OS_X
 
         keyring.set_keyring(keyring.backends.OS_X.Keyring())
+    else:
+        import keyring
 from flask import Flask
 from flask import request
 
@@ -69,10 +71,10 @@ def store_tokens(access_token, refresh_token):
 
 
 class Box:
-    def __init__(self, client_id, client_secret, redirect_url="http://localhost:5001"):
+    def __init__(self, client_id, client_secret, redirect_url="http://localhost:{}"):
         self.client_id = client_id
         self.client_secret = client_secret
-        self.redirect_url = redirect_url
+        self.redirect_url = redirect_url.format(constants.BOX_PORT)
         self._login()
 
     def _login(self):
@@ -693,7 +695,9 @@ class Box:
 def get_client(client_id, client_secret):
     global server
     if server is None:
-        server = Thread(target=app.run, daemon=True, kwargs=dict(port="5001"))
+        server = Thread(
+            target=app.run, daemon=True, kwargs=dict(port=constants.BOX_PORT)
+        )
         server.start()
 
     return Box(client_id, client_secret)
