@@ -435,7 +435,10 @@ class Box:
                 )
                 if self.get_file(filepath):
                     filenames.append(
-                        self.download_file(filepath, constants.TMP_DATA_DIR,)
+                        self.download_file(
+                            filepath,
+                            constants.TMP_DATA_DIR,
+                        )
                     )
                 else:
                     filepath = "/".join(
@@ -446,7 +449,10 @@ class Box:
                         ]
                     )
                     filenames.append(
-                        self.download_file(filepath, constants.TMP_DATA_DIR,)
+                        self.download_file(
+                            filepath,
+                            constants.TMP_DATA_DIR,
+                        )
                     )
             except:
                 pass
@@ -691,21 +697,3 @@ def get_client(client_id, client_secret):
         server.start()
 
     return Box(client_id, client_secret)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--config-file",
-        default=constants.USER_DATA_DIR + "config.toml",
-        required=False,
-        help="json file with box credentials",
-    )
-    args = parser.parse_args()
-
-    with open(args.config_file) as config:
-        cfg = toml.load(config)
-        clid = cfg["box"]["client_id"]
-        clsec = cfg["box"]["client_secret"]
-
-    box = get_client(clid, clsec)
