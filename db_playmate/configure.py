@@ -5,12 +5,15 @@ import webbrowser
 
 import sys
 import keyring
+
 if hasattr(sys, "frozen"):
     if sys.platform.startswith("win"):
         import keyring.backends.Windows
+
         keyring.set_keyring(keyring.backends.Windows.WinVaultKeyring())
     elif sys.platform.startswith("darwin"):
         import keyring.backends.OS_X
+
         keyring.set_keyring(keyring.backends.OS_X.Keyring())
 
 from flask import render_template, Blueprint, redirect
@@ -27,7 +30,9 @@ config = Blueprint("config", __name__)
 global forms
 forms = {}
 google_cred_form_1 = '{"installed":{"client_id":"136373533680-2huv7b2qo296gkvpbg8p6egqf45mv74t.apps.googleusercontent.com","project_id":"quickstart-1582159218809","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_secret":"'
-google_cred_form_2 = '","redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]}}'
+google_cred_form_2 = (
+    '","redirect_uris":["urn:ietf:wg:oauth:2.0:oob","http://localhost"]}}'
+)
 
 
 class ConfigForm(FlaskForm):
@@ -70,17 +75,17 @@ def submit():
     global forms
     config_form = ConfigForm()
 
-    box_client_id = config_form.box_client_id.data
-    box_client_secret = config_form.box_client_secret.data
-    box_redirect_uri = config_form.box_redirect_uri.data
+    box_client_id = config_form.box_client_id.data.strip()
+    box_client_secret = config_form.box_client_secret.data.strip()
+    box_redirect_uri = config_form.box_redirect_uri.data.strip()
 
-    kobo_base_url = config_form.kobo_base_url.data
-    kobo_auth_token = config_form.kobo_auth_token.data
+    kobo_base_url = config_form.kobo_base_url.data.strip()
+    kobo_auth_token = config_form.kobo_auth_token.data.strip()
 
-    databrary_username = config_form.databrary_username.data
-    databrary_password = config_form.databrary_password.data
+    databrary_username = config_form.databrary_username.data.strip()
+    databrary_password = config_form.databrary_password.data.strip()
 
-    google_sheet_secret = config_form.google_sheet_secret.data
+    google_sheet_secret = config_form.google_sheet_secret.data.strip()
 
     keyring.set_password(
         "db_playmate_databrary", databrary_username, databrary_password
@@ -98,10 +103,10 @@ def submit():
         cfg["box"]["redirect_uri"] = box_redirect_uri
         toml.dump(cfg, handle)
 
-    with open(constants.USER_DATA_DIR + "/credentials.json", 'w') as handle:
+    with open(constants.USER_DATA_DIR + "/credentials.json", "w") as handle:
         handle.write(google_cred_form_1 + google_sheet_secret + google_cred_form_2)
 
-    return redirect("http://localhost:5000/loading")
+    return redirect("http://localhost:{}/loading".format(constants.SERVER_PORT))
 
 
 def get_creds():
