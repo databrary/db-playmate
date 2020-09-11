@@ -24,7 +24,7 @@ class Bridge:
                 databrary_username = cfg["databrary"]["username"]
                 kobo_base_url = cfg["kobo"]["base_url"]
         except:
-            pass # It is OK if the creds are already in place and we called twice
+            pass  # It is OK if the creds are already in place and we called twice
 
         kobo_token, clsec = get_creds()
 
@@ -93,3 +93,5 @@ class Bridge:
                 form.to_csv(outfile)
             print("Uploading to Box...")
             self.box.upload_file(filename, "kobo")
+            print("Deleting kobo file...")
+            os.remove(filename)
