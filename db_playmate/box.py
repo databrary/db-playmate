@@ -582,7 +582,7 @@ class Box:
                 try:
                     _, _, _, coding_pass, lab_folder, filename = path.split("/")
                     coding_pass = coding_pass[-3:]
-                    lab_code = lab_folder.split("_")[1]
+                    lab_code = lab_folder.split("_")[0]
 
                     # Update the file based on the information we just saw
                     submission = datastore.find_submission_by_name(filename)

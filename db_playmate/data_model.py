@@ -6,6 +6,7 @@ class Submission:
     def __init__(self, site_id, subj_number, db_asset):
         self.asset = db_asset
         self.asset_id = db_asset["id"]
+        self.slot_id = db_asset["slot_id"]
         self.birthdate = db_asset["birthdate"] if "birthdate" in db_asset else ""
         self.gender = db_asset["gender"] if "gender" in db_asset else ""
         self.testdate = db_asset["testdate"] if "testdate" in db_asset else ""
@@ -53,14 +54,14 @@ class Submission:
         self.id = "{} - {} - {}".format(self.vol_id, self.site_id, self.subj_number)
         self.name = self.id  # TODO For now, revisit this
         self.play_filename = "PLAY_{}{}_NaturalPlay.mp4".format(
-            self.vol_id, self.asset_id
+            self.vol_id, self.slot_id
         )
-        self.play_id = "PLAY_{}_{}".format(self.vol_id, self.asset_id)
+        self.play_id = "PLAY_{}_{}".format(self.vol_id, self.slot_id)
         self.qa_filename = "PLAY_{}_{}.opf".format(self.site_id, self.subj_number)
-        self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.asset_id)
+        self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.slot_id)
         self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{language}-R{release}".format(
             vol_id=self.vol_id,
-            asset_id=self.asset_id,
+            asset_id=self.slot_id,
             site_id=self.site_id,
             testdate=self.testdate,
             #  exclusion_status="temp",  # TODO fixme
@@ -282,8 +283,10 @@ class Datastore:
         return None
 
     def find_submission_by_name(self, coding_prefix):
+        print(coding_prefix)
         coding_number = coding_prefix.split("_")[1]
         for s in self.get_submissions():
+            print(s.coding_filename_prefix.split("_")[1], coding_number)
             if str(s.coding_filename_prefix.split("_")[1]) == str(coding_number):
                 return s
         return None

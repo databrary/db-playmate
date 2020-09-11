@@ -444,7 +444,7 @@ class Databrary:
             + os.sep
             + "PLAY_"
             + str(asset.vol_id)
-            + str(asset.asset_id)
+            + str(asset.slot_id)
             + "_NaturalPlay"
             + ".mp4"
         )
@@ -638,6 +638,7 @@ class Databrary:
                     asset["filename"] = self.asset_to_filename(asset)
                     asset["vol_id"] = vol_id
                     asset["testdate"] = c["date"] if "date" in c else "test"
+                    asset["slot_id"] = c["id"]
                     for record in c["records"]:
                         try:
                             print(record)
@@ -651,7 +652,9 @@ class Databrary:
                                 else:
                                     asset["language"] = "English"
                         except KeyError:
-                            pass
+                            import traceback
+
+                            traceback.print_exc()
                 all_assets += assets
             else:
                 print(
