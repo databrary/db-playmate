@@ -9,7 +9,8 @@ PLAY_PREFIX = "PLAY-Project@/"  # For if there is a shared folder
 
 QA_CODING_DIR = PLAY_PREFIX + "automation_doNotTouch/2_PLAY_qa_opfs/1_PLAY_qa_templates"
 QA_CODED_DIR = (
-    PLAY_PREFIX + "automation_doNotTouch/2_PLAY_qa_opfs/2_PLAY_qa_complete/PLAY_QA_{}"
+    PLAY_PREFIX
+    + "automation_doNotTouch/2_PLAY_qa_opfs/2_PLAY_qa_complete_PASSED/PLAY_QA_{}"
 )
 PRI_CODING_DIR = (
     PLAY_PREFIX
