@@ -59,10 +59,11 @@ class Submission:
         self.play_id = "PLAY_{}_{}".format(self.vol_id, self.slot_id)
         self.qa_filename = "PLAY_{}_{}.opf".format(self.site_id, self.subj_number)
         self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.slot_id)
-        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{testdate}-{language}-R{release}".format(
+        self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{subnum}-{testdate}-{language}-R{release}".format(
             vol_id=self.vol_id,
             asset_id=self.slot_id,
             site_id=self.site_id,
+            subnum=self.subj_number,
             testdate=self.testdate,
             #  exclusion_status="temp",  # TODO fixme
             release=self.permission,
@@ -170,6 +171,27 @@ class Submission:
         except IndexError:
             self.video_map["Other"].append(asset)
 
+    def print_status(self):
+        passes = ["obj", "com", "tra", "loc", "emo"]
+        search_results = [[], []]
+        search_results[0].append(self.ready_for_qa)
+        search_results[0].append(self.ready_for_coding)
+        i = 0
+        for p in passes:
+            search_results[1].append((i, p))
+            i += 1
+            for status in [
+                "assigned_coding_site_{}",
+                "primary_coding_finished_{}",
+                "ready_for_rel_{}",
+                "rel_coding_finished_{}",
+                "moved_to_silver_{}",
+                "moved_to_gold_{}",
+            ]:
+                search_results[1].append((i, getattr(self, status.format(p))))
+                i += 1
+        return search_results
+
 
 class Lab:
     def __init__(self, site_code, lab_code, pi_fullname, email, institution):
@@ -219,6 +241,8 @@ class Site:
 
 
 class Datastore:
+    VERSION = 1
+
     def __init__(self):
         self.labs = {}  # lab_code -> lab
         self.sites = {}  # site_code -> site
@@ -290,6 +314,18 @@ class Datastore:
             if str(s.coding_filename_prefix.split("_")[1]) == str(coding_number):
                 return s
         return None
+
+    def find_submission_fuzzy(self, name):
+        if "PLAY_" in name:
+            coding_number = name.split("_")[1]
+        elif "_" in name:
+            coding_number = name.split("_")[0]
+        else:
+            coding_number = name
+        for s in self.get_submissions():
+            if str(s.coding_filename_prefix.split("_")[1]) == str(coding_number):
+                return s.print_status()
+        return "<p>Not found: {}</p>".format(name)
 
     def find_submission_by_site_subj(self, site, subj):
         print("Finding", site, subj, self.sites[site].submissions)

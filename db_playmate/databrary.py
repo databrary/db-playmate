@@ -639,6 +639,7 @@ class Databrary:
                     asset["vol_id"] = vol_id
                     asset["testdate"] = c["date"] if "date" in c else "test"
                     asset["slot_id"] = c["id"]
+                    print(asset)
                     for record in c["records"]:
                         try:
                             print(record)
@@ -652,6 +653,7 @@ class Databrary:
                                 else:
                                     asset["language"] = "English"
                         except KeyError:
+                            print("ASSET ERROR:", asset)
                             import traceback
 
                             traceback.print_exc()

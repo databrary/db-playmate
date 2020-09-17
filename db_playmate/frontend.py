@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 
 from flask import Flask, Response, render_template
 from flask_wtf import FlaskForm
-from wtforms.fields import SelectField, SelectMultipleField, SubmitField
+from wtforms.fields import SelectField, SelectMultipleField, SubmitField, TextField
 
 from db_playmate.bridge import Bridge
 from db_playmate.data_model import Datastore, Site
@@ -115,6 +115,11 @@ WEB.setWindowTitle("DB Playmate")
 QUEUE = Queue()
 
 
+class SearchForm(FlaskForm):
+    search_bar = TextField("Enter PLAY ID")
+    submit_search = SubmitField("Search")
+
+
 class InDbForm(FlaskForm):
     in_databrary = SelectField("In Databrary")
     submit_send_to_qa = SubmitField("Move to Ready for QA")
@@ -200,6 +205,8 @@ def create_forms():
     in_db_form.in_databrary.choices = prep_select_list(
         in_db if len(in_db) > 0 else [("-", "-")]
     )
+
+    search_form = SearchForm()
 
     qa_form = QAForm()
     qa = [
@@ -549,6 +556,7 @@ def create_forms():
         "refresh_button": refresh_form,
         "in_silver": in_silver,
         "in_gold": in_gold,
+        "search_form": search_form,
     }
 
     DATASTORE.save()
@@ -566,8 +574,13 @@ def initialize():
         BRIDGE = Bridge(CONFIG_FILE)
 
         if os.path.exists(constants.SAVE_FILE_NAME):
-            with open(constants.SAVE_FILE_NAME, "rb") as handle:
-                DATASTORE = pickle.load(handle)
+            try:
+                with open(constants.SAVE_FILE_NAME, "rb") as handle:
+                    DATASTORE = pickle.load(handle)
+                assert DATASTORE.VERSION == Datastore.VERSION
+            except:
+                print("Couldn't load datastore, making a new one")
+
         DATASTORE.curr_status = 0
         DATASTORE.increment_status()
 
@@ -622,6 +635,17 @@ def populate_main_page():
     global QUEUE
     print("Generating forms")
     forms = create_forms()
+    return render_template("index.html", forms=forms, queue=QUEUE)
+
+
+@app.route("/search_form", methods=["GET", "POST"])
+def search_form():
+    global DATASTORE
+    search_form = SearchForm()
+    submitted_data = DATASTORE.find_submission_fuzzy(search_form.search_bar.data)
+    forms = create_forms()
+    if submitted_data:
+        forms["search_results"] = submitted_data
     return render_template("index.html", forms=forms, queue=QUEUE)
 
 
@@ -1656,6 +1680,8 @@ def startup():
     )
     server.start()
     load_browser(WEB, url)
+
+    print("PORT:", constants.SERVER_PORT)
 
     # This line is critical to avoid a PyQT race condition
     sys.exit(qt_app.exec_())

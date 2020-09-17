@@ -14,20 +14,43 @@ html, body {
     height: 100%;
 }
 
-.select {
-  max-width: 150px;
-  min-width: 150px;
+select, textarea {
+  max-width: 200px;
+  min-width: 200px;
 }
 
 .mainbox{
   height: 100%;
 }
 
+#status_table {
+  font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#status_table td, #customers th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+
+#status_table tr:nth-child(even){background-color: #f2f2f2;}
+
+#status_table tr:hover {background-color: #ddd;}
+
+#status_table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #555555;
+  color: white;
+}
+
 /* Create two equal columns that float next to each other */
 .column {
 float: left;
-width: 50%;
-padding: 5px;
+width: 45%;
+padding: 10px;
 }
 
 /* Clear floats after the columns */
@@ -54,7 +77,7 @@ clear: both;*/
 
 .colpipe {
   display: table-cell;
-  width:75%;
+  width:45%;
   height:100%;
   background:#669966;
   padding: 0px 30px;
@@ -131,14 +154,14 @@ clear: both;*/
         <img src="/static/PLAY-logo.png" height=150px>
         <h4 class="green">1. Add videos to the workflow</h4>
         <form action="{{ url_for('send_to_qa') }}" method="post">
-        <div class="column">
+        <div class="row">
           {{ forms["in_db_form"].hidden_tag() }}
           <p>
           {{ forms["in_db_form"].in_databrary.label }}<br>
           {{ forms["in_db_form"].in_databrary() }}
           </p>
         </div>
-        <div class="column">
+        <div class="row">
           <div class="row">
           <p>
           {{ forms["in_db_form"].submit_send_to_qa() }}
@@ -151,8 +174,7 @@ clear: both;*/
           </div>
         </div>
         </form>
-      </div>
-      <div class="column">
+      <div class="row">
         <form action="{{ url_for('send_to_coding') }}" method="post">
         <div class="row">
           <p>
@@ -172,6 +194,8 @@ clear: both;*/
         </div>
         </form>
       </div>
+      </div>
+
     <!--old pipeline ends -->
     </div>
     <!-- Pipeline ends-->
@@ -179,6 +203,7 @@ clear: both;*/
     <!-- Action queue begins-->
     <div class="colpipe">    
       <!--old action Q begins-->
+      <div class="column">
       <form action="{{ url_for('queue_action') }}" method="post" id="queue">
         <div class="row">
           <h4>Action queue</h4>
@@ -193,11 +218,9 @@ clear: both;*/
           <p>
           {{ forms["queue_form"].cancel_queue() }}
           </p>
-          {% block content %}
             {% if queue.running %}
-            RUNNING
+            <b>RUNNING...</b>
             {% endif %}
-          {% endblock content %}
 
           <div class="progress" style="width: 50%; margin: 50px 50px 50px 0px;">
             <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%">
@@ -221,11 +244,56 @@ clear: both;*/
           </p>
           </div>
       </form>
+
+      </div>
       <!--old results ends-->
 
     </div>
     <!-- Action queue ends-->
-
+    <!-- Search form begins -->
+    <div class="colpipe">
+      <div class="column">
+        <form action="{{ url_for('search_form') }}" method="post">
+          <div class="row">
+            <p>
+            {{ forms["search_form"].search_bar.label }}<br>
+            {{ forms["search_form"].search_bar() }}<br>
+            {{ forms["search_form"].submit_search() }}
+            </p>
+          </div>
+        </form>
+        <div class="row">
+          {% if "search_results" in forms %}
+          <p>
+          Ready for QA: {{forms["search_results"][0][0]}}<br>
+          Ready for Coding: {{forms["search_results"][0][1]}}<br>
+          <table id="status_table">
+            <tr>
+              <th>Pass</th>
+              <th>Site</th>
+              <th>Primary Finished</th>
+              <th>Ready For Rel</th>
+              <th>Rel Finished</th>
+              <th>In Silver</th>
+              <th>In Gold</th>
+            </tr>
+              {% for v in forms["search_results"][1] %}
+                {% set x = v[0] %}
+                {% if x % 7 == 0 %}
+                  <tr>
+                {% endif %}
+                <td> {{ v[1] }} </td>
+                {% if x % 7 == 6 %}
+                  </tr>
+                {% endif %}
+              {% endfor %}
+          </table>
+          </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <!-- Search form ends -->
 </div>
 <!-- Green band ends-->
 
@@ -242,13 +310,13 @@ clear: both;*/
           <div class="column">
             <form action="{{ url_for('send_to_lab_obj') }}" method="post">
               <h4 class="grey">Object</h4>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["obj_coding_form"].ready_for_coding.label }}<br>
                   {{ forms["obj_coding_form"].ready_for_coding() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["obj_coding_form"].lab_list.label }}<br>
                   {{ forms["obj_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
@@ -264,13 +332,13 @@ clear: both;*/
           <div class="column">
             <form action="{{ url_for('send_to_lab_loc') }}" method="post">
               <h4 class="grey">Locomotion</h4>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["loc_coding_form"].ready_for_coding.label }}<br>
                   {{ forms["loc_coding_form"].ready_for_coding() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["loc_coding_form"].lab_list.label }}<br>
                   {{ forms["loc_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
@@ -288,13 +356,13 @@ clear: both;*/
           <div class="column">
             <h4 class="grey">Emotion</h4>
             <form action="{{ url_for('send_to_lab_emo') }}" method="post">
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["emo_coding_form"].ready_for_coding.label }}<br>
                   {{ forms["emo_coding_form"].ready_for_coding() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["emo_coding_form"].lab_list.label }}<br>
                   {{ forms["emo_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
@@ -310,13 +378,13 @@ clear: both;*/
           <div class="column">
             <h4 class="grey">Communication &amp; Gesture</h4>
             <form action="{{ url_for('send_to_lab_comm') }}" method="post">
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["comm_coding_form"].ready_for_coding.label }}<br>
                   {{ forms["comm_coding_form"].ready_for_coding() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                   {{ forms["comm_coding_form"].lab_list.label }}<br>
                   {{ forms["comm_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
@@ -344,13 +412,13 @@ clear: both;*/
           <div class="column">
             <h4 class="grey"> Object </h4>
             <form action="{{ url_for('send_to_rel_obj') }}" method="post">
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["obj_video_coding_form"].videos_not_coded.label }}<br>
                 {{ forms["obj_video_coding_form"].videos_not_coded() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["obj_video_coding_form"].videos_coded.label }}<br>
                 {{ forms["obj_video_coding_form"].videos_coded() }}
@@ -367,13 +435,13 @@ clear: both;*/
             <h4 class="grey"> Locomotion </h4>
             <form action="{{ url_for('send_to_rel_loc') }}" method="post">
 
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["loc_video_coding_form"].videos_not_coded.label }}<br>
                 {{ forms["loc_video_coding_form"].videos_not_coded() }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["loc_video_coding_form"].videos_coded.label }}<br>
                 {{ forms["loc_video_coding_form"].videos_coded() }}
@@ -413,15 +481,15 @@ clear: both;*/
 
 
             <div class="column">
-                <h4 class="grey"> Communication & Gesture </h4>
+                <h4 class="grey"> Communication &amp; Gesture </h4>
                 <form action="{{ url_for('send_to_rel_comm') }}" method="post">
-                  <div class="column">
+                  <div class="row">
                     <p>
                     {{ forms["comm_video_coding_form"].videos_not_coded.label }}<br>
                     {{ forms["comm_video_coding_form"].videos_not_coded() }}
                     </p>
                   </div>
-                  <div class="column">
+                  <div class="row">
                     <p>
                     {{ forms["comm_video_coding_form"].videos_coded.label }}<br>
                     {{ forms["comm_video_coding_form"].videos_coded() }}
@@ -451,13 +519,13 @@ clear: both;*/
           <div class="column">
             <form action="{{ url_for('send_to_gold_obj') }}" method="post">
               <h4 class="grey"> Object </h4>
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["obj_rel_form"].ready_for_rel.label }}<br>
                 {{ forms["obj_rel_form"].ready_for_rel(cols=50) }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
               <p>
               {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}<br>
               {{ forms["obj_rel_form"].submit_send_to_silver(cols=50) }}
@@ -475,13 +543,13 @@ clear: both;*/
           <div class="column">
             <form action="{{ url_for('send_to_gold_loc') }}" method="post">
               <h4 class="grey"> Locomotion </h4>
-              <div class="column">
+              <div class="row">
                 <p>
                 {{ forms["loc_rel_form"].ready_for_rel.label }}<br>
                 {{ forms["loc_rel_form"].ready_for_rel(cols=50) }}
                 </p>
               </div>
-              <div class="column">
+              <div class="row">
               <p>
               {{ forms["loc_rel_form"].submit_send_to_gold(cols=50) }}
               <br>  {{ forms["loc_rel_form"].submit_send_to_silver(cols=50) }}
@@ -524,7 +592,7 @@ clear: both;*/
 
           <div class="column">
             <form action="{{ url_for('send_to_gold_comm') }}" method="post">
-              <h4 class="grey"> Communication & Gesture </h4>
+              <h4 class="grey"> Communication &amp; Gesture </h4>
               <div class="row">
                 <p>
                 {{ forms["comm_rel_form"].ready_for_rel.label }}<br>
@@ -556,14 +624,15 @@ clear: both;*/
       <!--tra 123 begins -->
       <div class="row">
       <h4>2T. Assigning videos to Transcribers</h4>
+      <div class="column">
       <form action="{{ url_for('send_to_lab_tra') }}" method="post">
-        <div class="column">
+        <div class="row">
           <p>
             {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
             {{ forms["trans_coding_form"].ready_for_coding() }}
           </p>
         </div>
-        <div class="column">
+        <div class="row">
           <p>
             {{ forms["trans_coding_form"].lab_list.label }}<br>
             {{ forms["trans_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
@@ -574,20 +643,22 @@ clear: both;*/
           {{ forms["trans_coding_form"].submit_send_to_lab() }}
           </p>
         </div>
+        </div>
       </form>
       </div>
     <div class="row">
     <br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
+      <div class="column">
       <h4> 3T. Send Tran files to rel coders </h4>
       <form action="{{ url_for('send_to_rel_tra') }}" method="post">
-        <div class="column">
+        <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
           {{ forms["trans_video_coding_form"].videos_not_coded() }}
           </p>
         </div>
 
-        <div class="column">
+        <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
           {{ forms["trans_video_coding_form"].videos_coded() }}
@@ -598,6 +669,7 @@ clear: both;*/
           {{ forms["trans_video_coding_form"].submit_send_to_rel() }}
           </p>
         </div>
+        </div>
       </form>
     </div>
 
@@ -605,14 +677,15 @@ clear: both;*/
         <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
 
     <h4>4T. Mark Tran files: GOLD/SILVER </h4>
+      <div class="column">
       <form action="{{ url_for('send_to_gold_tra') }}" method="post">
-        <div class="column">
+        <div class="row">
           <p>
           {{ forms["tra_rel_form"].ready_for_rel.label }}<br>
           {{ forms["tra_rel_form"].ready_for_rel(cols=50) }}
           </p>
         </div>
-        <div class="column">
+        <div class="row">
         <p>
         {{ forms["tra_rel_form"].submit_send_to_gold(cols=50) }}<br>
         {{ forms["tra_rel_form"].submit_send_to_silver(cols=50) }}
@@ -623,6 +696,7 @@ clear: both;*/
         {{ forms["tra_rel_form"].gold.label }}<br>
         {{ forms["tra_rel_form"].gold() }}
         </p>
+        </div>
         </div>
       </form>
 
@@ -635,12 +709,12 @@ clear: both;*/
   <!-- Final begins-->
   <div class="colfin">
     <!--old FINAL begins -->
-    <div class="column">
+    <div class="row">
       <h4>{{ forms["in_silver"].in_silver.label }}</h4>
       <br>
       {{ forms['in_silver'].in_silver() }}
     </div>
-    <div class="column">
+    <div class="row">
       <h4>{{ forms["in_gold"].in_gold.label }}</h4>
       <br>
       {{ forms['in_gold'].in_gold() }}
