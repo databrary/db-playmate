@@ -122,14 +122,14 @@ class SearchForm(FlaskForm):
 
 class InDbForm(FlaskForm):
     in_databrary = SelectField("In Databrary")
-    submit_send_to_qa = SubmitField("Move to Ready for QA")
+    submit_send_to_qa = SubmitField("Generate QA Template")
     submit_remove = SubmitField("Remove from workflow")
 
 
 class QAForm(FlaskForm):
-    ready_for_qa = SelectField("Ready For QA")
-    submit_send_to_coding = SubmitField("Send to Coding")
-    submit_send_to_silver = SubmitField("Send to Silver")
+    ready_for_qa = SelectField("Completed QA")
+    submit_send_to_coding = SubmitField("Passed QA: Send to Coding")
+    submit_send_to_silver = SubmitField("Faild QA: Send to Silver")
 
 
 class CodingForm(FlaskForm):
@@ -174,7 +174,7 @@ class QueueForm(FlaskForm):
 
 
 class RefreshButton(FlaskForm):
-    refresh_button = SubmitField("Refresh Videos from Box")
+    refresh_button = SubmitField("Check for newly coded opf files")
 
 
 class InSilver(FlaskForm):
@@ -727,9 +727,9 @@ def send_to_lab_obj():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            print(constants.QA_CODED_DIR.format(x.site_id) + "/" + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
-                constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
+                constants.QA_CODED_DIR.format(x.site_id) + "/" + x.qa_filename
             )
 
             if not qa_file:

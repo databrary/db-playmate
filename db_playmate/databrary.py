@@ -636,6 +636,9 @@ class Databrary:
                 assets = c["assets"]
                 for asset in assets:
                     asset["filename"] = self.asset_to_filename(asset)
+                    asset["include"] = True
+                    if "NaturalPlay" not in asset["filename"]:
+                        continue
                     asset["vol_id"] = vol_id
                     asset["testdate"] = c["date"] if "date" in c else "test"
                     asset["slot_id"] = c["id"]
@@ -644,20 +647,37 @@ class Databrary:
                         try:
                             print(record)
                             if record["record"]["category"] == 1:
-                                asset["gender"] = record["record"]["measures"]["5"]
-                                asset["birthdate"] = record["record"]["measures"]["4"]
-                                if "12" in record["record"]["measures"]:
-                                    asset["language"] = record["record"]["measures"][
-                                        "12"
+                                try:
+                                    asset["gender"] = record["record"]["measures"]["5"]
+                                except KeyError:
+                                    print("ASSET ERROR:", asset)
+                                try:
+                                    asset["birthdate"] = record["record"]["measures"][
+                                        "4"
                                     ]
-                                else:
-                                    asset["language"] = "English"
+                                except KeyError:
+                                    print("ASSET ERROR:", asset)
+                                try:
+                                    if "12" in record["record"]["measures"]:
+                                        asset["language"] = record["record"][
+                                            "measures"
+                                        ]["12"]
+                                    else:
+                                        asset["language"] = "English"
+                                except KeyError:
+                                    print("ASSET ERROR:", asset)
+                            if record["record"]["category"] == 3:
+                                print("RECORD 3", record["record"]["measures"]["21"])
+                                # This is blank if the asset is marked as included
+                                asset["include"] = False
+                                raise KeyError
+
                         except KeyError:
                             print("ASSET ERROR:", asset)
                             import traceback
 
                             traceback.print_exc()
-                all_assets += assets
+                all_assets += [a for a in assets if a["include"]]
             else:
                 print(
                     "Getting assets for volume failed with HTTP status ",

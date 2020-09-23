@@ -308,7 +308,7 @@ clear: both;*/
         <div class="row">
           <h4 class="green">2L. Assign videos to labs for coding</h4>
           <div class="column">
-            <form action="{{ url_for('send_to_lab_obj') }}" method="post">
+            <form action="{{ url_for('send_to_lab_obj') }}" method="post" name="priobj">
               <h4 class="grey">Object</h4>
               <div class="row">
                 <p>
@@ -330,7 +330,7 @@ clear: both;*/
             </form>
           </div>
           <div class="column">
-            <form action="{{ url_for('send_to_lab_loc') }}" method="post">
+            <form action="{{ url_for('send_to_lab_loc') }}" method="post" name="priloc">
               <h4 class="grey">Locomotion</h4>
               <div class="row">
                 <p>
@@ -355,7 +355,7 @@ clear: both;*/
         <div class="row">
           <div class="column">
             <h4 class="grey">Emotion</h4>
-            <form action="{{ url_for('send_to_lab_emo') }}" method="post">
+            <form action="{{ url_for('send_to_lab_emo') }}" method="post" name="priemo">
               <div class="row">
                 <p>
                   {{ forms["emo_coding_form"].ready_for_coding.label }}<br>
@@ -377,7 +377,7 @@ clear: both;*/
           </div>
           <div class="column">
             <h4 class="grey">Communication &amp; Gesture</h4>
-            <form action="{{ url_for('send_to_lab_comm') }}" method="post">
+            <form action="{{ url_for('send_to_lab_comm') }}" method="post" name="pricom">
               <div class="row">
                 <p>
                   {{ forms["comm_coding_form"].ready_for_coding.label }}<br>
@@ -411,7 +411,7 @@ clear: both;*/
           <h4 class="green">3L. Send coded files to rel coders </h4>
           <div class="column">
             <h4 class="grey"> Object </h4>
-            <form action="{{ url_for('send_to_rel_obj') }}" method="post">
+            <form action="{{ url_for('send_to_rel_obj') }}" method="post" name="relobj">
               <div class="row">
                 <p>
                 {{ forms["obj_video_coding_form"].videos_not_coded.label }}<br>
@@ -433,7 +433,7 @@ clear: both;*/
           </div>
           <div class="column">
             <h4 class="grey"> Locomotion </h4>
-            <form action="{{ url_for('send_to_rel_loc') }}" method="post">
+            <form action="{{ url_for('send_to_rel_loc') }}" method="post" name="relloc">
 
               <div class="row">
                 <p>
@@ -458,7 +458,7 @@ clear: both;*/
         <div class="row">
           <div class="column">
             <h4 class="grey"> Emotion </h4>
-            <form action="{{ url_for('send_to_rel_emo') }}" method="post">
+            <form action="{{ url_for('send_to_rel_emo') }}" method="post" name="relemo">
               <div class="row">
                 <p>
                 {{ forms["emo_video_coding_form"].videos_not_coded.label }}<br>
@@ -482,7 +482,7 @@ clear: both;*/
 
             <div class="column">
                 <h4 class="grey"> Communication &amp; Gesture </h4>
-                <form action="{{ url_for('send_to_rel_comm') }}" method="post">
+                <form action="{{ url_for('send_to_rel_comm') }}" method="post" name="relcom">
                   <div class="row">
                     <p>
                     {{ forms["comm_video_coding_form"].videos_not_coded.label }}<br>
@@ -625,7 +625,7 @@ clear: both;*/
       <div class="row">
       <h4>2T. Assigning videos to Transcribers</h4>
       <div class="column">
-      <form action="{{ url_for('send_to_lab_tra') }}" method="post">
+      <form action="{{ url_for('send_to_lab_tra') }}" method="post" name="pritra">
         <div class="row">
           <p>
             {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
@@ -650,7 +650,7 @@ clear: both;*/
     <br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
       <div class="column">
       <h4> 3T. Send Tran files to rel coders </h4>
-      <form action="{{ url_for('send_to_rel_tra') }}" method="post">
+      <form action="{{ url_for('send_to_rel_tra') }}" method="post" name="reltra">
         <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>

@@ -56,7 +56,7 @@ class Submission:
         self.play_filename = "PLAY_{}{}_NaturalPlay.mp4".format(
             self.vol_id, self.slot_id
         )
-        self.play_id = "PLAY_{}_{}".format(self.vol_id, self.slot_id)
+        self.play_id = "PLAY_{}{}".format(self.vol_id, self.slot_id)
         self.qa_filename = "PLAY_{}_{}.opf".format(self.site_id, self.subj_number)
         self.coding_filename_prefix = "PLAY_{}{}".format(self.vol_id, self.slot_id)
         self.display_name = "PLAY_{vol_id}{asset_id}-{site_id}-{subnum}-{testdate}-{language}-R{release}".format(
@@ -241,7 +241,7 @@ class Site:
 
 
 class Datastore:
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self):
         self.labs = {}  # lab_code -> lab

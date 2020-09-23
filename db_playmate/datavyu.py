@@ -32,12 +32,16 @@ class DatavyuTemplateFactory:
         play_id = submission.play_id
         birthdate = submission.birthdate
         testdate = submission.testdate
+        language = submission.language
+        # TODO language_2
 
         site_id = submission.site_id
         subjn = submission.subj_number
 
-        spreadsheet.get_column("PLAY_id").new_cell(play_id, birthdate, testdate)
-        spreadsheet.get_column("qa_id").new_cell("", site_id, subjn)
+        spreadsheet.get_column("PLAY_id").new_cell(
+            play_id, birthdate, testdate, language
+        )
+        spreadsheet.get_column("qa_id").new_cell(site_id, subjn)
 
         output_filename = constants.TMP_DATA_DIR + os.sep + submission.qa_filename
 
@@ -46,7 +50,13 @@ class DatavyuTemplateFactory:
         # Create tmpdir if needed
         os.makedirs(constants.TMP_DATA_DIR, exist_ok=True)
         pyvyu.save_opf(
-            spreadsheet, output_filename, True, "PLAY_id", "qa_id", "qa", "qa_comments",
+            spreadsheet,
+            output_filename,
+            True,
+            "PLAY_id",
+            "qa_id",
+            "qa",
+            "qa_comments",
         )
 
         return output_filename
