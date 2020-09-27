@@ -32,6 +32,7 @@ PyQtWebEngine = "5.14.0"
 pyinstaller = {git = "https://github.com/pyinstaller/pyinstaller", 'branch' = "develop"}
 pytest = "^5.4.3"
 rope = "^0.17.0"
+flake8 = "^3.8.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

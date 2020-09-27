@@ -51,6 +51,11 @@ class Submission:
         self.moved_to_gold_emo = False
         self.in_kobo_forms = False
         self.queued = False
+        self.queued_obj = False
+        self.queued_loc = False
+        self.queued_emo = False
+        self.queued_tra = False
+        self.queued_com = False
         self.id = "{} - {} - {}".format(self.vol_id, self.site_id, self.subj_number)
         self.name = self.id  # TODO For now, revisit this
         self.play_filename = "PLAY_{}{}_NaturalPlay.mp4".format(
@@ -241,7 +246,7 @@ class Site:
 
 
 class Datastore:
-    VERSION = 2
+    VERSION = 3
 
     def __init__(self):
         self.labs = {}  # lab_code -> lab

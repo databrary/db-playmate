@@ -51,17 +51,25 @@ class Queue:
             self.results.append(job.error_msg)
             if job.item:
                 job.item.queued = False
+                job.item.queued_tra = False
+                job.item.queued_com = False
+                job.item.queued_obj = False
+                job.item.queued_loc = False
+                job.item.queued_emo = False
         self.running = False
         for job in self.queued_jobs:
             if job.status < 0:
                 return job.status
         return 0
 
-    def add(self, job):
+    def add(self, job, queue_type=""):
         self.status = 0
         self.queued_jobs.append(job)
         if job.item:
-            job.item.queued = True
+            if queue_type == "":
+                job.item.queued = True
+            else:
+                setattr(job.item, "queued_" + queue_type, True)
 
     def get_status(self):
         return self.status

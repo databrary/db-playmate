@@ -489,7 +489,6 @@ class Box:
 
     def sync_datastore_to_box(self, datastore):
         qa_dir = constants.QA_CODING_DIR
-        print(qa_dir)
         print("QA TEMP SYNC")
         for path in self.get_file_tree(qa_dir):
             print(path)
@@ -514,7 +513,6 @@ class Box:
         qa_dir = "/".join(constants.QA_CODED_DIR.split("/")[0:3])
         print(qa_dir)
         print("QA SYNC")
-        print(self.get_file_tree(qa_dir))
         for path in self.get_file_tree(qa_dir):
             print(path)
             if path.endswith(".opf"):

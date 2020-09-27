@@ -222,7 +222,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_tra
         and x.ready_for_coding is True
         and x.assigned_coding_site_tra is None
     ]
@@ -235,7 +235,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_com
         and x.ready_for_coding is True
         and x.assigned_coding_site_com is None
         and x.primary_coding_finished_tra
@@ -249,7 +249,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_loc
         and x.ready_for_coding is True
         and x.assigned_coding_site_loc is None
     ]
@@ -262,7 +262,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_obj
         and x.ready_for_coding is True
         and x.assigned_coding_site_obj is None
     ]
@@ -275,7 +275,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_emo
         and x.ready_for_coding is True
         and x.assigned_coding_site_emo is None
     ]
@@ -288,14 +288,14 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_tra
         and ((x.primary_coding_finished_tra and x.ready_for_rel_tra is False))
     ]
     v_coding_not_done = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_tra
         and (
             (
                 x.primary_coding_finished_tra is False
@@ -311,7 +311,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_loc
         and x.primary_coding_finished_loc
         and x.ready_for_rel_loc is False
     ]
@@ -319,7 +319,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_loc
         and x.primary_coding_finished_loc is False
         and x.assigned_coding_site_loc is not None
     ]
@@ -331,7 +331,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_com
         and x.primary_coding_finished_com
         and x.ready_for_rel_com is False
     ]
@@ -339,7 +339,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_com
         and x.primary_coding_finished_com is False
         and x.assigned_coding_site_com is not None
         and x.moved_to_gold_tra
@@ -352,7 +352,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_emo
         and x.primary_coding_finished_emo
         and x.ready_for_rel_emo is False
     ]
@@ -360,7 +360,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_emo
         and x.primary_coding_finished_emo is False
         and x.assigned_coding_site_emo is not None
     ]
@@ -372,7 +372,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_obj
         and x.primary_coding_finished_obj
         and x.ready_for_rel_obj is False
     ]
@@ -380,7 +380,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_obj
         and x.primary_coding_finished_obj is False
         and x.assigned_coding_site_obj is not None
     ]
@@ -392,7 +392,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_loc
         and x.ready_for_rel_loc
         and x.rel_coding_finished_loc is False
         and not x.moved_to_gold_loc
@@ -402,7 +402,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.moved_to_gold_loc
+        if not x.queued_loc and x.moved_to_gold_loc
     ]
     loc_rel_form.gold.choices = gold_videos
 
@@ -411,7 +411,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_emo
         and x.ready_for_rel_emo
         and x.rel_coding_finished_emo is False
         and not x.moved_to_gold_emo
@@ -421,7 +421,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.moved_to_gold_emo
+        if not x.queued_emo and x.moved_to_gold_emo
     ]
     emo_rel_form.gold.choices = gold_videos
 
@@ -430,7 +430,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_tra
         and x.primary_coding_finished_tra
         and x.ready_for_rel_tra
         and x.rel_coding_finished_tra is False
@@ -439,7 +439,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.moved_to_gold_tra
+        if not x.queued_tra and x.moved_to_gold_tra
     ]
     trans_rel_video_coding_form.ready_for_rel.choices = ready_for_rel
     trans_rel_video_coding_form.gold.choices = gold_videos
@@ -449,7 +449,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_com
         and x.ready_for_rel_com
         and x.rel_coding_finished_com is False
         and not x.moved_to_gold_com
@@ -459,7 +459,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued and x.moved_to_gold_com
+        if not x.queued_com and x.moved_to_gold_com
     ]
     comm_rel_form.gold.choices = gold_videos
 
@@ -468,7 +468,7 @@ def create_forms():
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
-        if not x.queued
+        if not x.queued_obj
         and x.ready_for_rel_obj
         and x.rel_coding_finished_com is False
         and not x.moved_to_gold_obj
@@ -733,7 +733,12 @@ def send_to_lab_obj():
             )
 
             if not qa_file:
-                raise Exception("No completed QA file")
+                raise Exception(
+                    "No completed QA file: "
+                    + constants.QA_CODED_DIR.format(x.site_id)
+                    + "/"
+                    + x.qa_filename
+                )
 
             BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_obj_file(
@@ -757,7 +762,8 @@ def send_to_lab_obj():
                 name="ASSIGN OBJ LAB: {} -> {}".format(submitted_data.qa_filename, lab),
                 args=[submitted_data, lab],
                 item=submitted_data,
-            )
+            ),
+            "obj",
         )
 
     except:
@@ -781,9 +787,9 @@ def send_to_lab_loc():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            print(constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
-                constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
+                constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename
             )
 
             if not qa_file:
@@ -810,7 +816,8 @@ def send_to_lab_loc():
                 name="ASSIGN LOC LAB: {} -> {}".format(submitted_data.qa_filename, lab),
                 args=[submitted_data, lab],
                 item=submitted_data,
-            )
+            ),
+            "loc",
         )
 
     except:
@@ -834,9 +841,9 @@ def send_to_lab_emo():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            print(constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
-                constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
+                constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename
             )
 
             if not qa_file:
@@ -864,7 +871,8 @@ def send_to_lab_emo():
                 name="ASSIGN EMO LAB: {} -> {}".format(submitted_data.qa_filename, lab),
                 args=[submitted_data, lab],
                 item=submitted_data,
-            )
+            ),
+            "emo",
         )
 
     except:
@@ -888,13 +896,13 @@ def send_to_lab_tra():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            print(constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
-                constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
+                constants.QA_CODED_DIR.format(x.site_id) + os.sep + x.qa_filename
             )
+
             if not qa_file:
                 raise Exception("No completed QA file")
-
             BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
             output_file = DatavyuTemplateFactory.generate_tra_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
@@ -917,7 +925,8 @@ def send_to_lab_tra():
                 name="ASSIGN TRA LAB: {} -> {}".format(submitted_data.qa_filename, lab),
                 args=[submitted_data, lab],
                 item=submitted_data,
-            )
+            ),
+            "tra",
         )
 
     except:
@@ -943,7 +952,7 @@ def send_to_lab_comm():
 
             qa_file = BRIDGE.box.get_file(
                 constants.PRI_CODED_DIR.format("tra", x.assigned_coding_site_tra)
-                + "/"
+                + os.sep
                 + x.coding_filename_prefix
                 + "_tra.opf"
             )
@@ -976,7 +985,8 @@ def send_to_lab_comm():
                 ),
                 args=[submitted_data, lab],
                 item=submitted_data,
-            )
+            ),
+            "com",
         )
 
     except:
@@ -1022,7 +1032,8 @@ def send_to_rel_tra():
                 name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "tra",
         )
 
     except:
@@ -1068,7 +1079,8 @@ def send_to_rel_obj():
                 name="READY FOR OBJ REL: {}".format(submitted_data.qa_filename),
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "obj",
         )
 
     except:
@@ -1115,7 +1127,8 @@ def send_to_rel_loc():
                 name="READY FOR LOC REL: {}".format(submitted_data.qa_filename),
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "loc",
         )
 
     except:
@@ -1162,7 +1175,8 @@ def send_to_rel_emo():
                 name="READY FOR EMO REL: {}".format(submitted_data.qa_filename),
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "emo",
         )
 
     except:
@@ -1211,7 +1225,8 @@ def send_to_rel_trans():
                     name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
                     args=[submitted_data],
                     item=submitted_data,
-                )
+                ),
+                "tra",
             )
         elif video_coding_form.submit_send_to_gold.data:
 
@@ -1225,7 +1240,8 @@ def send_to_rel_trans():
                         ),
                         args=[submitted_data],
                         item=submitted_data,
-                    )
+                    ),
+                    "tra",
                 )
 
         elif video_coding_form.submit_send_to_silver.data:
@@ -1240,7 +1256,8 @@ def send_to_rel_trans():
                         ),
                         args=[submitted_data],
                         item=submitted_data,
-                    )
+                    ),
+                    "tra",
                 )
 
     except:
@@ -1286,7 +1303,8 @@ def send_to_rel_comm():
                 name="READY FOR TRA REL: {}".format(submitted_data.qa_filename),
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "tra",
         )
 
     except:
@@ -1324,7 +1342,8 @@ def send_to_gold_tra():
                 name=name,
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "tra",
         )
 
         forms = create_forms()
@@ -1361,7 +1380,8 @@ def send_to_gold_obj():
                 name=name,
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "obj",
         )
 
         forms = create_forms()
@@ -1398,7 +1418,8 @@ def send_to_gold_loc():
                 name=name,
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "loc",
         )
 
         forms = create_forms()
@@ -1435,7 +1456,8 @@ def send_to_gold_emo():
                 name=name,
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "emo",
         )
 
         forms = create_forms()
@@ -1472,7 +1494,8 @@ def send_to_gold_comm():
                 name=name,
                 args=[submitted_data],
                 item=submitted_data,
-            )
+            ),
+            "com",
         )
 
         forms = create_forms()
