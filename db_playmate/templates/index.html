@@ -649,12 +649,18 @@ clear: both;*/
     <div class="row">
     <br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
       <div class="column">
-      <h4> 3T. Send Tran files to rel coders </h4>
+      <h4> 3T. Send Tra files to QA </h4>
       <form action="{{ url_for('send_to_rel_tra') }}" method="post" name="reltra">
         <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
           {{ forms["trans_video_coding_form"].videos_not_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["trans_video_coding_form"].lab_list.label }}<br>
+            {{ forms["trans_video_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
           </p>
         </div>
 
@@ -676,25 +682,30 @@ clear: both;*/
     <div class="row">
         <br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
 
-    <h4>4T. Mark Tran files: GOLD/SILVER </h4>
+    <h4>4T. Send Tra files to COMM </h4>
       <div class="column">
       <form action="{{ url_for('send_to_gold_tra') }}" method="post">
         <div class="row">
           <p>
-          {{ forms["tra_rel_form"].ready_for_rel.label }}<br>
-          {{ forms["tra_rel_form"].ready_for_rel(cols=50) }}
+          {{ forms["tra_qa_form"].ready_for_rel.label }}<br>
+          {{ forms["tra_qa_form"].ready_for_rel(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["tra_qa_form"].send_to_rel() }}
           </p>
         </div>
         <div class="row">
         <p>
-        {{ forms["tra_rel_form"].submit_send_to_gold(cols=50) }}<br>
-        {{ forms["tra_rel_form"].submit_send_to_silver(cols=50) }}
+        {{ forms["tra_qa_form"].submit_send_to_gold(cols=50) }}<br>
+        {{ forms["tra_qa_form"].submit_send_to_silver(cols=50) }}
         </p>
         </div>
         <div class="row">
         <p>
-        {{ forms["tra_rel_form"].gold.label }}<br>
-        {{ forms["tra_rel_form"].gold() }}
+        {{ forms["tra_qa_form"].gold.label }}<br>
+        {{ forms["tra_qa_form"].gold() }}
         </p>
         </div>
         </div>

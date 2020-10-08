@@ -27,6 +27,15 @@ PRI_WORK_DIR = (
 
 VIDEO_DIR = PLAY_PREFIX + "automation_doNotTouch/1_PLAY_videos_for_coding"
 
+TRA_QA_DIR_TODO = (
+    PLAY_PREFIX
+    + "4a_PLAY_coding_opf_templates_and_submissions/PLAY_opfs_tra/2a_TranscriptionQA/{}/Transcription_QA_ToDo"
+)
+TRA_QA_DIR_DONE = (
+    PLAY_PREFIX
+    + "4a_PLAY_coding_opf_templates_and_submissions/PLAY_opfs_tra/2a_TranscriptionQA/{}/Transcription_QA_Done"
+)
+
 
 REL_CODING_DIR = (
     PLAY_PREFIX + "automation_doNotTouch/5_PLAY_opf_readyforrel/PLAY_rel_{}/{}"

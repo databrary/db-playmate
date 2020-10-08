@@ -108,7 +108,22 @@ def read_lab_coding(labs):
         tra_names.append(row[0])
     for row in values:
         tra_names.append(row[0])
-    return labs, tra_names
+    header, values = _get_sheet(LAB_CODING_ID, "A1:A", "TraQAList")
+    tra_qa_names = []
+    # The function above assumes a header, but this sheet does not have one
+    for row in header:
+        tra_qa_names.append(row[0])
+    for row in values:
+        tra_qa_names.append(row[0])
+    header, values = _get_sheet(LAB_CODING_ID, "A1:A", "RelList")
+    rel_names = []
+    # The function above assumes a header, but this sheet does not have one
+    for row in header:
+        rel_names.append(row[0])
+    for row in values:
+        rel_names.append(row[0])
+
+    return labs, tra_names, tra_qa_names, rel_names
 
 
 def read_permissions_list():
@@ -182,8 +197,8 @@ def read_master():
                 lab = Lab(site_code, lab_code, pi, email, inst)
                 sites[site_code].labs[lab_code] = lab
                 labs[lab_code] = lab
-        labs, tra_names = read_lab_coding(labs)
-        return sites, labs, tra_names
+        labs, tra_names, tra_qa_names, rel_names = read_lab_coding(labs)
+        return sites, labs, tra_names, tra_qa_names, rel_names
 
 
 if __name__ == "__main__":

@@ -6,7 +6,6 @@ import sys
 import traceback
 import requests
 import jinja2
-import multiprocessing
 from markupsafe import Markup
 from wtforms.widgets.core import html_params
 
@@ -159,6 +158,10 @@ class VideosCodedForm(FlaskForm):
 
 class RelForm(FlaskForm):
     ready_for_rel = SelectField("Ready for Rel")
+    lab_list = SelectField(
+        "List of Rel Coders", widget=CustomSelect(), default="default"
+    )
+    submit_send_to_rel = SubmitField("Send to rel coder")
     submit_send_to_gold = SubmitField("Mark Pass as GOLD")
     submit_send_to_silver = SubmitField("Mark Pass as SILVER")
     gold = SelectField("In GOLD")
@@ -238,7 +241,7 @@ def create_forms():
         if not x.queued_com
         and x.ready_for_coding is True
         and x.assigned_coding_site_com is None
-        and x.primary_coding_finished_tra
+        and x.qa_finished_tra
     ]
     comm_coding_form.ready_for_coding.choices = comm_coding_videos
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_com])
@@ -405,6 +408,8 @@ def create_forms():
         if not x.queued_loc and x.moved_to_gold_loc
     ]
     loc_rel_form.gold.choices = gold_videos
+    lab_list = DATASTORE.tra_qa_names
+    loc_rel_form.lab_list = lab_list
 
     emo_rel_form = RelForm()
     ready_for_rel = [
@@ -424,8 +429,10 @@ def create_forms():
         if not x.queued_emo and x.moved_to_gold_emo
     ]
     emo_rel_form.gold.choices = gold_videos
+    lab_list = DATASTORE.tra_qa_names
+    emo_rel_form.lab_list = lab_list
 
-    trans_rel_video_coding_form = RelForm()
+    trans_qa_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
@@ -441,8 +448,11 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued_tra and x.moved_to_gold_tra
     ]
-    trans_rel_video_coding_form.ready_for_rel.choices = ready_for_rel
-    trans_rel_video_coding_form.gold.choices = gold_videos
+    lab_list = DATASTORE.tra_qa_names
+    trans_qa_form.lab_list = lab_list
+    trans_qa_form.ready_for_rel.choices = ready_for_rel
+    trans_qa_form.gold.choices = gold_videos
+    trans_qa_form.submit_send_to_gold.label = "Send to COM"
 
     comm_rel_form = RelForm()
     ready_for_rel = [
@@ -462,6 +472,8 @@ def create_forms():
         if not x.queued_com and x.moved_to_gold_com
     ]
     comm_rel_form.gold.choices = gold_videos
+    lab_list = DATASTORE.rel_names
+    comm_rel_form.lab_list = lab_list
 
     obj_rel_form = RelForm()
     ready_for_rel = [
@@ -481,6 +493,8 @@ def create_forms():
         if x.moved_to_gold_obj
     ]
     obj_rel_form.gold.choices = gold_videos
+    lab_list = DATASTORE.rel_names
+    obj_rel_form.lab_list = lab_list
 
     queue_form = QueueForm()
     if len(QUEUE.queued_jobs) > 0:
@@ -551,7 +565,7 @@ def create_forms():
         "loc_rel_form": loc_rel_form,
         "emo_rel_form": emo_rel_form,
         "comm_rel_form": comm_rel_form,
-        "tra_rel_form": trans_rel_video_coding_form,
+        "tra_qa_form": trans_qa_form,
         "queue_form": queue_form,
         "refresh_button": refresh_form,
         "in_silver": in_silver,
@@ -590,7 +604,7 @@ def initialize():
         # online resources
         get_kobo_forms(BRIDGE)
         DATASTORE.increment_status()
-        sites, labs, tra_names = get_labs(BRIDGE)
+        sites, labs, tra_names, tra_qa_names, rel_names = get_labs(BRIDGE)
         for s in sites:
             if s not in DATASTORE.sites:
                 DATASTORE.sites[s] = sites[s]
@@ -600,6 +614,12 @@ def initialize():
         for t in tra_names:
             if t not in DATASTORE.tra_names:
                 DATASTORE.tra_names.append(t)
+        for t in tra_qa_names:
+            if t not in DATASTORE.tra_qa_names:
+                DATASTORE.tra_qa_names.append(t)
+        for r in rel_names:
+            if r not in DATASTORE.rel_names:
+                DATASTORE.rel_names.append(t)
         DATASTORE.increment_status()
         get_submissions(DATASTORE.sites, BRIDGE, DATASTORE)
         DATASTORE.increment_status()
@@ -1021,7 +1041,7 @@ def send_to_rel_tra():
             BRIDGE.box.upload_file(
                 f,
                 constants.REL_CODING_DIR.format(
-                    "tra", submitted_data.assigned_coding_site_loc
+                    "tra", submitted_data.assigned_coding_site_tra
                 ),
             )
             x.ready_for_rel_tra = True
@@ -1044,6 +1064,66 @@ def send_to_rel_tra():
     return render_template("index.html", forms=forms, queue=QUEUE)
 
 
+# Special TRA QA step
+@app.route("/send_to_qa_tra", methods=["GET", "POST"])
+def send_to_lab_tra():
+    global DATASTORE
+    global QUEUE
+    global BRIDGE
+    try:
+        coding_form = TraCodingForm()
+        submitted_data = DATASTORE.find_submission(coding_form.ready_for_coding.data)
+        qa_person = coding_form.lab_list.data
+
+        def fn(x, qa_person):
+            # Download the coded QA file:
+
+            qa_file = BRIDGE.box.get_file(
+                constants.PRI_CODED_DIR.format(x.site_id, x.assigned_coding_site_tra)
+                + os.sep
+                + x.qa_filename
+            )
+
+            if not qa_file:
+                raise Exception("No completed QA file")
+            BRIDGE.box.download_file(qa_file, constants.TMP_DATA_DIR)
+            output_file = DatavyuTemplateFactory.generate_tra_qa_file(
+                x, constants.TMP_DATA_DIR + "/" + x.qa_filename
+            )
+            print(
+                "Uploading {} to {}".format(
+                    output_file, constants.TRA_QA_DIR_TODO.format("tra", qa_person)
+                )
+            )
+            BRIDGE.transfer_file_to_box(
+                output_file,
+                constants.PRI_CODING_DIR.format("tra", qa_person),
+                makedirs=True,
+            )
+            BRIDGE.box.create_folders(constants.PRI_CODED_DIR.format("tra", qa_person))
+            x.assigned_coding_site_tra = qa_person
+            qa_person.assigned_videos.append(x)
+
+        QUEUE.add(
+            Job(
+                target=fn,
+                name="ASSIGN TRA QA: {} -> {}".format(
+                    submitted_data.qa_filename, qa_person
+                ),
+                args=[submitted_data, qa_person],
+                item=submitted_data,
+            ),
+            "tra",
+        )
+
+    except:
+        print(traceback.format_exc())
+
+    finally:
+        forms = create_forms()
+    return render_template("index.html", forms=forms, queue=QUEUE)
+
+
 @app.route("/send_to_rel_obj", methods=["GET", "POST"])
 def send_to_rel_obj():
     global DATASTORE
@@ -1053,7 +1133,7 @@ def send_to_rel_obj():
         video_coding_form = VideosCodedForm()
         submitted_data = DATASTORE.find_submission(video_coding_form.videos_coded.data)
 
-        def fn(x):
+        def fn(x, qa_person):
             site = x.assigned_coding_site_obj
             BRIDGE.box.download_file(
                 "/".join(
@@ -1635,11 +1715,11 @@ def check_for_new():
 
 
 def get_labs(bridge):
-    sites, labs, tra_names = read_master()
+    sites, labs, tra_names, tra_qa_names, rel_names = read_master()
     for site in sites.values():
         site.get_vol_id(bridge.db)
 
-    return sites, labs, tra_names
+    return sites, labs, tra_names, tra_qa_names, rel_names
 
 
 def get_submissions(sites, bridge, datastore):

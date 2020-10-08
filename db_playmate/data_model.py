@@ -39,6 +39,7 @@ class Submission:
         self.rel_coding_finished_loc = False
         self.rel_coding_finished_emo = False
         self.rel_coding_finished_tra = False
+        self.qa_finished_tra = False  # Special QA step for tra before comm
         self.moved_to_silver_com = False
         self.moved_to_silver_tra = False
         self.moved_to_silver_obj = False
@@ -246,12 +247,14 @@ class Site:
 
 
 class Datastore:
-    VERSION = 3
+    VERSION = 4
 
     def __init__(self):
         self.labs = {}  # lab_code -> lab
         self.sites = {}  # site_code -> site
         self.tra_names = []  # Translator names
+        self.tra_qa_names = []
+        self.rel_names = []
 
         self.statuses = [
             "Connecting to Box, Google, Databrary, and Kobo...",
