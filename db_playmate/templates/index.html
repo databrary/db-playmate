@@ -650,7 +650,7 @@ clear: both;*/
     <br><br><br><br><br><br><br><br><br><br><br><br><br><hr>
       <div class="column">
       <h4> 3T. Send Tra files to QA </h4>
-      <form action="{{ url_for('send_to_rel_tra') }}" method="post" name="reltra">
+      <form action="{{ url_for('send_to_qa_tra') }}" method="post" name="reltra">
         <div class="row">
           <p>
           {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
