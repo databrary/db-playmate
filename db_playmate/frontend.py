@@ -146,11 +146,14 @@ class TraCodingForm(FlaskForm):
     videos_not_coded = SelectField("Video Being Coded")
     submit_send_to_lab = SubmitField("Send to Selected Transcriber")
     submit_send_to_silver = SubmitField("Send to SILVER")
-    submit_send_to_gold = SubmitField("Send to GOLD/COM")
+    submit_send_to_gold = SubmitField("Send to COM")
 
 
 class VideosCodedForm(FlaskForm):
     videos_coded = SelectField("Coded Videos")
+    lab_list = SelectField(
+        "List of Rel Coders", widget=CustomSelect(), default="default"
+    )
     videos_not_coded = SelectField("Video Being Coded")
     submit_send_to_rel = SubmitField("Send to Rel")
     submit_send_to_silver = SubmitField("Send to SILVER")
@@ -222,7 +225,7 @@ def create_forms():
     qa_form.ready_for_qa.choices = prep_select_list(qa if len(qa) > 0 else [("-", "-")])
 
     tra_coding_form = TraCodingForm()
-    trans_coding_videos = [
+    tra_coding_videos = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
@@ -230,7 +233,7 @@ def create_forms():
         and x.ready_for_coding is True
         and x.assigned_coding_site_tra is None
     ]
-    tra_coding_form.ready_for_coding.choices = trans_coding_videos
+    tra_coding_form.ready_for_coding.choices = tra_coding_videos
     lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
     tra_coding_form.lab_list.choices = prep_select_list(lab_list)
 
@@ -287,7 +290,7 @@ def create_forms():
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_emo])
     emo_coding_form.lab_list.choices = prep_select_list(lab_list)
 
-    trans_video_coding_form = TraCodingForm()
+    tra_video_coding_form = TraCodingForm()
 
     lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
     v_coding_done = [
@@ -309,9 +312,9 @@ def create_forms():
             )
         )
     ]
-    trans_video_coding_form.lab_list.choices = lab_list
-    trans_video_coding_form.videos_coded.choices = v_coding_done
-    trans_video_coding_form.videos_not_coded.choices = v_coding_not_done
+    tra_video_coding_form.lab_list.choices = lab_list
+    tra_video_coding_form.videos_coded.choices = v_coding_done
+    tra_video_coding_form.videos_not_coded.choices = v_coding_not_done
 
     loc_video_coding_form = VideosCodedForm()
     v_coding_done = [
@@ -456,7 +459,6 @@ def create_forms():
     tra_qa_form.lab_list = lab_list
     tra_qa_form.ready_for_rel.choices = ready_for_rel
     tra_qa_form.gold.choices = gold_videos
-    tra_qa_form.submit_send_to_gold.label = "Send to COM"
 
     comm_rel_form = RelForm()
     ready_for_rel = [
@@ -560,7 +562,7 @@ def create_forms():
         "loc_coding_form": loc_coding_form,
         "obj_coding_form": obj_coding_form,
         "emo_coding_form": emo_coding_form,
-        "trans_video_coding_form": trans_video_coding_form,
+        "tra_video_coding_form": tra_video_coding_form,
         "emo_video_coding_form": emo_video_coding_form,
         "obj_video_coding_form": obj_video_coding_form,
         "loc_video_coding_form": loc_video_coding_form,
@@ -608,7 +610,12 @@ def initialize():
 
         # Load the data if it exists, otherwise populate from
         # online resources
-        get_kobo_forms(BRIDGE)
+        try:
+            get_kobo_forms(BRIDGE)
+        except AttributeError:
+            DATASTORE.non_fatal_errors = (
+                " - ERROR: Kobo is down. Continuing without Kobo information."
+            )
         DATASTORE.increment_status()
         sites, labs, tra_names, tra_qa_names, rel_names = get_labs(BRIDGE)
         for s in sites:
@@ -1403,7 +1410,7 @@ def send_to_rel_comm():
 @app.route("/send_to_gold_tra", methods=["GET", "POST"])
 def send_to_gold_tra():
     try:
-        rel_form = RelForm()
+        rel_form = TraCodingForm()
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
@@ -1711,7 +1718,8 @@ def status():
 
     print(DATASTORE.get_status())
     return Response(
-        "data:{}\n\n".format(DATASTORE.get_status()), mimetype="text/event-stream"
+        "data:{}\n\n".format(DATASTORE.get_status() + DATASTORE.non_fatal_errors),
+        mimetype="text/event-stream",
     )
 
 
