@@ -628,19 +628,19 @@ clear: both;*/
       <form action="{{ url_for('send_to_lab_tra') }}" method="post" name="pritra">
         <div class="row">
           <p>
-            {{ forms["trans_coding_form"].ready_for_coding.label }}<br>
-            {{ forms["trans_coding_form"].ready_for_coding() }}
+            {{ forms["tra_coding_form"].ready_for_coding.label }}<br>
+            {{ forms["tra_coding_form"].ready_for_coding() }}
           </p>
         </div>
         <div class="row">
           <p>
-            {{ forms["trans_coding_form"].lab_list.label }}<br>
-            {{ forms["trans_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
+            {{ forms["tra_coding_form"].lab_list.label }}<br>
+            {{ forms["tra_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
           </p>
         </div>
         <div class="row">
           <p>
-          {{ forms["trans_coding_form"].submit_send_to_lab() }}
+          {{ forms["tra_coding_form"].submit_send_to_lab() }}
           </p>
         </div>
         </div>
@@ -653,26 +653,26 @@ clear: both;*/
       <form action="{{ url_for('send_to_qa_tra') }}" method="post" name="reltra">
         <div class="row">
           <p>
-          {{ forms["trans_video_coding_form"].videos_not_coded.label }}<br>
-          {{ forms["trans_video_coding_form"].videos_not_coded() }}
+          {{ forms["tra_video_coding_form"].videos_not_coded.label }}<br>
+          {{ forms["tra_video_coding_form"].videos_not_coded() }}
           </p>
         </div>
         <div class="row">
           <p>
-            {{ forms["trans_video_coding_form"].lab_list.label }}<br>
-            {{ forms["trans_video_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
+            {{ forms["tra_video_coding_form"].lab_list.label }}<br>
+            {{ forms["tra_video_coding_form"].lab_list(option_attr={"lab_list-0": {"disabled": ""} }, class="form-control") }}
           </p>
         </div>
 
         <div class="row">
           <p>
-          {{ forms["trans_video_coding_form"].videos_coded.label }}<br>
-          {{ forms["trans_video_coding_form"].videos_coded() }}
+          {{ forms["tra_video_coding_form"].videos_coded.label }}<br>
+          {{ forms["tra_video_coding_form"].videos_coded() }}
           </p>
         </div>
         <div class="row">
           <p>
-          {{ forms["trans_video_coding_form"].submit_send_to_lab() }}
+          {{ forms["tra_video_coding_form"].submit_send_to_lab() }}
           </p>
         </div>
         </div>
@@ -689,11 +689,6 @@ clear: both;*/
           <p>
           {{ forms["tra_qa_form"].ready_for_rel.label }}<br>
           {{ forms["tra_qa_form"].ready_for_rel(cols=50) }}
-          </p>
-        </div>
-        <div class="row">
-          <p>
-            {{ forms["tra_qa_form"].send_to_rel() }}
           </p>
         </div>
         <div class="row">
