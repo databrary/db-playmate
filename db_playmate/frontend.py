@@ -436,7 +436,7 @@ def create_forms():
     lab_list = DATASTORE.rel_names
     emo_rel_form.lab_list = lab_list
 
-    trans_qa_form = RelForm()
+    tra_qa_form = RelForm()
     ready_for_rel = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
@@ -453,10 +453,10 @@ def create_forms():
         if not x.queued_tra and x.moved_to_gold_tra
     ]
     lab_list = DATASTORE.tra_qa_names
-    trans_qa_form.lab_list = lab_list
-    trans_qa_form.ready_for_rel.choices = ready_for_rel
-    trans_qa_form.gold.choices = gold_videos
-    trans_qa_form.submit_send_to_gold.label = "Send to COM"
+    tra_qa_form.lab_list = lab_list
+    tra_qa_form.ready_for_rel.choices = ready_for_rel
+    tra_qa_form.gold.choices = gold_videos
+    tra_qa_form.submit_send_to_gold.label = "Send to COM"
 
     comm_rel_form = RelForm()
     ready_for_rel = [
@@ -569,7 +569,7 @@ def create_forms():
         "loc_rel_form": loc_rel_form,
         "emo_rel_form": emo_rel_form,
         "comm_rel_form": comm_rel_form,
-        "tra_qa_form": trans_qa_form,
+        "tra_qa_form": tra_qa_form,
         "queue_form": queue_form,
         "refresh_button": refresh_form,
         "in_silver": in_silver,
