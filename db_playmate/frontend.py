@@ -102,7 +102,7 @@ class QWebEngineViewWindow(QWebEngineView):
         try:
             func()
         except:
-            pass
+            print(traceback.format_exc())
         quit()
 
 
@@ -128,7 +128,7 @@ class InDbForm(FlaskForm):
 class QAForm(FlaskForm):
     ready_for_qa = SelectField("Completed QA")
     submit_send_to_coding = SubmitField("Passed QA: Send to Coding")
-    submit_send_to_silver = SubmitField("Faild QA: Send to Silver")
+    submit_send_to_silver = SubmitField("Failed QA: Send to Silver")
 
 
 class CodingForm(FlaskForm):
@@ -142,7 +142,8 @@ class TraCodingForm(FlaskForm):
     lab_list = SelectField(
         "List of Transcribers", widget=CustomSelect(), default="default"
     )
-    being_coded = SelectField("List of Videos being Transcribed")
+    videos_coded = SelectField("Coded Videos")
+    videos_not_coded = SelectField("Video Being Coded")
     submit_send_to_lab = SubmitField("Send to Selected Transcriber")
     submit_send_to_silver = SubmitField("Send to SILVER")
     submit_send_to_gold = SubmitField("Send to GOLD/COM")
@@ -220,7 +221,7 @@ def create_forms():
     ]
     qa_form.ready_for_qa.choices = prep_select_list(qa if len(qa) > 0 else [("-", "-")])
 
-    trans_coding_form = TraCodingForm()
+    tra_coding_form = TraCodingForm()
     trans_coding_videos = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
@@ -229,9 +230,9 @@ def create_forms():
         and x.ready_for_coding is True
         and x.assigned_coding_site_tra is None
     ]
-    trans_coding_form.ready_for_coding.choices = trans_coding_videos
+    tra_coding_form.ready_for_coding.choices = trans_coding_videos
     lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
-    trans_coding_form.lab_list.choices = prep_select_list(lab_list)
+    tra_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     comm_coding_form = CodingForm()
     comm_coding_videos = [
@@ -286,7 +287,9 @@ def create_forms():
     lab_list = sorted([(x.lab_code, x.lab_code) for x in labs if x.code_emo])
     emo_coding_form.lab_list.choices = prep_select_list(lab_list)
 
-    trans_video_coding_form = VideosCodedForm()
+    trans_video_coding_form = TraCodingForm()
+
+    lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
     v_coding_done = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
@@ -306,6 +309,7 @@ def create_forms():
             )
         )
     ]
+    trans_video_coding_form.lab_list.choices = lab_list
     trans_video_coding_form.videos_coded.choices = v_coding_done
     trans_video_coding_form.videos_not_coded.choices = v_coding_not_done
 
@@ -408,7 +412,7 @@ def create_forms():
         if not x.queued_loc and x.moved_to_gold_loc
     ]
     loc_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.tra_qa_names
+    lab_list = DATASTORE.rel_names
     loc_rel_form.lab_list = lab_list
 
     emo_rel_form = RelForm()
@@ -429,7 +433,7 @@ def create_forms():
         if not x.queued_emo and x.moved_to_gold_emo
     ]
     emo_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.tra_qa_names
+    lab_list = DATASTORE.rel_names
     emo_rel_form.lab_list = lab_list
 
     trans_qa_form = RelForm()
@@ -551,7 +555,7 @@ def create_forms():
     forms = {
         "in_db_form": in_db_form,
         "qa_form": qa_form,
-        "trans_coding_form": trans_coding_form,
+        "tra_coding_form": tra_coding_form,
         "comm_coding_form": comm_coding_form,
         "loc_coding_form": loc_coding_form,
         "obj_coding_form": obj_coding_form,
@@ -591,9 +595,11 @@ def initialize():
             try:
                 with open(constants.SAVE_FILE_NAME, "rb") as handle:
                     DATASTORE = pickle.load(handle)
-                assert DATASTORE.VERSION == Datastore.VERSION
+                print("VERSION", DATASTORE.VERSION, Datastore.version)
+                assert DATASTORE.VERSION == Datastore.version
             except:
                 print("Couldn't load datastore, making a new one")
+                DATASTORE = Datastore()
 
         DATASTORE.curr_status = 0
         DATASTORE.increment_status()
@@ -703,7 +709,7 @@ def refresh_page():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        pass
+        print(traceback.format_exc())
 
 
 @app.route("/send_to_coding", methods=["GET", "POST"])
@@ -727,7 +733,7 @@ def send_to_coding():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -1057,7 +1063,7 @@ def send_to_rel_tra():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -1066,7 +1072,7 @@ def send_to_rel_tra():
 
 # Special TRA QA step
 @app.route("/send_to_qa_tra", methods=["GET", "POST"])
-def send_to_lab_tra():
+def send_to_qa_tra():
     global DATASTORE
     global QUEUE
     global BRIDGE
@@ -1212,7 +1218,7 @@ def send_to_rel_loc():
         )
 
     except:
-        pass
+        print(traceback.format_exc())
 
     finally:
         forms = create_forms()
