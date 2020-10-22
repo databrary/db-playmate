@@ -554,6 +554,27 @@ clear: both;*/
                 </p>
               </div>
               <div class="row">
+                <p>
+                {{ forms["obj_rel_form"].lab_list.label }}<br>
+                {{ forms["obj_rel_form"].lab_list() }}
+                </p>
+              </div>
+              <div class"row">
+                {{ forms["obj_rel_form"].submit_send_to_rel() }}
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["obj_rel_form"].videos_not_coded.label }}<br>
+                {{ forms["obj_rel_form"].videos_not_coded(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["obj_rel_form"].ready_for_submit.label }}<br>
+                {{ forms["obj_rel_form"].ready_for_submit(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
               <p>
               {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}<br>
               {{ forms["obj_rel_form"].submit_send_to_silver(cols=50) }}
@@ -575,6 +596,27 @@ clear: both;*/
                 <p>
                 {{ forms["loc_rel_form"].ready_for_rel.label }}<br>
                 {{ forms["loc_rel_form"].ready_for_rel(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["loc_rel_form"].lab_list.label }}<br>
+                {{ forms["loc_rel_form"].lab_list() }}
+                </p>
+              </div>
+              <div class"row">
+                {{ forms["loc_rel_form"].submit_send_to_rel() }}
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["loc_rel_form"].videos_not_coded.label }}<br>
+                {{ forms["loc_rel_form"].videos_not_coded(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["loc_rel_form"].ready_for_submit.label }}<br>
+                {{ forms["loc_rel_form"].ready_for_submit(cols=50) }}
                 </p>
               </div>
               <div class="row">
@@ -604,6 +646,28 @@ clear: both;*/
                 </p>
               </div>
               <div class="row">
+                <p>
+                {{ forms["emo_rel_form"].lab_list.label }}<br>
+                {{ forms["emo_rel_form"].lab_list() }}
+                </p>
+              </div>
+              <div class"row">
+                {{ forms["emo_rel_form"].submit_send_to_rel() }}
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["emo_rel_form"].videos_not_coded.label }}<br>
+                {{ forms["emo_rel_form"].videos_not_coded(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["emo_rel_form"].ready_for_submit.label }}<br>
+                {{ forms["emo_rel_form"].ready_for_submit(cols=50) }}
+                </p>
+              </div>
+
+              <div class="row">
               <p>
               {{ forms["emo_rel_form"].submit_send_to_gold(cols=50) }}
               <br>  {{ forms["emo_rel_form"].submit_send_to_silver(cols=50) }}
@@ -627,6 +691,29 @@ clear: both;*/
                 {{ forms["comm_rel_form"].ready_for_rel(cols=50) }}
                 </p>
               </div>
+              <div class="row">
+                <p>
+                {{ forms["comm_rel_form"].lab_list.label }}<br>
+                {{ forms["comm_rel_form"].lab_list() }}
+                </p>
+              </div>
+              <div class"row">
+                {{ forms["comm_rel_form"].submit_send_to_rel() }}
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["comm_rel_form"].videos_not_coded.label }}<br>
+                {{ forms["comm_rel_form"].videos_not_coded(cols=50) }}
+                </p>
+              </div>
+              <div class="row">
+                <p>
+                {{ forms["comm_rel_form"].ready_for_submit.label }}<br>
+                {{ forms["comm_rel_form"].ready_for_submit(cols=50) }}
+                </p>
+              </div>
+
+
               <div class="row">
               <p>
               {{ forms["comm_rel_form"].submit_send_to_gold(cols=50) }}
@@ -687,15 +774,14 @@ clear: both;*/
         </div>
         <div class="row">
           <p>
-            {{ forms["tra_video_coding_form"].lab_list.label }}<br>
-            {{ forms["tra_video_coding_form"].lab_list() }}
-          </p>
-        </div>
-
-        <div class="row">
-          <p>
           {{ forms["tra_video_coding_form"].videos_coded.label }}<br>
           {{ forms["tra_video_coding_form"].videos_coded() }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+            {{ forms["tra_video_coding_form"].lab_list.label }}<br>
+            {{ forms["tra_video_coding_form"].lab_list() }}
           </p>
         </div>
         <div class="row">
@@ -719,6 +805,38 @@ clear: both;*/
           {{ forms["tra_qa_form"].ready_for_rel(cols=50) }}
           </p>
         </div>
+
+        <div class="row">
+          <p>
+          {{ forms["tra_qa_form"].lab_list.label }}<br>
+          {{ forms["tra_qa_form"].lab_list() }}
+          </p>
+        </div>
+        <div class"row">
+          {{ forms["tra_qa_form"].submit_send_to_rel() }}
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["tra_qa_form"].videos_not_coded.label }}<br>
+          {{ forms["tra_qa_form"].videos_not_coded(cols=50) }}
+          </p>
+        </div>
+        <div class="row">
+          <p>
+          {{ forms["tra_qa_form"].ready_for_submit.label }}<br>
+          {{ forms["tra_qa_form"].ready_for_submit(cols=50) }}
+          </p>
+        </div>
+
+
+        <div class="row">
+          <p>
+          {{ forms["tra_qa_form"].ready_for_submit.label }}<br>
+          {{ forms["tra_qa_form"].ready_for_submit(cols=50) }}
+          </p>
+        </div>
+
+
         <div class="row">
         <p>
         {{ forms["tra_qa_form"].submit_send_to_gold(cols=50) }}<br>
