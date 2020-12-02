@@ -34,22 +34,24 @@ class Submission:
         self.ready_for_rel_loc = False
         self.ready_for_rel_emo = False
         self.ready_for_rel_tra = False
+
+        self.assigned_rel_coding_site_tra = None
+        self.assigned_rel_coding_site_com = None
+        self.assigned_rel_coding_site_emo = None
+        self.assigned_rel_coding_site_loc = None
+        self.assigned_rel_coding_site_obj = None
+
         self.rel_coding_finished_com = False
         self.rel_coding_finished_obj = False
         self.rel_coding_finished_loc = False
         self.rel_coding_finished_emo = False
         self.rel_coding_finished_tra = False
         self.qa_finished_tra = False  # Special QA step for tra before comm
-        self.moved_to_silver_com = False
-        self.moved_to_silver_tra = False
-        self.moved_to_silver_obj = False
-        self.moved_to_silver_loc = False
-        self.moved_to_silver_emo = False
-        self.moved_to_gold_com = False
-        self.moved_to_gold_tra = False
-        self.moved_to_gold_obj = False
-        self.moved_to_gold_loc = False
-        self.moved_to_gold_emo = False
+        self.moved_to_archive_com = False
+        self.moved_to_archive_tra = False
+        self.moved_to_archive_obj = False
+        self.moved_to_archive_loc = False
+        self.moved_to_archive_emo = False
         self.in_kobo_forms = False
         self.queued = False
         self.queued_obj = False
@@ -247,14 +249,16 @@ class Site:
 
 
 class Datastore:
-    VERSION = 4
+    VERSION = 7
 
     def __init__(self):
+        self.version = Datastore.VERSION
         self.labs = {}  # lab_code -> lab
         self.sites = {}  # site_code -> site
         self.tra_names = []  # Translator names
-        self.tra_qa_names = []
+        self.tra_qa_names = []  # Tra QA names
         self.rel_names = []
+        self.checker_names = []
 
         self.statuses = [
             "Connecting to Box, Google, Databrary, and Kobo...",
@@ -268,6 +272,7 @@ class Datastore:
         ]
 
         self.error_status = "Error! Please report: {}"
+        self.non_fatal_errors = ""
 
         self.curr_status = 0
         self.synced = False

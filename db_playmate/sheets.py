@@ -115,22 +115,30 @@ def read_lab_coding(labs):
         tra_qa_names.append(row[0])
     for row in values:
         tra_qa_names.append(row[0])
-    header, values = _get_sheet(LAB_CODING_ID, "A1:A", "RelList")
+    header, values = _get_sheet(LAB_CODING_ID, "A1:C", "RelList")
     rel_names = []
     # The function above assumes a header, but this sheet does not have one
     for row in header:
-        rel_names.append(row[0])
+        rel_names.append((row[0], row[2]))
     for row in values:
-        rel_names.append(row[0])
+        try:
+            rel_names.append((row[0], row[2]))
+        except IndexError:
+            pass
+    header, values = _get_sheet(LAB_CODING_ID, "A1:C", "CheckerList")
+    checker_names = []
+    # The function above assumes a header, but this sheet does not have one
+    for row in header:
+        checker_names.append((row[0], row[2]))
+    for row in values:
+        print("CHECKER ROW", row)
+        try:
+            checker_names.append((row[0], row[2]))
+        except IndexError:
+            pass
 
-    return labs, tra_names, tra_qa_names, rel_names
-
-
-def read_permissions_list():
-    # TODO Need to read from emails in Summary tab and TranscribersList tab
-    header, values = self._get_sheet(LAB_CODING_ID, "A1:R", "Summary")
-
-    header, values = self._get_sheet(LAB_CODING_ID, "A1:B", "TranscribersList")
+    print("rel_names", rel_names)
+    return labs, tra_names, tra_qa_names, rel_names, checker_names
 
 
 def read_master():
@@ -197,8 +205,8 @@ def read_master():
                 lab = Lab(site_code, lab_code, pi, email, inst)
                 sites[site_code].labs[lab_code] = lab
                 labs[lab_code] = lab
-        labs, tra_names, tra_qa_names, rel_names = read_lab_coding(labs)
-        return sites, labs, tra_names, tra_qa_names, rel_names
+        labs, tra_names, tra_qa_names, rel_names, checker_names = read_lab_coding(labs)
+        return sites, labs, tra_names, tra_qa_names, rel_names, checker_names
 
 
 if __name__ == "__main__":

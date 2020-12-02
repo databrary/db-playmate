@@ -185,7 +185,6 @@ clear: both;*/
         <div class="row">
           <p>
           {{ forms["qa_form"].submit_send_to_coding() }} <br>
-          {{ forms["qa_form"].submit_send_to_silver() }}
           </p>
         </div>
         <div class="row">
@@ -274,8 +273,7 @@ clear: both;*/
               <th>Primary Finished</th>
               <th>Ready For Rel</th>
               <th>Rel Finished</th>
-              <th>In Silver</th>
-              <th>In Gold</th>
+              <th>In Archive</th>
             </tr>
               {% for v in forms["search_results"][1] %}
                 {% set x = v[0] %}
@@ -545,7 +543,7 @@ clear: both;*/
         <hr>
           <h4 class="green">4L. Mark coded files: GOLD/SILVER </h4>
           <div class="column">
-            <form action="{{ url_for('send_to_gold_obj') }}" method="post">
+            <form action="{{ url_for('send_to_archive_obj') }}" method="post">
               <h4 class="grey"> Object </h4>
               <div class="row">
                 <p>
@@ -576,21 +574,20 @@ clear: both;*/
               </div>
               <div class="row">
               <p>
-              {{ forms["obj_rel_form"].submit_send_to_gold(cols=50) }}<br>
-              {{ forms["obj_rel_form"].submit_send_to_silver(cols=50) }}
+              {{ forms["obj_rel_form"].submit_send_to_archive(cols=50) }}<br>
               </p>
               </div>
               <div class="row">
               <p>
-              {{ forms["obj_rel_form"].gold.label }}<br>
-              {{ forms["obj_rel_form"].gold() }}
+              {{ forms["obj_rel_form"].archive.label }}<br>
+              {{ forms["obj_rel_form"].archive() }}
               </p>
               </div>
             </form>
           </div>
 
           <div class="column">
-            <form action="{{ url_for('send_to_gold_loc') }}" method="post">
+            <form action="{{ url_for('send_to_archive_loc') }}" method="post">
               <h4 class="grey"> Locomotion </h4>
               <div class="row">
                 <p>
@@ -621,14 +618,13 @@ clear: both;*/
               </div>
               <div class="row">
               <p>
-              {{ forms["loc_rel_form"].submit_send_to_gold(cols=50) }}
-              <br>  {{ forms["loc_rel_form"].submit_send_to_silver(cols=50) }}
+              {{ forms["loc_rel_form"].submit_send_to_archive(cols=50) }}
               </p>
               </div>
               <div class="row">
               <p>
-              {{ forms["loc_rel_form"].gold.label }}<br>
-              {{ forms["loc_rel_form"].gold() }}
+              {{ forms["loc_rel_form"].archive.label }}<br>
+              {{ forms["loc_rel_form"].archive() }}
               </p>
               </div>
             </form>
@@ -637,7 +633,7 @@ clear: both;*/
         <div class="row">
 
           <div class="column">
-            <form action="{{ url_for('send_to_gold_emo') }}" method="post">
+            <form action="{{ url_for('send_to_archive_emo') }}" method="post">
               <h4 class="grey"> Emotion </h4>
               <div class="row">
                 <p>
@@ -669,21 +665,20 @@ clear: both;*/
 
               <div class="row">
               <p>
-              {{ forms["emo_rel_form"].submit_send_to_gold(cols=50) }}
-              <br>  {{ forms["emo_rel_form"].submit_send_to_silver(cols=50) }}
+              {{ forms["emo_rel_form"].submit_send_to_archive(cols=50) }}
               </p>
               </div>
               <div class="row">
               <p>
-              {{ forms["emo_rel_form"].gold.label }}<br>
-              {{ forms["emo_rel_form"].gold() }}
+              {{ forms["emo_rel_form"].archive.label }}<br>
+              {{ forms["emo_rel_form"].archive() }}
               </p>
               </div>
             </form>
           </div>
 
           <div class="column">
-            <form action="{{ url_for('send_to_gold_comm') }}" method="post">
+            <form action="{{ url_for('send_to_archive_comm') }}" method="post">
               <h4 class="grey"> Communication &amp; Gesture </h4>
               <div class="row">
                 <p>
@@ -716,14 +711,13 @@ clear: both;*/
 
               <div class="row">
               <p>
-              {{ forms["comm_rel_form"].submit_send_to_gold(cols=50) }}
-              <br>  {{ forms["comm_rel_form"].submit_send_to_silver(cols=50) }}
+              {{ forms["comm_rel_form"].submit_send_to_archive(cols=50) }}
               </p>
               </div>
               <div class="row">
               <p>
-              {{ forms["comm_rel_form"].gold.label }}<br>
-              {{ forms["comm_rel_form"].gold() }}
+              {{ forms["comm_rel_form"].archive.label }}<br>
+              {{ forms["comm_rel_form"].archive() }}
               </p>
               </div>
             </form>
@@ -798,7 +792,7 @@ clear: both;*/
 
     <h4>4T. Send Tra files to COMM </h4>
       <div class="column">
-      <form action="{{ url_for('send_to_gold_tra') }}" method="post">
+      <form action="{{ url_for('send_to_archive_tra') }}" method="post">
         <div class="row">
           <p>
           {{ forms["tra_qa_form"].ready_for_rel.label }}<br>
@@ -821,13 +815,6 @@ clear: both;*/
           {{ forms["tra_qa_form"].videos_not_coded(cols=50) }}
           </p>
         </div>
-        <div class="row">
-          <p>
-          {{ forms["tra_qa_form"].ready_for_submit.label }}<br>
-          {{ forms["tra_qa_form"].ready_for_submit(cols=50) }}
-          </p>
-        </div>
-
 
         <div class="row">
           <p>
@@ -839,14 +826,13 @@ clear: both;*/
 
         <div class="row">
         <p>
-        {{ forms["tra_qa_form"].submit_send_to_gold(cols=50) }}<br>
-        {{ forms["tra_qa_form"].submit_send_to_silver(cols=50) }}
+        {{ forms["tra_qa_form"].submit_send_to_archive(cols=50) }}<br>
         </p>
         </div>
         <div class="row">
         <p>
-        {{ forms["tra_qa_form"].gold.label }}<br>
-        {{ forms["tra_qa_form"].gold() }}
+        {{ forms["tra_qa_form"].archive.label }}<br>
+        {{ forms["tra_qa_form"].archive() }}
         </p>
         </div>
         </div>
@@ -862,14 +848,9 @@ clear: both;*/
   <div class="colfin">
     <!--old FINAL begins -->
     <div class="row">
-      <h4>{{ forms["in_silver"].in_silver.label }}</h4>
+      <h4>{{ forms["in_archive"].in_archive.label }}</h4>
       <br>
-      {{ forms['in_silver'].in_silver() }}
-    </div>
-    <div class="row">
-      <h4>{{ forms["in_gold"].in_gold.label }}</h4>
-      <br>
-      {{ forms['in_gold'].in_gold() }}
+      {{ forms['in_archive'].in_archive() }}
     </div>
     <!--old FINAL begins -->
   </div>

@@ -56,36 +56,6 @@ BRIDGE = 0
 INIT_THREAD = None  # making global so we can start it from config
 
 
-class CustomSelect:
-    """
-    Renders a select field allowing custom attributes for options.
-    Expects the field to be an iterable object of Option fields.
-    The render function accepts a dictionary of option ids ("{field_id}-{option_index}")
-    which contain a dictionary of attributes to be passed to the option.
-
-    Example:
-    form.customselect(option_attr={"customselect-0": {"disabled": ""} })
-    """
-
-    def __init__(self, multiple=False):
-        self.multiple = multiple
-
-    def __call__(self, field, option_attr=None, **kwargs):
-        if option_attr is None:
-            option_attr = {}
-        kwargs.setdefault("id", field.id)
-        if self.multiple:
-            kwargs["multiple"] = True
-        if "required" not in kwargs and "required" in getattr(field, "flags", []):
-            kwargs["required"] = True
-        html = ["<select %s>" % html_params(name=field.name, **kwargs)]
-        for option in field:
-            attr = option_attr.get(option.id, {})
-            html.append(option(**attr))
-        html.append("</select>")
-        return Markup("".join(html))
-
-
 class QWebEngineViewWindow(QWebEngineView):
     def __init__(self):
         super().__init__()
@@ -133,43 +103,35 @@ class QAForm(FlaskForm):
 
 class CodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Coding")
-    lab_list = SelectField("List of Labs", widget=CustomSelect(), default="default")
+    lab_list = SelectField("List of Labs", default="default")
     submit_send_to_lab = SubmitField("Send to Selected Lab")
 
 
 class TraCodingForm(FlaskForm):
     ready_for_coding = SelectField("Ready for Tra")
-    lab_list = SelectField(
-        "List of Transcribers", widget=CustomSelect(), default="default"
-    )
+    lab_list = SelectField("List of Transcribers", default="default")
     videos_coded = SelectField("Coded Videos")
     videos_not_coded = SelectField("Video Being Coded")
     submit_send_to_lab = SubmitField("Send to Selected Transcriber")
-    submit_send_to_silver = SubmitField("Send to SILVER")
-    submit_send_to_gold = SubmitField("Send to COM")
+    submit_send_to_archive = SubmitField("Send to COM")
 
 
 class VideosCodedForm(FlaskForm):
     videos_coded = SelectField("Coded Videos")
-    lab_list = SelectField(
-        "List of Rel Coders", widget=CustomSelect(), default="default"
-    )
+    lab_list = SelectField("List of Rel Coders", default="default")
     videos_not_coded = SelectField("Video Being Coded")
     submit_send_to_rel = SubmitField("Send to Rel")
-    submit_send_to_silver = SubmitField("Send to SILVER")
-    submit_send_to_gold = SubmitField("Send to GOLD/COM")
+    submit_send_to_archive = SubmitField("Send to GOLD/COM")
 
 
 class RelForm(FlaskForm):
-    ready_for_rel = SelectField("Ready for Rel")
-    lab_list = SelectField(
-        "List of Rel Coders", widget=CustomSelect(), default="default"
-    )
-    submit_send_to_rel = SubmitField("Send to rel coder")
-    submit_send_to_gold = SubmitField("Mark Pass as GOLD")
-    submit_send_to_silver = SubmitField("Mark Pass as SILVER")
-    gold = SelectField("In GOLD")
-    silver = SelectField("In Silver")
+    videos_not_coded = SelectField("Video Being Checked")
+    ready_for_rel = SelectField("Ready for Checking")
+    lab_list = SelectField("List of Rel Checkers", default="default")
+    ready_for_submit = SelectField("Checked Videos, Ready to Archive")
+    submit_send_to_rel = SubmitField("Send to Rel Checker")
+    submit_send_to_archive = SubmitField("Archive Pass")
+    archive = SelectField("Archived")
 
 
 class QueueForm(FlaskForm):
@@ -184,12 +146,8 @@ class RefreshButton(FlaskForm):
     refresh_button = SubmitField("Check for newly coded opf files")
 
 
-class InSilver(FlaskForm):
-    in_silver = SelectField("In Silver")
-
-
-class InGold(FlaskForm):
-    in_gold = SelectField("In Gold")
+class InArchive(FlaskForm):
+    in_archive = SelectField("Archived")
 
 
 def prep_select_list(options):
@@ -198,7 +156,10 @@ def prep_select_list(options):
 
 def create_forms():
     global DATASTORE
+    print("IN LOC REL NAMES", DATASTORE.rel_names)
     DATASTORE.save()
+
+    print("Creating search form")
     labs = DATASTORE.labs.values()
     in_db_form = InDbForm({"width": "200px"})
     in_db = [
@@ -215,6 +176,7 @@ def create_forms():
 
     search_form = SearchForm()
 
+    print("Populating lists")
     qa_form = QAForm()
     qa = [
         (x.id, x.display_name)
@@ -291,8 +253,9 @@ def create_forms():
     emo_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     tra_video_coding_form = TraCodingForm()
+    tra_video_coding_form.lab_list.label.text = "List of Tra QA"
 
-    lab_list = sorted([(x, x) for x in DATASTORE.tra_names])
+    lab_list = sorted([(x, x) for x in DATASTORE.tra_qa_names])
     v_coding_done = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
@@ -312,7 +275,7 @@ def create_forms():
             )
         )
     ]
-    tra_video_coding_form.lab_list.choices = lab_list
+    tra_video_coding_form.lab_list.choices = prep_select_list(lab_list)
     tra_video_coding_form.videos_coded.choices = v_coding_done
     tra_video_coding_form.videos_not_coded.choices = v_coding_not_done
 
@@ -335,6 +298,8 @@ def create_forms():
     ]
     loc_video_coding_form.videos_coded.choices = v_coding_done
     loc_video_coding_form.videos_not_coded.choices = v_coding_not_done
+    lab_list = sorted([(x, x) for x in get_names_for_pass(DATASTORE.rel_names, "loc")])
+    loc_video_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     comm_video_coding_form = VideosCodedForm()
     v_coding_done = [
@@ -356,6 +321,8 @@ def create_forms():
     ]
     comm_video_coding_form.videos_coded.choices = v_coding_done
     comm_video_coding_form.videos_not_coded.choices = v_coding_not_done
+    lab_list = sorted([(x, x) for x in get_names_for_pass(DATASTORE.rel_names, "com")])
+    comm_video_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     emo_video_coding_form = VideosCodedForm()
     v_coding_done = [
@@ -376,6 +343,8 @@ def create_forms():
     ]
     emo_video_coding_form.videos_coded.choices = v_coding_done
     emo_video_coding_form.videos_not_coded.choices = v_coding_not_done
+    lab_list = sorted([(x, x) for x in get_names_for_pass(DATASTORE.rel_names, "emo")])
+    emo_video_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     obj_video_coding_form = VideosCodedForm()
     v_coding_done = [
@@ -396,6 +365,8 @@ def create_forms():
     ]
     obj_video_coding_form.videos_coded.choices = v_coding_done
     obj_video_coding_form.videos_not_coded.choices = v_coding_not_done
+    lab_list = sorted([(x, x) for x in get_names_for_pass(DATASTORE.rel_names, "obj")])
+    obj_video_coding_form.lab_list.choices = prep_select_list(lab_list)
 
     loc_rel_form = RelForm()
     ready_for_rel = [
@@ -414,9 +385,11 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued_loc and x.moved_to_gold_loc
     ]
-    loc_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.rel_names
-    loc_rel_form.lab_list = lab_list
+    loc_rel_form.archive.choices = gold_videos
+    lab_list = sorted(
+        [(x, x) for x in get_names_for_pass(DATASTORE.checker_names, "loc")]
+    )
+    loc_rel_form.lab_list.choices = prep_select_list(lab_list)
 
     emo_rel_form = RelForm()
     ready_for_rel = [
@@ -435,9 +408,11 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued_emo and x.moved_to_gold_emo
     ]
-    emo_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.rel_names
-    emo_rel_form.lab_list = lab_list
+    emo_rel_form.archive.choices = gold_videos
+    lab_list = sorted(
+        [(x, x) for x in get_names_for_pass(DATASTORE.checker_names, "emo")]
+    )
+    emo_rel_form.lab_list.choices = prep_select_list(lab_list)
 
     tra_qa_form = RelForm()
     ready_for_rel = [
@@ -448,17 +423,41 @@ def create_forms():
         and x.primary_coding_finished_tra
         and x.ready_for_rel_tra
         and x.rel_coding_finished_tra is False
+        and x.assigned_rel_coding_site_tra is False
     ]
+    being_checked = [
+        (x.id, x.display_name)
+        for site in DATASTORE.sites.values()
+        for x in site.submissions.values()
+        if not x.queued_tra
+        and x.primary_coding_finished_tra
+        and x.ready_for_rel_tra
+        and x.rel_coding_finished_tra is False
+        and x.assigned_rel_coding_site_tra is not None
+    ]
+    checked_videos = [
+        (x.id, x.display_name)
+        for site in DATASTORE.sites.values()
+        for x in site.submissions.values()
+        if not x.queued_tra
+        and x.primary_coding_finished_tra
+        and x.ready_for_rel_tra
+        and x.rel_coding_finished_tra is True
+        and x.assigned_rel_coding_site_tra is not None
+    ]
+
     gold_videos = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if not x.queued_tra and x.moved_to_gold_tra
     ]
-    lab_list = DATASTORE.tra_qa_names
-    tra_qa_form.lab_list = lab_list
+    lab_list = sorted([(x, x) for x in DATASTORE.tra_qa_names])
+    tra_qa_form.lab_list.choices = prep_select_list(lab_list)
     tra_qa_form.ready_for_rel.choices = ready_for_rel
-    tra_qa_form.gold.choices = gold_videos
+    tra_qa_form.videos_not_coded.choices = being_checked
+    tra_qa_form.ready_for_submit.choices = checked_videos
+    tra_qa_form.archive.choices = gold_videos
 
     comm_rel_form = RelForm()
     ready_for_rel = [
@@ -477,9 +476,11 @@ def create_forms():
         for x in site.submissions.values()
         if not x.queued_com and x.moved_to_gold_com
     ]
-    comm_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.rel_names
-    comm_rel_form.lab_list = lab_list
+    comm_rel_form.archive.choices = gold_videos
+    lab_list = sorted(
+        [(x, x) for x in get_names_for_pass(DATASTORE.checker_names, "com")]
+    )
+    comm_rel_form.lab_list.choices = prep_select_list(lab_list)
 
     obj_rel_form = RelForm()
     ready_for_rel = [
@@ -498,9 +499,12 @@ def create_forms():
         for x in site.submissions.values()
         if x.moved_to_gold_obj
     ]
-    obj_rel_form.gold.choices = gold_videos
-    lab_list = DATASTORE.rel_names
-    obj_rel_form.lab_list = lab_list
+    obj_rel_form.archive.choices = gold_videos
+
+    lab_list = sorted(
+        [(x, x) for x in get_names_for_pass(DATASTORE.checker_names, "obj")]
+    )
+    obj_rel_form.lab_list.choices = prep_select_list(lab_list)
 
     queue_form = QueueForm()
     if len(QUEUE.queued_jobs) > 0:
@@ -515,44 +519,22 @@ def create_forms():
 
     refresh_form = RefreshButton()
 
-    in_silver = InSilver()
-    silver_videos = [
-        (x.id, x.display_name)
-        for site in DATASTORE.sites.values()
-        for x in site.submissions.values()
-        if any(
-            [
-                x.moved_to_silver_obj,
-                x.moved_to_silver_emo,
-                x.moved_to_silver_tra,
-                x.moved_to_silver_com,
-                x.moved_to_silver_loc,
-            ]
-        )
-        and (x.moved_to_silver_obj or x.moved_to_gold_obj)
-        and (x.moved_to_silver_loc or x.moved_to_gold_loc)
-        and (x.moved_to_silver_tra or x.moved_to_gold_tra)
-        and (x.moved_to_silver_com or x.moved_to_gold_com)
-        and (x.moved_to_silver_emo or x.moved_to_gold_emo)
-    ]
-    in_silver.in_silver.choices = silver_videos
-
-    in_gold = InGold()
-    gold_videos = [
+    in_archive = InArchive()
+    archive_videos = [
         (x.id, x.display_name)
         for site in DATASTORE.sites.values()
         for x in site.submissions.values()
         if all(
             [
-                x.moved_to_gold_obj,
-                x.moved_to_gold_emo,
-                x.moved_to_gold_tra,
-                x.moved_to_gold_com,
-                x.moved_to_gold_loc,
+                x.moved_to_archive_obj,
+                x.moved_to_archive_emo,
+                x.moved_to_archive_tra,
+                x.moved_to_archive_com,
+                x.moved_to_archive_loc,
             ]
         )
     ]
-    in_gold.in_gold.choices = gold_videos
+    in_archive.in_archive.choices = archive_videos
 
     forms = {
         "in_db_form": in_db_form,
@@ -574,8 +556,7 @@ def create_forms():
         "tra_qa_form": tra_qa_form,
         "queue_form": queue_form,
         "refresh_button": refresh_form,
-        "in_silver": in_silver,
-        "in_gold": in_gold,
+        "in_archive": in_archive,
         "search_form": search_form,
     }
 
@@ -617,7 +598,9 @@ def initialize():
                 " - ERROR: Kobo is down. Continuing without Kobo information."
             )
         DATASTORE.increment_status()
-        sites, labs, tra_names, tra_qa_names, rel_names = get_labs(BRIDGE)
+        sites, labs, tra_names, tra_qa_names, rel_names, checker_names = get_labs(
+            BRIDGE
+        )
         for s in sites:
             if s not in DATASTORE.sites:
                 DATASTORE.sites[s] = sites[s]
@@ -632,7 +615,11 @@ def initialize():
                 DATASTORE.tra_qa_names.append(t)
         for r in rel_names:
             if r not in DATASTORE.rel_names:
-                DATASTORE.rel_names.append(t)
+                DATASTORE.rel_names.append(r)
+        for r in checker_names:
+            if r not in DATASTORE.checker_names:
+                DATASTORE.checker_names.append(r)
+        print("REL NAMES DS:", rel_names, DATASTORE.rel_names)
         DATASTORE.increment_status()
         get_submissions(DATASTORE.sites, BRIDGE, DATASTORE)
         DATASTORE.increment_status()
@@ -1321,14 +1308,14 @@ def send_to_rel_trans():
                 ),
                 "tra",
             )
-        elif video_coding_form.submit_send_to_gold.data:
+        elif video_coding_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_tra = True
                 QUEUE.add(
                     Job(
                         target=fn,
-                        name="READY FOR TRA GOLD/COM: {}".format(
+                        name="READY FOR TRA ARCHIVE/COM: {}".format(
                             submitted_data.qa_filename
                         ),
                         args=[submitted_data],
@@ -1414,13 +1401,13 @@ def send_to_gold_tra():
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
-        if rel_form.submit_send_to_gold.data:
+        if rel_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_tra = True
                 process_finished_asset(x)
 
-            name = "MARK AS GOLD TRA: {}".format(submitted_data.qa_filename)
+            name = "ARCHIVE TRA: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
@@ -1452,13 +1439,13 @@ def send_to_gold_obj():
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
-        if rel_form.submit_send_to_gold.data:
+        if rel_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_obj = True
                 process_finished_asset(x)
 
-            name = "MARK AS GOLD OBJ: {}".format(submitted_data.qa_filename)
+            name = "ARCHIVE OBJ: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
@@ -1490,13 +1477,13 @@ def send_to_gold_loc():
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
-        if rel_form.submit_send_to_gold.data:
+        if rel_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_loc = True
                 process_finished_asset(x)
 
-            name = "MARK AS GOLD LOC: {}".format(submitted_data.qa_filename)
+            name = "ARCHIVE LOC: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
@@ -1528,13 +1515,13 @@ def send_to_gold_emo():
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
-        if rel_form.submit_send_to_gold.data:
+        if rel_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_emo = True
                 process_finished_asset(x)
 
-            name = "MARK AS GOLD EMO: {}".format(submitted_data.qa_filename)
+            name = "ARCHIVE EMO: {}".format(submitted_data.qa_filename)
         else:
 
             def fn(x):
@@ -1566,20 +1553,13 @@ def send_to_gold_comm():
         global DATASTORE
         submitted_data = DATASTORE.find_submission(rel_form.ready_for_rel.data)
 
-        if rel_form.submit_send_to_gold.data:
+        if rel_form.submit_send_to_archive.data:
 
             def fn(x):
                 x.moved_to_gold_com = True
                 process_finished_asset(x)
 
-            name = "MARK AS GOLD COM: {}".format(submitted_data.qa_filename)
-        else:
-
-            def fn(x):
-                x.moved_to_silver_com = True
-                process_finished_asset(x)
-
-            name = "MARK AS SILVER COM: {}".format(submitted_data.qa_filename)
+            name = "ARCHIVE COM: {}".format(submitted_data.qa_filename)
 
         QUEUE.add(
             Job(
@@ -1728,12 +1708,23 @@ def check_for_new():
     pass
 
 
+def get_names_for_pass(names, coding_pass):
+    names = []
+    for n, p in names:
+        print("CHECKING NAME", n, p, constants.CODING_PASSES[p], coding_pass)
+        if constants.CODING_PASSES[p] == coding_pass or p == coding_pass:
+            names.append(n)
+    return names
+
+
 def get_labs(bridge):
-    sites, labs, tra_names, tra_qa_names, rel_names = read_master()
+    sites, labs, tra_names, tra_qa_names, rel_names, checker_names = read_master()
+    print("REL NAMES", rel_names)
+    print("CHECKER NAMES", checker_names)
     for site in sites.values():
         site.get_vol_id(bridge.db)
 
-    return sites, labs, tra_names, tra_qa_names, rel_names
+    return sites, labs, tra_names, tra_qa_names, rel_names, checker_names
 
 
 def get_submissions(sites, bridge, datastore):

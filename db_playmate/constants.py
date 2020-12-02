@@ -51,9 +51,18 @@ SERVER_PORT = str(random.randint(6000, 25000))
 USER_DATA_DIR = appdirs.user_data_dir(APP_NAME, APP_AUTHOR)
 TMP_DATA_DIR = appdirs.user_cache_dir(APP_NAME, APP_AUTHOR)
 SAVE_FILE_NAME = USER_DATA_DIR + "/" + "db_playmate.pickle"
+ALL_OPFS_DIR = PLAY_PREFIX + "automation_doNotTouch/6_PLAY_all5finalopfs"
 GOLD_FINAL_DIR = PLAY_PREFIX + "automation_doNotTouch/7_PLAY_GOLD/{}/"  # Site
 SILVER_FINAL_DIR = (
     PLAY_PREFIX + "automation_doNotTouch/8_PLAY_SILVER/{}/{}/"
 )  # Site / Pass
 os.makedirs(USER_DATA_DIR, exist_ok=True)
 os.makedirs(TMP_DATA_DIR, exist_ok=True)
+
+CODING_PASSES = {
+    "obj": "Object",
+    "emo": "Emotion",
+    "com": "Communication & Gesture",
+    "loc": "Locomotion",
+    "tra": "Transcription",
+}
