@@ -5,10 +5,11 @@ from argparse import ArgumentParser
 import toml
 from pathlib import Path
 import keyring
-from db_playmate import Kobo
+from db_playmate.kobo import Kobo
 from db_playmate.box import get_client as get_box_client
 import tempfile
 import csv
+from db_playmate import app
 
 
 def main():
@@ -24,11 +25,11 @@ def main():
     if args.config_file is None:
         args.config_file = "config.toml"
     config_path = Path(args.config_file).resolve()
-    print(f"Loading configurations from {config_path}...")
+    app.logger.info(f"Loading configurations from {config_path}...")
     try:
         configs = toml.load(config_path)
     except FileNotFoundError:
-        print("ERROR: failed to load configurations")
+        app.logger.error("ERROR: failed to load configurations")
         return 1
 
     kconf = configs.get("kobo")
@@ -39,31 +40,30 @@ def main():
     except keyring.errors.PasswordDeleteError:
         pass
 
-    print("Connecting to Box...")
+    app.logger.info("Connecting to Box...")
     client_id = bconf.get("client_id")
     client_secret = bconf.get("client_secret")
     try:
         box = get_box_client(client_id, client_secret)
     except Exception as e:
-        print("ERROR: failed to initialize box client. See error message.")
-        print(e)
+        app.logger.error("ERROR: failed to initialize box client. See error message.", e)
         return 1
 
-    print("Connecting to KoboToolbox...")
+    app.logger.info("Connecting to KoboToolbox...")
     kobo = Kobo(base_url=kconf.get("base_url"), token=kconf.get("auth_token"))
     src_folder = Path("./kobo")
     src_folder.mkdir(parents=False, exist_ok=True)
     dest_folder = "0_PLAY_KBTB_questionnaires"  # parameterize this
     for frm in kobo.get_forms().values():
-        print(f"{frm.name}: {frm.num_submissions} submissions. Downloading...")
+        app.logger.info(f"{frm.name}: {frm.num_submissions} submissions. Downloading...")
         filename = frm.name + ".csv"
         with open(Path(src_folder, filename), "w+") as outfile:
             frm.to_csv(outfile)
 
-        print("Uploading to Box...")
+        app.logger.info("Uploading to Box...")
         groups = frm.group_by("site_id")
         for site, subms in groups.items():
-            print(f"\t- Uploading {len(subms)} submissions for {site}")
+            app.logger.info(f"\t- Uploading {len(subms)} submissions for {site}")
             # write data to temp file
             tf, tp = tempfile.mkstemp()
             with open(tf, "w", newline="") as tmp:
@@ -79,7 +79,7 @@ def main():
             box.upload_file(tp, site_folder, new_name=filename)
             del tf
 
-    print("Finished.")
+    app.logger.info("Finished.")
     return 0
 
 

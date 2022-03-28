@@ -2,7 +2,7 @@ import csv
 from .question import Question
 from .submission import Submission
 import logging as log
-
+from db_playmate import app
 
 class Form:
     """
@@ -125,7 +125,7 @@ class Form:
             for data in rj:
                 self.add_submission(data)
         except AttributeError as e:
-            print("Error, could not connect to kobo", e)
+            app.logger.error("Error, could not connect to kobo", e)
 
         return self.submissions
 

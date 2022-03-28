@@ -1,11 +1,11 @@
 from threading import Thread
 import traceback
-
+from db_playmate import app
 
 class Job(Thread):
     def __init__(self, target, name, args, item=None):
         Thread.__init__(self)
-        print(target, args)
+        app.logger.info(target, args)
         self._target = target
         self._args = args
         self._name = name
@@ -15,7 +15,7 @@ class Job(Thread):
         self.item = item
 
     def run(self):
-        print(self._target)
+        app.logger.info(self._target)
         try:
             self._target(*self._args)
             status = 0
@@ -23,7 +23,7 @@ class Job(Thread):
         except Exception as e:
             status = -1
             error_msg = self.display_name + " ERROR: " + str(e)
-            print(e)
+            app.logger.error(e)
             traceback.print_exc()
         finally:
             self.status = status
@@ -44,7 +44,7 @@ class Queue:
         total_jobs = len(self.queued_jobs)
         self.running = True
         for i, job in enumerate(self.queued_jobs):
-            print(i, job)
+            app.logger.info(i, job)
             job.start()
             job.join()
             self.status = (i + 1) / total_jobs * 100

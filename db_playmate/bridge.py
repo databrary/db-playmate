@@ -6,6 +6,7 @@ import os
 import shutil
 import db_playmate.constants as constants
 from db_playmate.configure import get_creds
+from db_playmate import app
 
 """
 This is the bridge between Box and Kobo/Databrary.
@@ -15,9 +16,12 @@ This class also will hold instances of all three connections
 
 
 class Bridge:
-    def __init__(self, config_file):
+    __config_file = None
 
-        with open(config_file) as config:
+    def __init__(self, config_file):
+        self.__config_file = config_file
+
+        with open(self.__config_file) as config:
             cfg = toml.load(config)
             clid = cfg["box"]["client_id"]
             databrary_username = cfg["databrary"]["username"]
@@ -25,11 +29,11 @@ class Bridge:
 
         kobo_token, clsec = get_creds()
 
-        print("Connecting to Box...")
+        app.logger.info("Connecting to Box...")
         self.box = get_client(clid, clsec)
-        print("Connecting to Kobo...")
+        app.logger.info("Connecting to Kobo...")
         self.kobo = Kobo(kobo_base_url, kobo_token)
-        print("Connecting to Databrary...")
+        app.logger.info("Connecting to Databrary...")
         self.db = Databrary(databrary_username)
 
     def transfer_box_to_databrary(
@@ -75,18 +79,22 @@ class Bridge:
 
     def transfer_kobo_to_box(self):
         try:
+            app.logger.info("transfer_kobo_to_box::Delete Kobo...")
             self.box.delete("kobo")
         except Exception as e:
-            print(e)
+            app.logger.error('Failed to delete Kobo from box',e)
         try:
+            app.logger.info("transfer_kobo_to_box::Create kobo folder...")
             self.box.create_folder("", "kobo")
         except Exception as e:
-            print(e)
+            app.logger.error(e)
+        app.logger.info("transfer_kobo_to_box::getting kobo forms...")
         forms = self.kobo.get_forms()
+        app.logger.info('received kobo forms')
         for form in forms.values():
-            print(f"{form.name}: {form.num_submissions} submissions. Downloading...")
+            app.logger.info(f"{form.name}: {form.num_submissions} submissions. Downloading...")
             filename = constants.TMP_DATA_DIR + "/" + form.name + ".csv"
             with open(filename, "w+") as outfile:
                 form.to_csv(outfile)
-            print("Uploading to Box...")
+            app.logger.info("Uploading to Box...")
             self.box.upload_file(filename, "kobo")

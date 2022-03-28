@@ -4,6 +4,7 @@ import threading
 import time
 import sys
 import traceback
+from db_playmate import app
 
 from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtWidgets import QApplication
@@ -17,7 +18,7 @@ from PyQt5.QtWebEngine import *
 from PyQt5.QtWebEngineWidgets import *
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow
 
-from flask import Flask, Response, render_template
+from flask import Response, render_template
 from flask_wtf import FlaskForm
 from wtforms.fields import SelectField, SelectMultipleField, SubmitField
 
@@ -31,19 +32,14 @@ from db_playmate.datavyu import DatavyuTemplateFactory as Datavyu
 
 import db_playmate.constants as constants
 
-from db_playmate.configure import config
-
-
-CONFIG_FILE = constants.USER_DATA_DIR + "/config.toml"
-print(CONFIG_FILE, os.path.exists(CONFIG_FILE))
+import logging
 
 
 VIDEO_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/1_PLAY_videos_for_coding"
 QA_BOX_FOLDER = "PLAY-Project@/automation_doNotTouch/2_PLAY_qa_opfs/1_PLAY_qa_templates"
 
-app = Flask(__name__)
-app.config["SECRET_KEY"] = "you-will-never-guess"
-app.register_blueprint(config, url_prefix="/config")
+CONFIG_FILE = constants.USER_DATA_DIR + "/config.toml"
+app.logger.info(CONFIG_FILE, os.path.exists(CONFIG_FILE))
 
 DATASTORE = Datastore()
 
@@ -515,6 +511,7 @@ def initialize():
     global CONFIG_FILE
 
     try:
+        app.logger.info("initilize::config file", CONFIG_FILE)
         BRIDGE = Bridge(CONFIG_FILE)
 
         if os.path.exists(constants.SAVE_FILE_NAME):
@@ -525,7 +522,8 @@ def initialize():
 
         # Load the data if it exists, otherwise populate from
         # online resources
-        get_kobo_forms(BRIDGE)
+        app.logger.info("initilize::Get kobo forms bridge:", BRIDGE)
+        get_kobo_forms()
         DATASTORE.increment_status()
         sites, labs, tra_names = get_labs(BRIDGE)
         for s in sites:
@@ -542,15 +540,15 @@ def initialize():
         DATASTORE.increment_status()
 
         # Create a server to show the data
-        print("Checking for changes to coded videos...")
+        app.logger.info("Checking for changes to coded videos...")
         BRIDGE.box.update_coded_videos(DATASTORE)
         DATASTORE.increment_status()
 
-        print("Checking permissions and fixing if needed...")
+        app.logger.info("Checking permissions and fixing if needed...")
         BRIDGE.box.update_permissions(DATASTORE)
         DATASTORE.increment_status()
 
-        print("Syncing datastore to Box")
+        app.logger.info("Syncing datastore to Box")
         if not DATASTORE.synced:
             BRIDGE.box.sync_datastore_to_box(DATASTORE)
             DATASTORE.synced = True
@@ -560,9 +558,8 @@ def initialize():
         if DATASTORE.get_status() != "Finished!":
             DATASTORE.increment_status()
     except Exception as e:
-        print(traceback.format_exc())
+        app.logger.error('initialize::error: ',traceback.format_exc())
         DATASTORE.set_error_state(traceback.format_exc().replace("\n", " "))
-    print("FINISHED")
 
 
 @app.route("/")
@@ -570,7 +567,7 @@ def initialize():
 @app.route("/index", methods=["GET", "POST"])
 def populate_main_page():
     global QUEUE
-    print("Generating forms")
+    app.logger.info("Generating forms")
     forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
 
@@ -653,7 +650,7 @@ def send_to_lab_obj():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            app.logger.info(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
@@ -665,7 +662,7 @@ def send_to_lab_obj():
             output_file = DatavyuTemplateFactory.generate_obj_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
-            print(
+            app.logger.info(
                 "Uploading {} to {}".format(
                     output_file, constants.PRI_CODING_DIR.format("obj", lab)
                 )
@@ -687,7 +684,7 @@ def send_to_lab_obj():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -707,7 +704,7 @@ def send_to_lab_loc():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            app.logger.info(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
@@ -718,7 +715,7 @@ def send_to_lab_loc():
             output_file = DatavyuTemplateFactory.generate_loc_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
-            print(
+            app.logger.info(
                 "Uploading {} to {}".format(
                     output_file, constants.PRI_CODING_DIR.format("loc", lab)
                 )
@@ -740,7 +737,7 @@ def send_to_lab_loc():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -760,7 +757,7 @@ def send_to_lab_emo():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            app.logger.info(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
@@ -772,7 +769,7 @@ def send_to_lab_emo():
             output_file = DatavyuTemplateFactory.generate_emo_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
-            print(
+            app.logger.info(
                 "Uploading {} to {}".format(
                     output_file, constants.PRI_CODING_DIR.format("emo", lab)
                 )
@@ -794,7 +791,7 @@ def send_to_lab_emo():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -814,7 +811,7 @@ def send_to_lab_tra():
         def fn(x, lab):
             # Download the coded QA file:
 
-            print(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
+            app.logger.info(constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename)
             qa_file = BRIDGE.box.get_file(
                 constants.QA_CODED_DIR.format(x.site_id) + x.qa_filename
             )
@@ -825,7 +822,7 @@ def send_to_lab_tra():
             output_file = DatavyuTemplateFactory.generate_tra_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
-            print(
+            app.logger.info(
                 "Uploading {} to {}".format(
                     output_file, constants.PRI_CODING_DIR.format("tra", lab)
                 )
@@ -847,7 +844,7 @@ def send_to_lab_tra():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -880,7 +877,7 @@ def send_to_lab_comm():
             output_file = DatavyuTemplateFactory.generate_com_file(
                 x, constants.TMP_DATA_DIR + "/" + x.qa_filename
             )
-            print(
+            app.logger.info(
                 "Uploading {} to {}".format(
                     output_file, constants.PRI_CODING_DIR.format("com", lab)
                 )
@@ -906,7 +903,7 @@ def send_to_lab_comm():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -998,7 +995,7 @@ def send_to_rel_obj():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
     finally:
         forms = create_forms()
@@ -1092,7 +1089,7 @@ def send_to_rel_emo():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
@@ -1170,7 +1167,7 @@ def send_to_rel_trans():
                 )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
@@ -1216,7 +1213,7 @@ def send_to_rel_comm():
         )
 
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
     finally:
         forms = create_forms()
     return render_template("index.html", forms=forms, queue=QUEUE)
@@ -1251,7 +1248,7 @@ def send_to_gold_tra():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
 
 @app.route("/send_to_gold_obj", methods=["GET", "POST"])
@@ -1283,7 +1280,7 @@ def send_to_gold_obj():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
 
 @app.route("/send_to_gold_loc", methods=["GET", "POST"])
@@ -1315,7 +1312,7 @@ def send_to_gold_loc():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
 
 @app.route("/send_to_gold_emo", methods=["GET", "POST"])
@@ -1347,7 +1344,7 @@ def send_to_gold_emo():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
 
 @app.route("/send_to_gold_comm", methods=["GET", "POST"])
@@ -1379,20 +1376,20 @@ def send_to_gold_comm():
         forms = create_forms()
         return render_template("index.html", forms=forms, queue=QUEUE)
     except:
-        print(traceback.format_exc())
+        app.logger.error(traceback.format_exc())
 
 
 def process_finished_asset(asset):
     # Make sure that we are in fact done with this video
-    print("All gold?", asset.is_all_gold())
-    print("Finished?", asset.is_finished())
+    app.logger.info("All gold?", asset.is_all_gold())
+    app.logger.info("Finished?", asset.is_finished())
     if asset.is_finished():
-        print("Detected finished video")
+        app.logger.info("Detected finished video")
         if asset.is_all_gold():
-            print("Video is GOLD!")
+            app.logger.info("Video is GOLD!")
             send_to_gold(asset)
         else:
-            print("Video is Silver!")
+            app.logger.info("Video is Silver!")
             send_to_silver(asset)
 
 
@@ -1406,9 +1403,9 @@ def send_to_gold(asset):
         ),
         *files
     )
-    print("COMBINED FILENAME", combined_file)
-    print("DEST", constants.GOLD_FINAL_DIR.format(asset.site_id))
-    print(
+    app.logger.info("COMBINED FILENAME", combined_file)
+    app.logger.info("DEST", constants.GOLD_FINAL_DIR.format(asset.site_id))
+    app.logger.info(
         "/".join(
             [constants.TMP_DATA_DIR, asset.coding_filename_prefix + "_combined.opf"]
         )
@@ -1485,7 +1482,7 @@ def queue_action():
 def progress():
     global QUEUE
 
-    print(QUEUE.status)
+    app.logger.info(QUEUE.status)
     return Response("data:{}\n\n".format(QUEUE.status), mimetype="text/event-stream")
 
 
@@ -1499,7 +1496,7 @@ def loading():
 def status():
     global DATASTORE
 
-    print(DATASTORE.get_status())
+    app.logger.info(DATASTORE.get_status())
     return Response(
         "data:{}\n\n".format(DATASTORE.get_status()), mimetype="text/event-stream"
     )
@@ -1522,24 +1519,26 @@ def get_submissions(sites, bridge, datastore):
     for site in sites.values():
         if site.vol_id is None:
             continue
-        print("Getting submissions for vol_id", site.vol_id)
+        app.logger.info("Getting submissions for vol_id", site.vol_id)
         assets = bridge.db.get_assets_for_volume(site.vol_id, gold_only=False)
         if assets is not None:
             for a in assets:
-                print(a)
+                app.logger.info(a)
                 if a["filename"].endswith(".mp4"):
                     try:
                         datastore.add_video(a)
-                        print("FOUND VIDEO!", a)
+                        app.logger.info("FOUND VIDEO!", a)
                     except IndexError as e:
-                        print("Error adding video")
-                        print(e)
+                        app.logger.info("Error adding video")
+                        app.logger.info(e)
     for sub in datastore.get_submissions():
         sub.check_for_form(bridge.kobo.get_forms())
 
 
-def get_kobo_forms(bridge):
-    bridge.transfer_kobo_to_box()
+def get_kobo_forms():
+    global BRIDGE
+    app.logger.info("get_kobo_forms::Getting Kobo Forms....")
+    BRIDGE.transfer_kobo_to_box()
 
 
 def startup():
@@ -1563,6 +1562,7 @@ def startup():
 
     init_thread = threading.Thread(target=initialize)
     init_thread.start()
+    logging.basicConfig(filename='logs.log', level=logging.INFO)
     server = threading.Thread(target=lambda x: x.run(), args=(app,))
     server.start()
     load_browser(WEB, url)

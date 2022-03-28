@@ -1,6 +1,6 @@
 import pickle
 import db_playmate.constants as constants
-
+from db_playmate import app
 
 class Submission:
     def __init__(self, site_id, subj_number, db_asset):
@@ -158,10 +158,10 @@ class Submission:
             if video_type[-1].isdigit():
                 video_type = video_type[:-1]
             if video_type in self.video_map and asset not in self.video_map.values():
-                print(video_type)
+                app.logger.info(video_type)
                 self.video_map[video_type].append(asset)
             else:
-                print(
+                app.logger.info(
                     "Warning: Could not find video_type",
                     video_type,
                     "in map or video was already in list",
@@ -245,12 +245,12 @@ class Datastore:
         self.error_flag = True
 
     def increment_status(self):
-        print("INCREMENTING", self.curr_status)
+        app.logger.info("INCREMENTING", self.curr_status)
         self.curr_status += 1
 
     def get_status(self):
-        if self.error_flag:
-            return self.error_status
+        # if self.error_flag:
+        #     return self.error_status
         return self.statuses[self.curr_status]
 
     def add_video(self, asset):
@@ -261,7 +261,7 @@ class Datastore:
         try:
             self.sites[site_id].add_video(site_id, asset)
         except KeyError:
-            print("ERROR: Could not find video", site_id, asset)
+            app.logger.error("ERROR: Could not find video", site_id, asset)
             pass  # If the key isnt found just ignore it for now
 
     def save(self):
@@ -289,7 +289,7 @@ class Datastore:
         return None
 
     def find_submission_by_site_subj(self, site, subj):
-        print("Finding", site, subj, self.sites[site].submissions)
+        app.logger.info("Finding", site, subj, self.sites[site].submissions)
         return self.sites[site].submissions[subj]
 
     def find_lab(self, lab_id):

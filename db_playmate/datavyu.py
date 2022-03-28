@@ -6,13 +6,14 @@ Datavyu module:
 import os
 import pyvyu
 import db_playmate.constants as constants
+from db_playmate import app
 
 
 class DatavyuTemplateFactory:
     """Factory for generation of datavyu templates"""
 
     def generate_qa_file(submission):
-        print(submission.asset)
+        app.logger.info(submission.asset)
         spreadsheet = pyvyu.Spreadsheet()
         spreadsheet.new_column(
             "PLAY_id", "play_id", "birthdate", "testdate", "language_1", "language_2"
@@ -41,7 +42,7 @@ class DatavyuTemplateFactory:
 
         output_filename = constants.TMP_DATA_DIR + os.sep + submission.qa_filename
 
-        print(output_filename)
+        app.logger.info(output_filename)
 
         # Create tmpdir if needed
         os.makedirs(constants.TMP_DATA_DIR, exist_ok=True)
@@ -212,7 +213,7 @@ class DatavyuTemplateFactory:
         output_filename = "{}/{}_obj.opf".format(
             constants.TMP_DATA_DIR, submission.coding_filename_prefix
         )
-        print(output_filename)
+        app.logger.info(output_filename)
 
         # Create tmpdir if needed
         os.makedirs(constants.TMP_DATA_DIR, exist_ok=True)

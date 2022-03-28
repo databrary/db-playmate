@@ -11,4 +11,4 @@ base_url = 'https://kf.kobotoolbox.org'
 auth_token = ''
 
 [databrary]
-uesrname = ''
+username = ''

@@ -11,6 +11,7 @@ import os
 from tqdm import tqdm
 import json
 import db_playmate.constants as constants
+from db_playmate import app
 
 if hasattr(sys, "frozen"):
     if sys.platform.startswith("win"):
@@ -36,13 +37,13 @@ class Databrary:
 
         # Check parameters
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean.")
+            app.logger.info("vb must be Boolean.")
             return ""
 
         constants_url = "https://nyu.databrary.org/api/constants"
 
         if vb:
-            print("Sending GET request to " + constants_url + "\n")
+            app.logger.info("Sending GET request to " + constants_url + "\n")
 
         r = self.session.get(constants_url)
         if r.status_code == 200:
@@ -53,7 +54,7 @@ class Databrary:
                 df = pandas.read_json(r.content, typ="series")
                 return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # -----------------------------------------------------------------------------
@@ -63,16 +64,16 @@ class Databrary:
 
         # Check parameters
         if not (isinstance(type, str)):
-            print("type must be a string.")
+            app.logger.info("type must be a string.")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean.")
+            app.logger.info("vb must be Boolean.")
             return ""
 
         stats_activity_url = "https://nyu.databrary.org/api/activity"
 
         if vb:
-            print("Sending GET request to " + stats_activity_url + "\n")
+            app.logger.info("Sending GET request to " + stats_activity_url + "\n")
         r = self.session.get(stats_activity_url)
 
         if r.status_code == 200:
@@ -83,7 +84,7 @@ class Databrary:
                 df = pandas.read_json(r.content, typ="series")
                 return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # -----------------------------------------------------------------------------
@@ -101,26 +102,26 @@ class Databrary:
 
         # Check parameters
         if not (isinstance(username, str)):
-            print("username must be a string.")
+            app.logger.info("username must be a string.")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean.")
+            app.logger.info("vb must be Boolean.")
             return ""
         if not (isinstance(stored_credentials, bool)):
-            print("stored_credentials must be Boolean.")
+            app.logger.info("stored_credentials must be Boolean.")
             return ""
         if not (isinstance(system_credentials, bool)):
-            print("system_credentials must be Boolean.")
+            app.logger.info("system_credentials must be Boolean.")
             return ""
 
         login_url = "https://nyu.databrary.org/api/user/login"
 
         if stored_credentials:
             if vb:
-                print("Using stored credentials.")
+                app.logger.info("Using stored credentials.")
         elif system_credentials:
             if username == "":
-                print("Please enter your Databrary user ID (email).")
+                app.logger.info("Please enter your Databrary user ID (email).")
                 username = input("User ID: ")
             if keyring.get_keyring() != "":
                 kl = keyring.get_password("db_playmate_databrary", username)
@@ -128,11 +129,11 @@ class Databrary:
                     pw = kl
                 else:
                     if vb:
-                        print("No password for user: ", username, "\n")
+                        app.logger.info("No password for user: ", username, "\n")
                         return ""
             else:
                 if vb:
-                    print("No stored credentials for user: ", username, "\n")
+                    app.logger.info("No stored credentials for user: ", username, "\n")
                     return ""
         else:
             # Get login credentials
@@ -141,26 +142,26 @@ class Databrary:
 
         # Check login credentials
         if not (isinstance(username, str)):
-            print("username must be a string.")
+            app.logger.info("username must be a string.")
             return ""
         if not (isinstance(pw, str)):
-            print("Password must be a string")
+            app.logger.info("Password must be a string")
             return ""
 
         # POST request
         payload = {"email": username, "password": pw}
         if vb:
-            print("Sending GET request to ", login_url)
+            app.logger.info("Sending GET request to ", login_url)
 
         self.session = requests.Session()
         r = self.session.post(login_url, data=payload)
 
         if r.status_code == 200:
-            print("Logged in.")
+            app.logger.info("Logged into Databrary.")
             if return_resp:
                 return r.text
         else:
-            print("Log in failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Log in failed with HTTP status " + r.status_code + "\n")
 
         return r
 
@@ -169,13 +170,13 @@ class Databrary:
 
         # Check parameters
         if isinstance(party_id, list):
-            print("party_id must be single scalar value")
+            app.logger.info("party_id must be single scalar value")
             return ""
         if not (isinstance(party_id, int)) or (party_id <= 0):
-            print("party_id must be an integer > 0")
+            app.logger.info("party_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
@@ -185,14 +186,14 @@ class Databrary:
         r = self.session.get(party_url)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             if return_JSON:
                 return r.text
             # Otherwise, convert JSON to data frame
             df = pandas.read_json(r.content, typ="series")
             return "institution" in df.index
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -206,16 +207,16 @@ class Databrary:
 
         # Check parameters
         if isinstance(party_id, list):
-            print("party_id must be single scalar value")
+            app.logger.info("party_id must be single scalar value")
             return ""
         if not (isinstance(party_id, int)) or (party_id <= 0):
-            print("party_id must be an integer > 0")
+            app.logger.info("party_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
         if not (isinstance(return_JSON, bool)):
-            print("return_JSON must be Boolean")
+            app.logger.info("return_JSON must be Boolean")
             return ""
 
         party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
@@ -225,17 +226,17 @@ class Databrary:
         r = self.session.get(party_url)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             if return_JSON:
                 return r.text
             # Otherwise, convert JSON to data frame
             df = pandas.read_json(r.content, typ="series")
             if not ("institution" in df.index):
-                print("Party ID " + party_id + " is not an institution.")
+                app.logger.info("Party ID " + party_id + " is not an institution.")
                 return ""
             return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -244,16 +245,16 @@ class Databrary:
 
         # Check parameters
         if isinstance(party_id, list):
-            print("party_id must be single scalar value")
+            app.logger.info("party_id must be single scalar value")
             return ""
         if not (isinstance(party_id, int)) or (party_id <= 0):
-            print("party_id must be an integer > 0")
+            app.logger.info("party_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
         if not (isinstance(return_JSON, bool)):
-            print("return_JSON must be Boolean")
+            app.logger.info("return_JSON must be Boolean")
             return ""
 
         party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
@@ -263,17 +264,17 @@ class Databrary:
         r = self.session.get(party_url)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             if return_JSON:
                 return r.text
             # Otherwise, convert JSON to data frame
             df = pandas.read_json(r.content, typ="series")
             if not ("prename" in df.index):
-                print("Party ID " + party_id + " is not a person.")
+                app.logger.info("Party ID " + party_id + " is not a person.")
                 return ""
             return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -281,33 +282,33 @@ class Databrary:
 
         # Check parameters
         if isinstance(party_id, list):
-            print("party_id must be single scalar value")
+            app.logger.info("party_id must be single scalar value")
             return ""
         if not (isinstance(party_id, int)) or (party_id <= 0):
-            print("party_id must be an integer > 0")
+            app.logger.info("party_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
         if not (isinstance(return_JSON, bool)):
-            print("return_JSON must be Boolean")
+            app.logger.info("return_JSON must be Boolean")
             return ""
 
         party_url = "https://nyu.databrary.org/api/party/" + str(party_id)
 
         if vb:
-            print("Sending GET to " + party_url)
+            app.logger.info("Sending GET to " + party_url)
         r = self.session.get(party_url)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             if return_JSON:
                 return r.text
             # Otherwise, convert JSON to data frame
             df = pandas.read_json(r.content, typ="series")
             return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -319,22 +320,22 @@ class Databrary:
         if isinstance(vol_id, list):
             stop("vol_id must have length 1.")
         if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
+            app.logger.info("vol_id must be an integer > 0")
             return ""
         if not (isinstance(to_df, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
         if not (isinstance(return_response, bool)):
-            print("return_response must be Boolean")
+            app.logger.info("return_response must be Boolean")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         request_url = "https://nyu.databrary.org/volume/" + str(vol_id) + "/csv"
 
         r = self.session.get(request_url)
-        print("Sending GET to " + request_url)
+        app.logger.info("Sending GET to " + request_url)
         if r.status_code == 200:
             if to_df:
                 bytes_content = io.BytesIO(r.content)
@@ -343,7 +344,7 @@ class Databrary:
             else:
                 return r.content
         else:
-            print("Download Failed, HTTP status " + str(r.status_code))
+            app.logger.info("Download Failed, HTTP status " + str(r.status_code))
             if return_response:
                 return r.status_code
 
@@ -353,7 +354,7 @@ class Databrary:
 
         # Check parameters
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         c = assign_constants(vb=vb)
@@ -367,27 +368,27 @@ class Databrary:
 
         # Check parameters
         if isinstance(vol_id, list):
-            print("vol_id must be single scalar value")
+            app.logger.info("vol_id must be single scalar value")
             return ""
         if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
+            app.logger.info("vol_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         vol_url = "https://nyu.databrary.org/api/volume/" + str(vol_id)
 
         if vb:
-            print("Sending GET to ", vol_url)
+            app.logger.info("Sending GET to ", vol_url)
         r = self.session.get(vol_url)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             df = pandas.read_json(r.content, typ="series")
             return df
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -397,13 +398,13 @@ class Databrary:
         if isinstance(vol_id, list):
             stop("vol_id must be a single, scalar value.")
         if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
+            app.logger.info("vol_id must be an integer > 0")
             return ""
         if not (isinstance(convert_JSON, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         url_cont_rec = (
@@ -412,18 +413,18 @@ class Databrary:
             + "?containers&records"
         )
         if vb:
-            print("Sending GET to ", url_cont_rec)
+            app.logger.info("Sending GET to ", url_cont_rec)
         r = self.session.get(url_cont_rec)
         if r.status_code == 200:
             if vb:
-                print("Success.")
+                app.logger.info("Success.")
             if convert_JSON:
                 df = pandas.read_json(r.content, typ="series")
                 return df
             else:
                 return r.text
         else:
-            print("Download failed with HTTP status " + r.status_code + "\n")
+            app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
             return ""
 
     # ------------------------------------------------------------------------------
@@ -431,14 +432,14 @@ class Databrary:
         if download_dir == "./":
             download_dir = constants.TMP_DATA_DIR
 
-        print("DOWNLOADING", asset.asset)
+        app.logger.info("DOWNLOADING", asset.asset)
         url = (
             "https://nyu.databrary.org"
             + "/asset/"
             + str(asset.asset_id)
             + "/download?inline=false"
         )
-        print("Sending GET to ", url)
+        app.logger.info("Sending GET to ", url)
         filename = (
             download_dir
             + os.sep
@@ -461,7 +462,7 @@ class Databrary:
                 if r.status_code == 200:
                     return filename
                 else:
-                    print("Download failed with HTTP status " + r.status_code + "\n")
+                    app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
                     return None
 
     def download_asset_stream(self, asset, vb=False):
@@ -504,12 +505,12 @@ class Databrary:
             + str(asset.asset_id)
             + "/download?inline=false"
         )
-        print("Sending GET to ", url)
+        app.logger.info("Sending GET to ", url)
         r = self.session.get(url, stream=True)
         r.raise_for_status()
         total_size = int(r.headers.get("content-length", 0))
-        print(total_size)
-        print(r.headers)
+        app.logger.info(total_size)
+        app.logger.info(r.headers)
         fname = asset.play_filename
         i = r.iter_content(8192)
         # Return the download stream for processing by another module
@@ -523,20 +524,20 @@ class Databrary:
         if isinstance(vol_id, list):
             stop("vol_id must be a single, scalar value.")
         if not (isinstance(vol_id, int)) or (vol_id <= 0):
-            print("vol_id must be an integer > 0")
+            app.logger.info("vol_id must be an integer > 0")
             return ""
         if isinstance(session_id, list):
             stop("session_id must be a single, scalar value.")
         if not (isinstance(session_id, int)) or (session_id <= 0):
-            print("session_id must be an integer > 0")
+            app.logger.info("session_id must be an integer > 0")
             return ""
         if isinstance(asset_id, list):
             stop("asset_id must be a single, scalar value.")
         if not (isinstance(asset_id, int)) or (asset_id <= 0):
-            print("asset_id must be an integer > 0")
+            app.logger.info("asset_id must be an integer > 0")
             return ""
         if not (isinstance(vb, bool)):
-            print("vb must be Boolean")
+            app.logger.info("vb must be Boolean")
             return ""
 
         url = (
@@ -548,15 +549,15 @@ class Databrary:
             + str(asset_id)
         )
         if vb:
-            print("Sending GET to ", url)
+            app.logger.info("Sending GET to ", url)
         r = self.session.get(url)
         if r.status_code == 200:
             if vb:
-                print("Success!")
+                app.logger.info("Success!")
             df = pandas.read_json(r.content, typ="series")
             return df
         else:
-            print("Download failed with HTTP status ", r.status_code)
+            app.logger.info("Download failed with HTTP status ", r.status_code)
             return ""
 
     def get_volume_by_name(self, vol_name):
@@ -568,14 +569,14 @@ class Databrary:
             else:
                 # Convert content to data.frame
                 c = json.loads(r.content)
-                print(c)
+                app.logger.info(c)
                 if len(c["response"]["docs"]) == 1:
                     return c["response"]["docs"][0]["id"]
                 else:
-                    print("Could not find volume for", vol_name)
+                    app.logger.info("Could not find volume for", vol_name)
                     return None
         else:
-            print(
+            app.logger.info(
                 "Getting vol by name failed with HTTP status ",
                 r.status_code,
                 search_url,
@@ -593,10 +594,10 @@ class Databrary:
             else:
                 # Convert content to data.frame
                 c = json.loads(r.content)
-                print(c)
+                app.logger.info(c)
                 return c["containers"]
         else:
-            print("Getting slots for vol failed with HTTP status ", r.status_code, url)
+            app.logger.info("Getting slots for vol failed with HTTP status ", r.status_code, url)
             return None
 
     def write_tag_for_asset(self, asset, tag):
@@ -624,7 +625,7 @@ class Databrary:
             r = self.session.get(url)
             if r.status_code == 200:
                 c = json.loads(r.content)
-                print("SLOT", c)
+                app.logger.info("SLOT", c)
                 if gold_only:
                     flag = False
                     for r in c["records"]:
@@ -640,7 +641,7 @@ class Databrary:
                     asset["testdate"] = c["date"] if "date" in c else "test"
                     for record in c["records"]:
                         try:
-                            print(record)
+                            app.logger.info(record)
                             if record["record"]["category"] == 1:
                                 asset["gender"] = record["record"]["measures"]["5"]
                                 asset["birthdate"] = record["record"]["measures"]["4"]
@@ -654,7 +655,7 @@ class Databrary:
                             pass
                 all_assets += assets
             else:
-                print(
+                app.logger.info(
                     "Getting assets for volume failed with HTTP status ",
                     r.status_code,
                     url,
@@ -685,5 +686,5 @@ class Databrary:
                     self.formats = formats
                     return formats
             else:
-                print("Download failed with HTTP status " + r.status_code + "\n")
+                app.logger.info("Download failed with HTTP status " + r.status_code + "\n")
                 return ""

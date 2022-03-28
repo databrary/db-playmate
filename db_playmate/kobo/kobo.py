@@ -2,6 +2,7 @@ import requests
 from requests import HTTPError
 from .form import Form
 from typing import List
+from db_playmate import app
 
 
 class Kobo:
@@ -58,7 +59,7 @@ class Kobo:
             response = requests.get(url=url, params=self.params, headers=hds)
             response.raise_for_status()
         except HTTPError as http_err:
-            print(f"HTTP error: {http_err}")
+            app.logger.error(f"HTTP error: {http_err}")
         except Exception as err:
             raise err
         else:

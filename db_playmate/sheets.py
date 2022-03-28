@@ -5,6 +5,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from db_playmate.data_model import Lab, Site
 import db_playmate.constants as constants
+from db_playmate import app
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
@@ -59,9 +60,9 @@ def read_lab_coding(labs):
     header, values = _get_sheet(LAB_CODING_ID, LAB_CODING_RANGE, "Summary")
 
     for row in header:
-        print(row)
+        app.logger.info(row)
         for i, col in enumerate(row):
-            print(i, col)
+            app.logger.info(i, col)
             if col == LAB_CODE_COL:
                 LAB_CODE_COL = i
             if col == CODING_PASS_COL:
@@ -70,11 +71,11 @@ def read_lab_coding(labs):
                 contact_columns.append(i)
 
     if not values:
-        print("No data found.")
+        app.logger.info("No data found.")
     else:
         for row in values:
             try:
-                print("%s, %s" % (row[LAB_CODE_COL], row[CODING_PASS_COL]))
+                app.logger.info("%s, %s" % (row[LAB_CODE_COL], row[CODING_PASS_COL]))
                 lab_code = row[LAB_CODE_COL]
                 coding_pass = row[CODING_PASS_COL]
                 if coding_pass == "Communicative Acts & Gesture":
@@ -92,14 +93,14 @@ def read_lab_coding(labs):
                 import traceback
 
                 traceback.print_exc()
-                print(
+                app.logger.error(
                     "ERROR in CODING PASS ROW:",
                     row,
                     LAB_CODE_COL,
                     SITE_CODE_COL,
                     CODING_PASS_COL,
+                    e
                 )
-                print(e)
                 continue
     header, values = _get_sheet(LAB_CODING_ID, "A1:A", "TranscribersList")
     tra_names = []
@@ -158,12 +159,12 @@ def read_master():
                 ROLE_COL = i
 
     if not values:
-        print("No data found.")
+        app.logger.info("No data found.")
     else:
         labs = {}
         sites = {}
         for row in values:
-            print("%s, %s" % (row[INST_COL], row[LAB_CODE_COL]))
+            app.logger.info("%s, %s" % (row[INST_COL], row[LAB_CODE_COL]))
             site_code = row[SITE_CODE_COL]
             lab_code = row[LAB_CODE_COL]
             try:
